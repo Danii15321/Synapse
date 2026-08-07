@@ -1,6 +1,6 @@
 # Journal — tranche 02 : Walking skeleton
 
-- Démarrée le : 2026-08-07 / Terminée le : — / Statut : EN COURS
+- Démarrée le : 2026-08-07 / Terminée le : 2026-08-07 / Statut : TERMINÉE
 
 ## Definition of Ready
 
@@ -93,4 +93,19 @@ Recette relancée par le chef-projet le 2026-08-07 avec la valeur factice docume
 - `npm run e2e` : 3 tests verts, incluant la non-régression de l'accueil ;
 - navigateur réel à `390 × 844` : `/prompts` affiche les deux titres et résumés, un seul `<main>`, deux `<article>`, largeur document `390`, aucun débordement horizontal ;
 - états `loading`, `error`, `empty` et `success` couverts par les tests d'écran ;
-- DoD commune et DoD spécifique satisfaites localement ; preuve CI distante encore à recueillir avant clôture.
+- DoD commune et DoD spécifique satisfaites. La PR [#3](https://github.com/Danii15321/Synapse/pull/3) a obtenu une CI distante entièrement verte sur le run [31212308740](https://github.com/Danii15321/Synapse/actions/runs/31212308740) : garde pipeline, lint, types, migration, seed, 38 tests, build, installation Chromium, 3 E2E et audit des dépendances.
+
+## Rapport de sortie
+
+```text
+RAPPORT DE TRANCHE — 02 Walking skeleton
+
+Statut          : TERMINÉE
+Tests           : 19 écrits · 19 verts · 38 verts avec non-régression
+Itérations      : 1 passage d'audit · 0 retour correctif
+DoD             : commune ✓ · spécifique ✓
+Livrable        : /prompts démontré à 390 × 844 avec deux prompts PostgreSQL, API brute 200 et aucun débordement
+Écarts ouverts  : aucun
+Décisions prises: URL publiques validées ; correction d'isolation d'un test et retrait d'un invariant Prisma temporaire arbitrés et tracés
+Prochaine étape : tranche 03 — socle sécurité, après validation du porteur
+```
