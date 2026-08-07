@@ -9,17 +9,24 @@ function read(relativePath: string): string {
   return readFileSync(join(ROOT, relativePath), "utf8")
 }
 
-function scenario(name: string, given: string, when: string, then: string): string {
+function scenario(
+  name: string,
+  given: string,
+  when: string,
+  then: string,
+): string {
   return `${name} — ce qui est vérifié\nGIVEN : ${given}\nWHEN  : ${when}\nTHEN  : ${then}`
 }
 
 function sourceFiles(directory: string): string[] {
   const absoluteDirectory = join(ROOT, directory)
 
-  return readdirSync(absoluteDirectory, { withFileTypes: true }).flatMap((entry) => {
-    const relativePath = join(directory, entry.name)
-    return entry.isDirectory() ? sourceFiles(relativePath) : [relativePath]
-  })
+  return readdirSync(absoluteDirectory, { withFileTypes: true }).flatMap(
+    (entry) => {
+      const relativePath = join(directory, entry.name)
+      return entry.isDirectory() ? sourceFiles(relativePath) : [relativePath]
+    },
+  )
 }
 
 describe("fondations du projet", () => {
@@ -99,7 +106,9 @@ describe("fondations du projet", () => {
         expect(statSync(absoluteDirectory).isDirectory(), directory).toBe(true)
         const entries = readdirSync(absoluteDirectory)
         if (entries.length === 0) {
-          expect(entries, `${directory} doit être versionnable`).toContain(".gitkeep")
+          expect(entries, `${directory} doit être versionnable`).toContain(
+            ".gitkeep",
+          )
         }
       }
     },
@@ -137,20 +146,24 @@ describe("fondations du projet", () => {
     ),
     () => {
       const compose = read("docker-compose.yml")
-      const serviceNames = [...compose.matchAll(/^  ([a-zA-Z][\w-]*):\s*$/gm)].map((match) => match[1])
+      const serviceNames = [
+        ...compose.matchAll(/^  ([a-zA-Z][\w-]*):\s*$/gm),
+      ].map((match) => match[1])
 
       expect(serviceNames).toEqual(["postgres"])
-      expect(compose).toMatch(/^\s*image:\s*["']?postgres:16(?:[.-][\w.-]+)?["']?\s*$/m)
+      expect(compose).toMatch(
+        /^\s*image:\s*["']?postgres:16(?:[.-][\w.-]+)?["']?\s*$/m,
+      )
       expect(compose).not.toMatch(/redis|mysql|mariadb|mongo/i)
     },
   )
 
   it(
     scenario(
-      "Prisma est initialisé sans modèle métier",
-      "la tranche de fondations avant le walking skeleton",
+      "Prisma conserve sa configuration PostgreSQL durable",
+      "le socle Prisma à travers les tranches fonctionnelles",
       "le schéma Prisma est inspecté",
-      "il contient un generator et un datasource PostgreSQL basé sur DATABASE_URL, mais aucun model",
+      "il contient toujours un generator et un datasource PostgreSQL basé sur DATABASE_URL",
     ),
     () => {
       const schema = read("prisma/schema.prisma")
@@ -159,7 +172,6 @@ describe("fondations du projet", () => {
       expect(schema).toMatch(/datasource\s+db\s*{/)
       expect(schema).toMatch(/provider\s*=\s*["']postgresql["']/)
       expect(schema).toMatch(/url\s*=\s*env\(["']DATABASE_URL["']\)/)
-      expect(schema).not.toMatch(/^\s*model\s+\w+/m)
     },
   )
 
@@ -177,7 +189,9 @@ describe("fondations du projet", () => {
       expect(dbSource).toMatch(/^import\s+["']server-only["']/)
       expect(dbSource).toMatch(/globalThis/)
       expect(dbSource).toMatch(/NODE_ENV/)
-      expect(serverSources.match(/new\s+PrismaClient\s*\(/g) ?? []).toHaveLength(1)
+      expect(
+        serverSources.match(/new\s+PrismaClient\s*\(/g) ?? [],
+      ).toHaveLength(1)
     },
   )
 
@@ -189,12 +203,17 @@ describe("fondations du projet", () => {
       "seul src/server/config.ts lit process.env et tous les fichiers serveur commencent par server-only",
     ),
     () => {
-      const files = sourceFiles("src").filter((file) => /\.[cm]?[jt]sx?$/.test(file))
+      const files = sourceFiles("src").filter((file) =>
+        /\.[cm]?[jt]sx?$/.test(file),
+      )
       const illegalEnvReaders = files.filter(
-        (file) => file !== "src/server/config.ts" && /process\.env/.test(read(file)),
+        (file) =>
+          file !== "src/server/config.ts" && /process\.env/.test(read(file)),
       )
       const unguardedServerFiles = files.filter(
-        (file) => file.startsWith("src/server/") && !/^import\s+["']server-only["']/m.test(read(file)),
+        (file) =>
+          file.startsWith("src/server/") &&
+          !/^import\s+["']server-only["']/m.test(read(file)),
       )
 
       expect(illegalEnvReaders).toEqual([])
@@ -216,7 +235,9 @@ describe("fondations du projet", () => {
       expect(gitignore).toMatch(/^\.env\*\s*$/m)
       expect(gitignore).toMatch(/^!\.env\.example\s*$/m)
       expect(example).toMatch(/^DATABASE_URL=(?!\s*$).+/m)
-      expect(example).not.toMatch(/password\s*=\s*(?!synapse|change|example|fake)/i)
+      expect(example).not.toMatch(
+        /password\s*=\s*(?!synapse|change|example|fake)/i,
+      )
     },
   )
 })

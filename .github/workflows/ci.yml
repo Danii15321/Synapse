@@ -49,11 +49,23 @@ jobs:
       - name: Vérifier les types
         run: npm run type-check
 
+      - name: Appliquer les migrations
+        run: npx prisma migrate deploy
+
+      - name: Peupler la base de démonstration
+        run: npx prisma db seed
+
       - name: Tests
         run: npm run test
 
       - name: Build
         run: npm run build
+
+      - name: Installer Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Tests E2E
+        run: npm run e2e
 
       - name: Audit des dépendances
         run: npm audit
