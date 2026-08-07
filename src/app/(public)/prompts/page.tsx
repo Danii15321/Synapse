@@ -1,6 +1,8 @@
 import { PromptCard } from "@/components/features/prompt-card"
 import { getPrompts } from "@/server/services/prompt-service"
 
+export const dynamic = "force-dynamic"
+
 export default async function PromptsPage() {
   const prompts = await getPrompts()
 
