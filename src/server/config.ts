@@ -8,10 +8,12 @@ const configSchema = z
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
+    VERCEL: z.literal("1").optional(),
   })
   .strict()
 
 export const config = configSchema.parse({
   DATABASE_URL: process.env.DATABASE_URL,
   NODE_ENV: process.env.NODE_ENV,
+  VERCEL: process.env.VERCEL,
 })

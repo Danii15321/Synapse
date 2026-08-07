@@ -69,4 +69,3 @@ jobs:
 
       - name: Audit des dépendances
         run: npm audit
-        continue-on-error: true
