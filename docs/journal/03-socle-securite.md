@@ -1,6 +1,6 @@
 # Journal — tranche 03 : Socle de sécurité transverse
 
-- Démarrée le : 2026-08-07 / Terminée le : — / Statut : EN COURS
+- Démarrée le : 2026-08-07 / Terminée le : 2026-08-07 / Statut : TERMINÉE
 
 ## Definition of Ready
 
@@ -130,4 +130,20 @@ Recette relancée par le chef-projet le 2026-08-07 avec la valeur factice docume
 - navigateur réel à `390 × 844` : `/prompts` présente un `<main>`, deux `<article>`, les deux prompts attendus, largeur document `390`, aucun débordement horizontal et aucune erreur console ;
 - états `loading`, `error`, `empty` et `success` de `/prompts` couverts par les tests d'écran hérités ; écrans globaux `error` et `not-found` accessibles et adaptés au mobile ;
 - huit empreintes gelées inchangées ; `git diff --check` et le garde-fou `docs/pipeline-dev/` verts ;
-- DoD commune et DoD spécifique satisfaites localement. Validation distante de la PR en attente.
+- DoD commune et DoD spécifique satisfaites ;
+- PR [#4](https://github.com/Danii15321/Synapse/pull/4) : validations distantes initiales entièrement vertes sur le run [`push` 31221328919](https://github.com/Danii15321/Synapse/actions/runs/31221328919) et le run [`pull_request` 31221357906](https://github.com/Danii15321/Synapse/actions/runs/31221357906). Les deux exécutent garde pipeline, lint, types, migrations, seed, 54 tests, build, installation Chromium, 4 E2E et audit des dépendances.
+
+## Rapport de sortie
+
+```text
+RAPPORT DE TRANCHE — 03 Socle de sécurité transverse
+
+Statut          : TERMINÉE
+Tests           : 18 écrits · 18 verts · 54 verts avec non-régression
+Itérations      : 3 passages d'audit · 2 retours d'implémentation
+DoD             : commune ✓ · spécifique ✓
+Livrable        : /prompts démontré à 390 × 844 avec headers, nonce par requête, hydratation saine ; 70 requêtes produisent 429 + Retry-After ; erreur générique corrélée sans fuite
+Écarts ouverts  : aucun
+Décisions prises: X-Forwarded-For fiable uniquement sur Vercel attesté ; compartiment local fail-closed ; rendu /prompts dynamique ; reprise nonce autorisée par le porteur
+Prochaine étape : tranche 04 — authentification complète, après validation du porteur
+```
