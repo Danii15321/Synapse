@@ -90,6 +90,16 @@ Architecture **Backend For Frontend (BFF)** avec Next.js : le frontend et le bac
 
 Les conventions détaillées — architecture en couches, règles de sécurité, standards de code, workflow — sont décrites dans [AGENTS.md](AGENTS.md), qui fait autorité pour toute contribution.
 
+### Deux chemins de lecture complémentaires
+
+Une page rendue par le serveur, comme `/prompts`, appelle directement son
+service métier. Elle ne fait pas de requête HTTP vers sa propre API.
+
+Un composant client qui doit charger les mêmes données passe exclusivement par
+la fonction partagée de `src/lib/api.ts`. Celle-ci appelle le Route Handler
+`GET /api/prompts`, qui délègue au même service. Dans les deux cas, le service
+reste l'unique entrée vers le repository Prisma et PostgreSQL.
+
 ---
 
 ## 7. Périmètre v1 / v2
