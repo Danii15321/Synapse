@@ -131,7 +131,7 @@ Recette relancée par le chef-projet le 2026-08-07 avec la valeur factice docume
 - états `loading`, `error`, `empty` et `success` de `/prompts` couverts par les tests d'écran hérités ; écrans globaux `error` et `not-found` accessibles et adaptés au mobile ;
 - huit empreintes gelées inchangées ; `git diff --check` et le garde-fou `docs/pipeline-dev/` verts ;
 - DoD commune et DoD spécifique satisfaites ;
-- PR [#4](https://github.com/Danii15321/Synapse/pull/4) : validations distantes initiales entièrement vertes sur le run [`push` 31221328919](https://github.com/Danii15321/Synapse/actions/runs/31221328919) et le run [`pull_request` 31221357906](https://github.com/Danii15321/Synapse/actions/runs/31221357906). Les deux exécutent garde pipeline, lint, types, migrations, seed, 54 tests, build, installation Chromium, 4 E2E et audit des dépendances.
+- PR [#4](https://github.com/Danii15321/Synapse/pull/4) : validations distantes initiales entièrement vertes sur le run [`push` 31221328919](https://github.com/Danii15321/Synapse/actions/runs/31221328919) et le run [`pull_request` 31221357906](https://github.com/Danii15321/Synapse/actions/runs/31221357906). Après le commit documentaire terminal, les runs [`push` 31221538199](https://github.com/Danii15321/Synapse/actions/runs/31221538199) et [`pull_request` 31221541098](https://github.com/Danii15321/Synapse/actions/runs/31221541098) sont également entièrement verts. Tous exécutent garde pipeline, lint, types, migrations, seed, 54 tests, build, installation Chromium, 4 E2E et audit des dépendances.
 
 ## Rapport de sortie
 
