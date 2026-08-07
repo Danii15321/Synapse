@@ -1,6 +1,6 @@
 # Journal — tranche 02 : Walking skeleton
 
-- Démarrée le : 2026-08-07 / Terminée le : 2026-08-07 / Statut : TERMINÉE
+- Démarrée le : 2026-08-07 / Terminée le : — / Statut : EN COURS
 
 ## Definition of Ready
 
@@ -48,15 +48,18 @@ Les tests ci-dessous sont gelés après revue du périmètre et preuve RED. L'ag
 | `tests/services/prompt-service.test.ts` | `fd952421c4e74ff7f9ed2420d1396dd5cba04bc30f543de06343bf960876222b` |
 | `tests/api/prompts-route.test.ts` | `5dc71c846ef4a94c6f5269affda45e70422222799b5736ef4e7158f62aea062f` |
 | `tests/components/prompts-page.test.tsx` | `316cf938a3e075b051af7966d38bc54f5267081ef4ddd482aa07f15a3c486120` |
-| `tests/e2e/prompts.spec.ts` | `b222b5b196ea7447bd8b118c3f2a911829e01459088a78dba6c38fab6324c871` |
+| `tests/e2e/prompts.spec.ts` | `a71f874f36d3e01068bac485b237af5b78bbe6f515ae9b49f01d30d0e01245c4` |
 
 Contestations après gel : l'agent d'implémentation a constaté que le scénario d'écran `empty` héritait du DOM du scénario `success` et échouait avec deux éléments `<main>`. Le fichier de tranche exige des états indépendants ; il n'exige pas une fuite d'état entre tests. Le chef-projet a donc qualifié le défaut comme une erreur d'isolation du test et a rappelé le même agent de tests pour ajouter uniquement le nettoyage entre scénarios. L'implémentation n'a touché à aucun test et s'est arrêtée conformément au protocole. Le test corrigé a été copié dans une archive isolée de `origin/main` : il reste rouge sur l'import inexistant de la page, ce qui rétablit la preuve RED. ESLint et Prettier ciblés sont verts. Son nouveau SHA-256, reporté dans le tableau, constitue le second gel ; les six autres empreintes sont inchangées.
+
+Seconde contestation après gel : le run CI `31212486343`, déclenché par le seul commit documentaire de clôture, a échoué de façon intermittente sur `page.locator("main")` parce que l'état `loading` et l'état final coexistaient brièvement pendant le streaming Next.js. Le même code et le même test avaient déjà obtenu deux passages E2E verts, localement et sur le run PR `31212308740`, et le contrôle navigateur du chef-projet constatait un seul `<main>` dans l'état final. Le chef-projet a qualifié ce point comme un défaut de synchronisation du test E2E. Le même agent de tests a conservé toutes les preuves fonctionnelles et ciblé le `<main>` final par le premier titre reçu depuis l'API. Preuve RED : 2/2 scénarios échouent contre une archive de `origin/main` sur les statuts 404 attendus avant implémentation. Preuve anti-flake : 20/20 exécutions vertes avec `--repeat-each=10`. Le nouveau SHA-256 reporté dans le tableau constitue le troisième gel ; les six autres empreintes sont inchangées.
 
 ## Itérations audit ↔ implémentation
 
 | # | Constats renvoyés | Ce qui a été corrigé |
 |---|---|---|
 | 1 | Audit initial conforme : aucun constat bloquant, majeur ou mineur. | Aucune correction nécessaire. |
+| 2 | Ré-audit du troisième gel conforme : aucune garantie E2E réduite, aucun constat ouvert ; 60/60 répétitions Playwright vertes. | Aucune correction applicative nécessaire. |
 
 ## Décisions d'implémentation
 
@@ -93,19 +96,20 @@ Recette relancée par le chef-projet le 2026-08-07 avec la valeur factice docume
 - `npm run e2e` : 3 tests verts, incluant la non-régression de l'accueil ;
 - navigateur réel à `390 × 844` : `/prompts` affiche les deux titres et résumés, un seul `<main>`, deux `<article>`, largeur document `390`, aucun débordement horizontal ;
 - états `loading`, `error`, `empty` et `success` couverts par les tests d'écran ;
-- DoD commune et DoD spécifique satisfaites. La PR [#3](https://github.com/Danii15321/Synapse/pull/3) a obtenu une CI distante entièrement verte sur le run [31212308740](https://github.com/Danii15321/Synapse/actions/runs/31212308740) : garde pipeline, lint, types, migration, seed, 38 tests, build, installation Chromium, 3 E2E et audit des dépendances.
+- après le troisième gel, recette complète relancée par le chef-projet : lint, types, 38 tests, build et audit npm verts, puis 30/30 exécutions Playwright vertes avec `--repeat-each=10` ;
+- DoD commune et DoD spécifique satisfaites localement. La PR [#3](https://github.com/Danii15321/Synapse/pull/3) a obtenu une première CI distante entièrement verte sur le run [31212308740](https://github.com/Danii15321/Synapse/actions/runs/31212308740). Le run suivant `31212486343` a révélé la course E2E décrite dans la section Tests ; la preuve distante finale reste donc ouverte.
 
 ## Rapport de sortie
 
 ```text
 RAPPORT DE TRANCHE — 02 Walking skeleton
 
-Statut          : TERMINÉE
+Statut          : EN COURS
 Tests           : 19 écrits · 19 verts · 38 verts avec non-régression
 Itérations      : 1 passage d'audit · 0 retour correctif
 DoD             : commune ✓ · spécifique ✓
 Livrable        : /prompts démontré à 390 × 844 avec deux prompts PostgreSQL, API brute 200 et aucun débordement
 Écarts ouverts  : aucun
 Décisions prises: URL publiques validées ; correction d'isolation d'un test et retrait d'un invariant Prisma temporaire arbitrés et tracés
-Prochaine étape : tranche 03 — socle sécurité, après validation du porteur
+Prochaine étape : stabiliser la preuve E2E de tranche 02 puis recueillir une CI finale verte
 ```
