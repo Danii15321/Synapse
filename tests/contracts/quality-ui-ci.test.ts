@@ -163,15 +163,21 @@ describe("qualité, interface et intégration continue", () => {
 
   it(
     scenario(
-      "L'audit de dépendances est visible mais non bloquant en tranche 01",
-      "le workflow GitHub Actions de la tranche de fondations",
+      "L'audit de dépendances devient bloquant en tranche 03",
+      "le workflow GitHub Actions après la mise en place du socle de sécurité",
       "l'étape npm audit est inspectée",
-      "npm audit est exécuté avec continue-on-error jusqu'à la tranche 03",
+      "npm audit est exécuté et aucun continue-on-error ne neutralise son statut d'échec",
     ),
     () => {
       const workflow = read(".github/workflows/ci.yml")
-      const auditBlock = workflow.match(/-\s+name:\s*[^\n]*audit[\s\S]{0,300}?run:\s*npm audit[^\n]*[\s\S]{0,120}?continue-on-error:\s*true/i)
-      expect(auditBlock).not.toBeNull()
+      const auditPosition = workflow.search(/run:\s*npm audit(?:\s|$)/i)
+      const auditBlock = workflow.slice(
+        Math.max(0, auditPosition - 160),
+        auditPosition + 240,
+      )
+
+      expect(auditPosition).toBeGreaterThan(-1)
+      expect(auditBlock).not.toMatch(/continue-on-error:\s*true/i)
     },
   )
 
