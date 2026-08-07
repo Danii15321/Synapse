@@ -1,6 +1,6 @@
 # Journal — tranche 01 : Fondations et outillage
 
-- Démarrée le : 2026-08-07 / Terminée le : — / Statut : BLOQUÉE
+- Démarrée le : 2026-08-07 / Terminée le : 2026-08-07 / Statut : TERMINÉE
 
 ## Definition of Ready
 
@@ -45,7 +45,7 @@ Gelés le 2026-08-07 après revue du chef-projet. La phase RED couvre 22 comport
 
 Revue : chaque DoD spécifique a une couverture ; le livrable a son E2E ; les quatre pièges ont une non-régression ; aucun code applicatif ni test hors périmètre n'a été écrit ; aucun test ne dépend d'une hypothèse non arbitrée. Les niveaux repository, service et Route Handler ne sont pas applicables avant le walking skeleton de la tranche 02.
 
-Limite de preuve connue : aucun remote Git n'est configuré. Les deux validations exigeant une PR réelle devront être exécutées sur le dépôt distant avant la recette finale ; les tests locaux ne prouvent que la structure du workflow et du garde-fou.
+Les preuves locales sont complétées par les exécutions GitHub Actions réelles consignées dans la validation finale.
 
 ## Itérations audit ↔ implémentation
 
@@ -63,7 +63,7 @@ Limite de preuve connue : aucun remote Git n'est configuré. Les deux validation
 
 ## Écarts
 
-### Écart ouvert — preuves sur PR réelle impossibles
+### Écart résolu — preuves sur PR réelle initialement impossibles
 
 Constat factuel : le dépôt local est sur la branche `master`, ne contient aucun commit et n'a aucun remote. `git remote -v` et `git log --oneline` ne fournissent aucune cible ; `origin/main` n'existe donc pas.
 
@@ -75,7 +75,9 @@ Tranches impactées : la tranche 02 ne peut pas satisfaire sa Definition of Read
 
 Tentatives effectuées : contrôle de `git status`, `git branch --show-current`, `git remote -v`, `git log --oneline`, vérification statique du workflow et de son garde-fou, exécution locale intégrale de la chaîne.
 
-Mise à jour du 2026-08-07 : le porteur a fourni `https://github.com/Danii15321/Synapse.git` et autorisé le remplacement complet du contenu distant ainsi que la création des branches et PR de validation. L'ancienne branche `main` (`147d9b7`) a été remplacée, avec lease explicite, par le nouveau commit racine `9362850`. Aucune autre branche ni aucun tag distant n'existait. L'écart reste ouvert uniquement jusqu'aux deux preuves de PR réelle.
+Décision humaine du 2026-08-07 : le porteur a fourni `https://github.com/Danii15321/Synapse.git` et autorisé le remplacement complet du contenu distant ainsi que la création des branches et PR de validation. L'ancienne branche `main` (`147d9b7`) a été remplacée, avec lease explicite, par le nouveau commit racine `9362850`. Aucune autre branche ni aucun tag distant n'existait.
+
+Résolution : la PR verte `#1` a été fusionnée après succès de la CI. La PR jetable `#2` a échoué exactement sur le garde-fou, puis a été fermée sans fusion ; sa branche et son worktree ont été supprimés. `main` ne contient aucune modification de `docs/pipeline-dev/` issue de ce test. L'écart est clos et n'impacte plus la tranche 02.
 
 ## Validation finale
 
@@ -91,8 +93,10 @@ Audit final local : propre après deux tours, sans constat local BLOQUANT, MAJEU
 - [x] PostgreSQL 16, `prisma migrate dev` et `prisma db seed` vérifiés par l'audit ; aucune correction ultérieure ne les a affectés.
 - [x] Échec de `next dev` et `next build` sans `DATABASE_URL`, avec message Zod nommant la variable.
 - [x] Build négatif de la frontière `server-only` vérifié.
-- [ ] CI verte sur une PR réelle — branche `validation/tranche-01-ci` préparée, résultat en attente.
-- [ ] PR de test modifiant `docs/pipeline-dev/` rejetée par la CI — à exécuter après la PR verte.
+- [x] CI verte sur une PR réelle — PR `#1`, fusionnée ; run `31207013855`, succès en 1 min 6 s.
+- [x] PR de test modifiant `docs/pipeline-dev/` rejetée par la CI — PR `#2`, run `31207290293`, échec attendu à l'étape « Bloquer les modifications de la pipeline » ; PR fermée sans fusion et branche supprimée.
 - [x] Commit racine Conventional Commit : `9362850 feat(infra): initialiser les fondations du projet`.
 
-Rapport d'audit : premier passage non conforme avec deux constats locaux et un blocage externe ; tour 1 referme les deux constats et découvre une lecture d'environnement dupliquée ; tour 2 referme ce dernier constat et déclare l'audit local propre. Le blocage externe de PR réelle reste ouvert.
+Rapport d'audit : premier passage non conforme avec deux constats locaux et un blocage externe ; tour 1 referme les deux constats et découvre une lecture d'environnement dupliquée ; tour 2 referme ce dernier constat et déclare l'audit local propre. Les deux preuves distantes ont ensuite clos le dernier blocage.
+
+Recette prononcée : DoD commune satisfaite ; DoD spécifique satisfaite ; livrable démontré localement à 390 px et chaîne CI démontrée sur GitHub. Prochaine étape autorisée : tranche 02 — walking skeleton.
