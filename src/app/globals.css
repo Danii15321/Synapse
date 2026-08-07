@@ -1,0 +1,27 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 42 45% 97%;
+  --surface: 0 0% 100%;
+  --foreground: 222 47% 15%;
+  --accent: 158 64% 38%;
+  --success: 145 63% 34%;
+  --error: 0 72% 48%;
+  --warning: 38 92% 45%;
+  --font-sans: Arial;
+  --radius-card: 1.25rem;
+  --radius-control: 0.75rem;
+  --shadow-card: 0 1rem 3rem -1.5rem hsl(222 47% 15% / 0.28);
+}
+
+@layer base {
+  * {
+    @apply border-foreground/10;
+  }
+
+  body {
+    @apply min-h-screen bg-background font-sans text-foreground antialiased;
+  }
+}
