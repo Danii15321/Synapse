@@ -1,6 +1,6 @@
 # Journal — tranche 02 : Walking skeleton
 
-- Démarrée le : 2026-08-07 / Terminée le : — / Statut : EN COURS
+- Démarrée le : 2026-08-07 / Terminée le : 2026-08-07 / Statut : TERMINÉE
 
 ## Definition of Ready
 
@@ -97,19 +97,19 @@ Recette relancée par le chef-projet le 2026-08-07 avec la valeur factice docume
 - navigateur réel à `390 × 844` : `/prompts` affiche les deux titres et résumés, un seul `<main>`, deux `<article>`, largeur document `390`, aucun débordement horizontal ;
 - états `loading`, `error`, `empty` et `success` couverts par les tests d'écran ;
 - après le troisième gel, recette complète relancée par le chef-projet : lint, types, 38 tests, build et audit npm verts, puis 30/30 exécutions Playwright vertes avec `--repeat-each=10` ;
-- DoD commune et DoD spécifique satisfaites localement. La PR [#3](https://github.com/Danii15321/Synapse/pull/3) a obtenu une première CI distante entièrement verte sur le run [31212308740](https://github.com/Danii15321/Synapse/actions/runs/31212308740). Le run suivant `31212486343` a révélé la course E2E décrite dans la section Tests ; la preuve distante finale reste donc ouverte.
+- DoD commune et DoD spécifique satisfaites. La PR [#3](https://github.com/Danii15321/Synapse/pull/3) a obtenu une première CI distante entièrement verte sur le run [31212308740](https://github.com/Danii15321/Synapse/actions/runs/31212308740). Le run suivant `31212486343` a révélé la course E2E décrite dans la section Tests. Après le troisième gel, les runs [31213362476](https://github.com/Danii15321/Synapse/actions/runs/31213362476) (`push`) et [31213364371](https://github.com/Danii15321/Synapse/actions/runs/31213364371) (`pull_request`) sont tous deux entièrement verts : garde pipeline, lint, types, migration, seed, 38 tests, build, installation Chromium, 3 E2E et audit des dépendances.
 
 ## Rapport de sortie
 
 ```text
 RAPPORT DE TRANCHE — 02 Walking skeleton
 
-Statut          : EN COURS
+Statut          : TERMINÉE
 Tests           : 19 écrits · 19 verts · 38 verts avec non-régression
-Itérations      : 1 passage d'audit · 0 retour correctif
+Itérations      : 2 passages d'audit · 0 retour applicatif
 DoD             : commune ✓ · spécifique ✓
 Livrable        : /prompts démontré à 390 × 844 avec deux prompts PostgreSQL, API brute 200 et aucun débordement
 Écarts ouverts  : aucun
 Décisions prises: URL publiques validées ; correction d'isolation d'un test et retrait d'un invariant Prisma temporaire arbitrés et tracés
-Prochaine étape : stabiliser la preuve E2E de tranche 02 puis recueillir une CI finale verte
+Prochaine étape : tranche 03 — socle sécurité, après validation du porteur
 ```
