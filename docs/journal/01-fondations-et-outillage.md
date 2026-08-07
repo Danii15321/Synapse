@@ -73,7 +73,9 @@ Proposition soumise à validation humaine : fournir l'URL du dépôt distant et 
 
 Tranches impactées : la tranche 02 ne peut pas satisfaire sa Definition of Ready tant que la tranche 01 n'est pas validée.
 
-Tentatives effectuées : contrôle de `git status`, `git branch --show-current`, `git remote -v`, `git log --oneline`, vérification statique du workflow et de son garde-fou, exécution locale intégrale de la chaîne. Aucun remote, commit ou résultat de CI réel n'est disponible. L'écart n'est pas auto-validé.
+Tentatives effectuées : contrôle de `git status`, `git branch --show-current`, `git remote -v`, `git log --oneline`, vérification statique du workflow et de son garde-fou, exécution locale intégrale de la chaîne.
+
+Mise à jour du 2026-08-07 : le porteur a fourni `https://github.com/Danii15321/Synapse.git` et autorisé le remplacement complet du contenu distant ainsi que la création des branches et PR de validation. L'ancienne branche `main` (`147d9b7`) a été remplacée, avec lease explicite, par le nouveau commit racine `9362850`. Aucune autre branche ni aucun tag distant n'existait. L'écart reste ouvert uniquement jusqu'aux deux preuves de PR réelle.
 
 ## Validation finale
 
@@ -89,8 +91,8 @@ Audit final local : propre après deux tours, sans constat local BLOQUANT, MAJEU
 - [x] PostgreSQL 16, `prisma migrate dev` et `prisma db seed` vérifiés par l'audit ; aucune correction ultérieure ne les a affectés.
 - [x] Échec de `next dev` et `next build` sans `DATABASE_URL`, avec message Zod nommant la variable.
 - [x] Build négatif de la frontière `server-only` vérifié.
-- [ ] CI verte sur une PR réelle — bloqué par l'absence de remote et de commit.
-- [ ] PR de test modifiant `docs/pipeline-dev/` rejetée par la CI — même blocage externe.
-- [ ] Commits Conventional Commits — aucun commit n'existe encore ; à produire avant les PR.
+- [ ] CI verte sur une PR réelle — branche `validation/tranche-01-ci` préparée, résultat en attente.
+- [ ] PR de test modifiant `docs/pipeline-dev/` rejetée par la CI — à exécuter après la PR verte.
+- [x] Commit racine Conventional Commit : `9362850 feat(infra): initialiser les fondations du projet`.
 
 Rapport d'audit : premier passage non conforme avec deux constats locaux et un blocage externe ; tour 1 referme les deux constats et découvre une lecture d'environnement dupliquée ; tour 2 referme ce dernier constat et déclare l'audit local propre. Le blocage externe de PR réelle reste ouvert.
