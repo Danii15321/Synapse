@@ -35,16 +35,25 @@ THEN  : l'API renvoie exactement deux DTO valides, leurs titres et résumés son
     throw new Error("GET /api/prompts doit renvoyer un tableau de DTO prompts")
   }
   expect(payload).toHaveLength(2)
+  const firstPrompt = payload[0]
+  if (!firstPrompt) {
+    throw new Error("le seed doit fournir un premier prompt")
+  }
 
   const pageResponse = await page.goto("/prompts")
 
   expect(pageResponse?.status()).toBe(200)
-  await expect(page.locator("main")).toBeVisible()
+  const finalMain = page.getByRole("main").filter({
+    has: page.getByRole("heading", { name: firstPrompt.title, exact: true }),
+  })
+  await expect(finalMain).toBeVisible()
   for (const prompt of payload) {
     await expect(
-      page.getByRole("heading", { name: prompt.title }),
+      finalMain.getByRole("heading", { name: prompt.title }),
     ).toBeVisible()
-    await expect(page.getByText(prompt.summary, { exact: true })).toBeVisible()
+    await expect(
+      finalMain.getByText(prompt.summary, { exact: true }),
+    ).toBeVisible()
   }
   const hasHorizontalOverflow = await page.evaluate(
     () => document.documentElement.scrollWidth > window.innerWidth,
