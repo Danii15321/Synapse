@@ -2,8 +2,13 @@ import { defineConfig, devices } from "@playwright/test"
 
 export default defineConfig({
   testDir: "./tests/e2e",
-  fullyParallel: true,
-  reporter: "html",
+  fullyParallel: false,
+  reporter: [
+    ["list"],
+    ["html"],
+    ["./scripts/playwright-rate-limit-reporter.ts"],
+  ],
+  workers: 1,
   use: {
     baseURL: "http://localhost:3000",
     trace: "on-first-retry",

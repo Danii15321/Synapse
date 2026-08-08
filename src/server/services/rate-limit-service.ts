@@ -31,10 +31,7 @@ function sensitiveBucket(pathname: string): string {
   if (pathname.startsWith("/api/auth/callback/")) {
     return "auth-callback"
   }
-  if (
-    pathname === "/api/auth/signout" ||
-    pathname === "/api/auth/logout"
-  ) {
+  if (pathname === "/api/auth/signout" || pathname === "/api/auth/logout") {
     return "auth-signout"
   }
   if (pathname === "/api/auth" || pathname.startsWith("/api/auth/")) {

@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "Prompt" ALTER COLUMN "body" SET DEFAULT '',
+ALTER COLUMN "excerpt" SET DEFAULT '',
+ALTER COLUMN "tags" SET DEFAULT ARRAY[]::TEXT[];
