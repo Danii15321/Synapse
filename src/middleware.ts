@@ -3,9 +3,11 @@ import { randomUUID } from "node:crypto"
 import { NextRequest, NextResponse } from "next/server"
 
 import { config as appConfig } from "@/server/config"
+import { SESSION_COOKIE_NAME } from "@/server/auth/session-cookie"
 import { mapDomainError, RateLimitedError } from "@/server/errors"
 import { writeLog } from "@/server/logger"
 import { resolveRateLimitIdentifier } from "@/server/rate-limit/client-identifier"
+import { createRateLimitProof } from "@/server/rate-limit/proof"
 import { enforceRateLimit } from "@/server/services/rate-limit-service"
 
 const GENERIC_ERROR_MESSAGE = "La requête n'a pas pu être traitée."
@@ -39,6 +41,10 @@ function applySecurityHeaders(response: NextResponse, csp: string): void {
   }
 }
 
+function isMemberPath(pathname: string): boolean {
+  return pathname === "/compte" || pathname.startsWith("/compte/")
+}
+
 export async function middleware(request: NextRequest): Promise<NextResponse> {
   const startedAt = Date.now()
   const nonce = Buffer.from(randomUUID()).toString("base64")
@@ -48,18 +54,43 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
   requestHeaders.set("x-nonce", nonce)
 
   try {
-    const identifier = resolveRateLimitIdentifier({
-      headers: request.headers,
-      trustedProxy:
-        appConfig.NODE_ENV === "production" && appConfig.VERCEL === "1"
-          ? "vercel"
-          : "none",
-    })
-    await enforceRateLimit({
-      identifier,
-      now: new Date(),
-      pathname: request.nextUrl.pathname,
-    })
+    if (request.nextUrl.pathname.startsWith("/api/")) {
+      const identifier = resolveRateLimitIdentifier({
+        headers: request.headers,
+        trustedProxy:
+          appConfig.NODE_ENV === "production" && appConfig.VERCEL === "1"
+            ? "vercel"
+            : "none",
+      })
+      await enforceRateLimit({
+        identifier,
+        now: new Date(),
+        pathname: request.nextUrl.pathname,
+      })
+      requestHeaders.set(
+        "x-synapse-rate-limit-proof",
+        createRateLimitProof({
+          method: request.method,
+          nonce,
+          pathname: request.nextUrl.pathname,
+          secret: appConfig.AUTH_SECRET,
+        }),
+      )
+    }
+
+    if (
+      isMemberPath(request.nextUrl.pathname) &&
+      !request.cookies.has(SESSION_COOKIE_NAME)
+    ) {
+      const loginUrl = new URL("/login", request.url)
+      loginUrl.searchParams.set(
+        "callbackUrl",
+        `${request.nextUrl.pathname}${request.nextUrl.search}`,
+      )
+      const response = NextResponse.redirect(loginUrl)
+      applySecurityHeaders(response, csp)
+      return response
+    }
 
     const response = NextResponse.next({
       request: { headers: requestHeaders },

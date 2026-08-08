@@ -24,6 +24,25 @@ function isSensitiveRoute(pathname: string): boolean {
   )
 }
 
+function sensitiveBucket(pathname: string): string {
+  if (pathname === "/api/auth/register") {
+    return "auth-register"
+  }
+  if (pathname.startsWith("/api/auth/callback/")) {
+    return "auth-callback"
+  }
+  if (
+    pathname === "/api/auth/signout" ||
+    pathname === "/api/auth/logout"
+  ) {
+    return "auth-signout"
+  }
+  if (pathname === "/api/auth" || pathname.startsWith("/api/auth/")) {
+    return "auth-other"
+  }
+  return "inscriptions"
+}
+
 /**
  * Spécification : compte les appels par IP dans une fenêtre d'une minute,
  * avec un quota général de 60 et un quota sensible de 10. Une fenêtre
@@ -37,7 +56,7 @@ export async function enforceRateLimit({
 }: EnforceRateLimitInput): Promise<void> {
   const sensitive = isSensitiveRoute(pathname)
   const limit = sensitive ? SENSITIVE_LIMIT : GENERAL_LIMIT
-  const bucket = sensitive ? "sensitive" : "general"
+  const bucket = sensitive ? `sensitive:${sensitiveBucket(pathname)}` : "general"
 
   await purgeExpiredRateLimits(now)
   const hit = await recordRateLimitHit({
