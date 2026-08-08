@@ -142,3 +142,14 @@ Validation indépendante du chef-projet le 2026-08-08 :
 - `git diff --check` : vert ; `docs/pipeline-dev/` : aucun diff ;
   `next-env.d.ts` : restauré, aucun diff ;
 - audit final : **CONFORME — aucun constat résiduel**.
+
+Validation distante :
+
+- PR d'implémentation [#12](https://github.com/Danii15321/Synapse/pull/12),
+  fusionnée dans `main` le 2026-08-08 — commit de fusion `ba8b1b8` ;
+- CI GitHub Actions déclenchée par le push :
+  [run 31274456378](https://github.com/Danii15321/Synapse/actions/runs/31274456378),
+  conclusion `SUCCESS` ;
+- CI GitHub Actions déclenchée par la pull request :
+  [run 31274464916](https://github.com/Danii15321/Synapse/actions/runs/31274464916),
+  conclusion `SUCCESS`.
