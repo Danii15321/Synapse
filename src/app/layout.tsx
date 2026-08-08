@@ -1,6 +1,8 @@
 import type { Metadata } from "next"
 import type { ReactNode } from "react"
 
+import { SiteNavigation } from "@/components/site-navigation"
+import { auth } from "@/server/auth/config"
 import { config } from "@/server/config"
 
 import "./globals.css"
@@ -12,12 +14,15 @@ export const metadata: Metadata = {
 
 void config
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{ children: ReactNode }>) {
   return (
     <html lang="fr">
-      <body>{children}</body>
+      <body>
+        <SiteNavigation authenticated={Boolean((await auth())?.user)} />
+        {children}
+      </body>
     </html>
   )
 }

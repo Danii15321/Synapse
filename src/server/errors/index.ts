@@ -35,6 +35,27 @@ export class RateLimitedError extends Error {
   }
 }
 
+export class AccountAlreadyExistsError extends Error {
+  constructor() {
+    super("Un compte existe déjà pour cette adresse")
+    this.name = "AccountAlreadyExistsError"
+  }
+}
+
+export class InvalidCurrentPasswordError extends Error {
+  constructor() {
+    super("Le mot de passe actuel est invalide")
+    this.name = "InvalidCurrentPasswordError"
+  }
+}
+
+export class UnauthorizedError extends Error {
+  constructor() {
+    super("Authentification requise")
+    this.name = "UnauthorizedError"
+  }
+}
+
 type ErrorMapping = Readonly<{
   status: number
 }>
@@ -51,6 +72,12 @@ export function mapDomainError(error: unknown): ErrorMapping {
   }
   if (error instanceof RateLimitedError) {
     return { status: 429 }
+  }
+  if (error instanceof UnauthorizedError) {
+    return { status: 401 }
+  }
+  if (error instanceof InvalidCurrentPasswordError) {
+    return { status: 400 }
   }
 
   return { status: 500 }
