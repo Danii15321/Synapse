@@ -1,6 +1,6 @@
 # Journal — tranche 06 : Shell du site et identité
 
-- Démarrée le : 2026-08-08 / Terminée le : — / Statut : EN COURS
+- Démarrée le : 2026-08-08 / Terminée le : 2026-08-08 / Statut : TERMINÉE
 
 ## Definition of Ready
 
@@ -141,4 +141,4 @@ DoD spécifique : satisfaite sous réserve du seul écart E06-01 déjà validé.
 
 Tentative de recette supplémentaire dans le navigateur intégré : l'onglet `http://localhost:3000/` était présent, mais la politique de sécurité de cette surface a refusé l'accès à `localhost`. Aucun contournement n'a été tenté. Le viewport a été restauré et l'onglet conservé. La recette visuelle repose donc sur le Chromium Playwright officiel déjà exécuté, qui couvre explicitement le parcours 390 px et les mesures visuelles attendues.
 
-Validation GitHub et clôture : en attente de commits, PR, CI et fusion.
+Validation GitHub et clôture : les trois commits conventionnels de tests, d'implémentation et de journal ont été poussés sur `feat/tranche-06-shell-identite`. La PR [#7](https://github.com/Danii15321/Synapse/pull/7) a obtenu ses deux contrôles `quality` verts, puis a été fusionnée dans `main` au commit `5f79a8298d69f387995700f8162e3dfbc61f7168`. La CI post-fusion [31259309458](https://github.com/Danii15321/Synapse/actions/runs/31259309458) est verte (`quality` en 3 min). L'annotation GitHub sur la migration future des actions v4 de Node 20 vers Node 24 est non bloquante et ne change aucun résultat. La tranche 06 est terminée.
