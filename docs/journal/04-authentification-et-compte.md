@@ -1,6 +1,6 @@
 # Journal — tranche 04 : Authentification et compte
 
-- Démarrée le : 2026-08-08 / Terminée le : — / Statut : EN COURS
+- Démarrée le : 2026-08-08 / Terminée le : 2026-08-08 / Statut : TERMINÉE
 
 ## Definition of Ready
 
@@ -75,6 +75,7 @@ Gel déclaré le 2026-08-08 après arbitrage humain de l'écart E04-01. Les trei
 | GREEN-3 | Troisième E2E : même obstacle, quatre parcours rouges ; appels directs via `localhost` verts mais Playwright via `127.0.0.1` reçoit l'erreur générique | **Arrêt obligatoire** après trois tentatives. Aucun quatrième essai. Hypothèse à arbitrer : la vérification CSRF compare l'origine `127.0.0.1` à une URL normalisée en `localhost` et refuse le navigateur avant l'authentification |
 | AUDIT-1 | 2 MAJEURS : garde UX `/compte` absente du middleware ; erreurs de `/api/auth/logout` non mappées. 1 MINEUR : sentinelle `x-synapse-rate-limit-checked` forgeable lors d'un appel direct | Garde grossière ajoutée au middleware sans remplacer `requireUser()` ; erreurs logout mappées en réponses génériques corrélées ; sentinelle remplacée par une preuve HMAC liée à la méthode, au chemin et au nonce |
 | AUDIT-2 | Aucun constat : 0 BLOQUANT, 0 MAJEUR, 0 MINEUR | Audit indépendant déclaré **CONFORME** après preuve HTTP réelle, vérification de la preuve HMAC, rejeu des suites et contrôle des empreintes gelées |
+| CI-1 | Premier run distant rouge avant les tests : `AUTH_SECRET` obligatoire absent de l'environnement GitHub Actions | Génération de 48 octets aléatoires au runtime avec OpenSSL, masquage immédiat et propagation au seul job via `GITHUB_ENV` ; aucun secret statique ou persistant. Ré-audit ciblé : **CONFORME**, 0 constat |
 
 Reprise GREEN autorisée par le porteur du projet le 2026-08-08 par « Ok je l'autorise », limitée au diagnostic de la comparaison d'origine `127.0.0.1` / `localhost`, à son correctif si confirmé et aux validations qui en découlent. Cette autorisation ouvre un nouvel audit de blocage ; elle ne modifie ni le périmètre ni la dérogation E04-01.
 
@@ -121,4 +122,19 @@ Validation locale indépendante terminée le 2026-08-08 :
 - `docs/pipeline-dev/` est identique à `origin/main` et `git diff --check` est propre ;
 - recette manuelle à 390 × 844 px : inscription, compte `FREE`, déconnexion, redirection de l'anonyme vers `/login`, reconnexion et message d'échec générique vérifiés ; accueil et `/prompts` sans débordement horizontal ni erreur console ; le changement de mot de passe n'a pas été soumis manuellement, son parcours complet étant couvert par Playwright.
 
-Validation distante et fusion : en attente de la PR.
+Validation distante : PR [#5](https://github.com/Danii15321/Synapse/pull/5). Le premier passage a correctement révélé l'absence de `AUTH_SECRET` dans GitHub Actions. Après correction et audit ciblé, les runs [`push` 31230857428](https://github.com/Danii15321/Synapse/actions/runs/31230857428) et [`pull_request` 31230860503](https://github.com/Danii15321/Synapse/actions/runs/31230860503) sont entièrement verts : intégrité pipeline, secret éphémère, lint, types, migrations, seed, 93 tests, build, installation Chromium, 8 E2E et audit des dépendances.
+
+## Rapport de sortie
+
+```text
+RAPPORT DE TRANCHE — 04 Authentification et compte
+
+Statut          : TERMINÉE
+Tests           : 43 écrits · 43 verts · 93 verts avec non-régression
+Itérations      : 2 passages d'audit · 1 retour d'implémentation · 1 correction CI ré-auditée
+DoD             : commune ✓ · spécifique ✓
+Livrable        : inscription, session PostgreSQL glissante, compte FREE, déconnexion, reconnexion et rotation du mot de passe démontrés à 390 px
+Écarts ouverts  : aucun
+Décisions prises: e-mail non vérifié en v1 ; session glissante 30 jours ; passerelle Credentials interne validée, sans JWT
+Prochaine étape : tranche 05 — contrôle d'accès premium, après validation du porteur
+```
