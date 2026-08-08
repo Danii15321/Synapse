@@ -73,13 +73,13 @@ async function insertPremiumPrompt(): Promise<PremiumFixture> {
   createdSlugs.add(fixture.slug)
   await db.$executeRaw`
     INSERT INTO "Prompt" (
-      "id", "slug", "title", "summary", "excerpt", "tags", "visibility",
-      "body", "createdAt", "updatedAt"
+      "id", "slug", "title", "summary", "excerpt", "domain", "tags",
+      "coverImage", "visibility", "body", "publishedAt", "createdAt", "updatedAt"
     )
     VALUES (
       ${fixture.id}, ${fixture.slug}, 'Prompt premium', 'Résumé public',
-      ${fixture.excerpt}, ARRAY['business', 'ia']::text[], 'PREMIUM'::"Visibility",
-      ${fixture.body}, NOW(), NOW()
+      ${fixture.excerpt}, 'ia'::"PromptDomain", ARRAY['business', 'ia']::text[],
+      NULL, 'PREMIUM'::"Visibility", ${fixture.body}, NOW(), NOW(), NOW()
     )
   `
   return fixture
@@ -98,7 +98,7 @@ describe("repository de détail premium sur PostgreSQL", () => {
       "Le modèle persiste une visibilité par contenu et un excerpt distinct du body",
       "une vraie base PostgreSQL 16 migrée pour le modèle premium",
       "le catalogue et les valeurs par défaut de Prompt sont interrogés directement",
-      "l'enum Visibility contient FREE et PREMIUM, Prompt possède visibility, body, excerpt et tags, et une insertion sans visibilité reçoit FREE",
+      "l'enum Visibility contient FREE et PREMIUM, Prompt possède visibility, body, excerpt et tags, et une insertion sans visibilité ni publishedAt reçoit FREE tout en restant brouillon",
     ),
     async () => {
       await expectPostgreSql()
@@ -137,20 +137,23 @@ describe("repository de détail premium sur PostgreSQL", () => {
       createdSlugs.add(slug)
       await db.$executeRaw`
         INSERT INTO "Prompt" (
-          "id", "slug", "title", "summary", "excerpt", "tags", "body",
-          "createdAt", "updatedAt"
+          "id", "slug", "title", "summary", "excerpt", "domain", "tags",
+          "body", "createdAt", "updatedAt"
         )
         VALUES (
           ${`default-free-${suffix}`}, ${slug}, 'Prompt libre', 'Résumé libre',
-          'Extrait libre', ARRAY['libre']::text[], 'Corps libre', NOW(), NOW()
+          'Extrait libre', 'ia'::"PromptDomain", ARRAY['libre']::text[],
+          'Corps libre', NOW(), NOW()
         )
       `
-      const inserted = await db.$queryRaw<Array<{ visibility: string }>>`
-        SELECT "visibility"::text AS visibility
+      const inserted = await db.$queryRaw<
+        Array<{ publishedAt: Date | null; visibility: string }>
+      >`
+        SELECT "publishedAt" AS "publishedAt", "visibility"::text AS visibility
         FROM "Prompt"
         WHERE "slug" = ${slug}
       `
-      expect(inserted).toEqual([{ visibility: "FREE" }])
+      expect(inserted).toEqual([{ publishedAt: null, visibility: "FREE" }])
     },
   )
 
@@ -175,6 +178,8 @@ describe("repository de détail premium sur PostgreSQL", () => {
         throw new Error("findBySlug doit retourner une row")
       }
       expect(Object.keys(row).sort()).toEqual([
+        "coverImage",
+        "domain",
         "excerpt",
         "id",
         "slug",
@@ -211,6 +216,8 @@ describe("repository de détail premium sur PostgreSQL", () => {
       }
       expect(Object.keys(row).sort()).toEqual([
         "body",
+        "coverImage",
+        "domain",
         "excerpt",
         "id",
         "slug",

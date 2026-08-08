@@ -22,9 +22,12 @@ type HomeRepository = {
 
 const promptSnapshotSelect = {
   body: true,
+  coverImage: true,
   createdAt: true,
+  domain: true,
   excerpt: true,
   id: true,
+  publishedAt: true,
   slug: true,
   summary: true,
   tags: true,
@@ -81,10 +84,14 @@ async function insertPrompt(
   createdAt: Date,
   visibility: "FREE" | "PREMIUM" = "FREE",
 ): Promise<void> {
+  const coverImage =
+    index % 2 === 0 ? `/images/prompts/accueil-${index}.webp` : null
+  const domain = index % 2 === 0 ? "communication" : "entrepreneuriat"
+
   await db.$executeRaw`
     INSERT INTO "Prompt" (
-      "id", "slug", "title", "summary", "excerpt", "tags",
-      "visibility", "body", "createdAt", "updatedAt"
+      "id", "slug", "title", "summary", "excerpt", "domain", "tags",
+      "coverImage", "visibility", "body", "publishedAt", "createdAt", "updatedAt"
     )
     VALUES (
       ${`home-prompt-${index}`},
@@ -92,9 +99,12 @@ async function insertPrompt(
       ${`Prompt accueil ${index}`},
       ${`Résumé accueil ${index}`},
       ${`Extrait accueil ${index}`},
-      ARRAY['accueil']::text[],
+      ${domain}::"PromptDomain",
+      ARRAY[${`accueil-${index}`}]::text[],
+      ${coverImage},
       ${visibility}::"Visibility",
       ${`Corps accueil ${index}`},
+      ${createdAt},
       ${createdAt},
       ${createdAt}
     )
@@ -155,9 +165,9 @@ describe("repository de l'accueil sur PostgreSQL", () => {
   it(
     scenario(
       "La mise en avant charge trois prompts récents sans contenu verrouillé",
-      "quatre prompts datés dans une vraie base, dont les corps contiennent des sentinelles sensibles",
+      "quatre prompts publiés et datés dans une vraie base, avec domaines, images, tags et visibilités distincts, dont les corps contiennent des sentinelles sensibles",
       "l'agrégat de l'accueil est lu",
-      "seuls les trois plus récents reviennent, du plus récent au plus ancien, avec exactement id, slug, title et summary",
+      "seuls les trois plus récents reviennent, du plus récent au plus ancien, avec exactement toutes les métadonnées publiques de PromptCard et sans body ni excerpt",
     ),
     async () => {
       const repository = await loadRepository()
@@ -167,7 +177,7 @@ describe("repository de l'accueil sur PostgreSQL", () => {
         await insertPrompt(
           index,
           new Date(`2026-08-0${index}T10:00:00.000Z`),
-          "PREMIUM",
+          index % 2 === 0 ? "FREE" : "PREMIUM",
         )
       }
 
@@ -180,28 +190,41 @@ describe("repository de l'accueil sur PostgreSQL", () => {
       expect(overview.recentPrompts).toHaveLength(3)
       expect(overview.recentPrompts).toEqual([
         {
+          coverImage: "/images/prompts/accueil-4.webp",
+          domain: "communication",
           id: "home-prompt-4",
           slug: "home-prompt-4",
           summary: "Résumé accueil 4",
+          tags: ["accueil-4"],
           title: "Prompt accueil 4",
+          visibility: "FREE",
         },
         {
+          coverImage: null,
+          domain: "entrepreneuriat",
           id: "home-prompt-3",
           slug: "home-prompt-3",
           summary: "Résumé accueil 3",
+          tags: ["accueil-3"],
           title: "Prompt accueil 3",
+          visibility: "PREMIUM",
         },
         {
+          coverImage: "/images/prompts/accueil-2.webp",
+          domain: "communication",
           id: "home-prompt-2",
           slug: "home-prompt-2",
           summary: "Résumé accueil 2",
+          tags: ["accueil-2"],
           title: "Prompt accueil 2",
+          visibility: "FREE",
         },
       ])
       expect(JSON.stringify(overview.recentPrompts)).not.toContain(
         "Corps accueil",
       )
       expect(repositorySource).not.toMatch(/\bbody\s*:/)
+      expect(repositorySource).not.toMatch(/\bexcerpt\s*:/)
     },
   )
 })

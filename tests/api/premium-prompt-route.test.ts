@@ -13,6 +13,8 @@ type ContentNotFoundErrorConstructor = new (
 ) => Error
 
 const TEASER = {
+  coverImage: null,
+  domain: "ia",
   excerpt: "Extrait éditorial public",
   id: "prompt-premium",
   slug: "prompt-premium",

@@ -77,7 +77,7 @@ THEN  : chaque destination répond, le header et le footer restent présents, le
 test(`La navigation reflète une nouvelle session FREE — ce qui est vérifié
 GIVEN : un visiteur anonyme qui crée un compte depuis le shell mobile
 WHEN  : il revient sur l'accueil dans la même session
-THEN  : Connexion disparaît, Compte apparaît et l'adhésion gratuite est annoncée sans badge Premium`, async ({
+THEN  : Connexion disparaît, Compte apparaît et l'indicateur de session annonce l'adhésion gratuite sans présenter l'utilisateur comme membre Premium`, async ({
   page,
 }) => {
   const email = `shell-${randomUUID()}@example.test`
@@ -93,10 +93,17 @@ THEN  : Connexion disparaît, Compte apparaît et l'adhésion gratuite est annon
 
   await page.goto("/")
   await openMobileMenu(page)
-  await expect(page.getByRole("link", { name: /compte/i })).toBeVisible()
-  await expect(page.getByText(/membre gratuit|accès gratuit/i)).toBeVisible()
-  await expect(page.getByText(/^premium$/i)).toHaveCount(0)
-  await expect(page.getByRole("link", { name: /connexion/i })).toHaveCount(0)
+  const shellIdentity = page.getByRole("banner").locator(".session-indicator")
+  await expect(
+    shellIdentity.getByRole("link", { name: /compte/i }),
+  ).toBeVisible()
+  await expect(
+    shellIdentity.getByText(/membre gratuit|accès gratuit/i),
+  ).toBeVisible()
+  await expect(shellIdentity.getByText(/^premium$/i)).toHaveCount(0)
+  await expect(
+    shellIdentity.getByRole("link", { name: /connexion/i }),
+  ).toHaveCount(0)
 })
 
 test(`Les métadonnées servies produisent un aperçu de partage absolu — ce qui est vérifié
