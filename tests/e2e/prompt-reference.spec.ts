@@ -251,10 +251,10 @@ THEN  : le corps exact est copié, une annonce demande de le coller, les nouveau
   )
 })
 
-test(`Un prompt FREE rejoue le parcours liste vers détail puis copie en un tap — ce qui est vérifié
+test(`Un prompt FREE se copie et préremplit Claude, tandis que ChatGPT reste sans injection — ce qui est vérifié
 GIVEN : un prompt FREE publié visible dans la carte de référence sur un viewport de 390px
-WHEN  : un anonyme ouvre sa carte puis touche Copier
-THEN  : titre, summary, image 4/3 et corps distinct sont visibles, la copie restitue exactement le body et chaque action mesure au moins 44px`, async ({
+WHEN  : un anonyme ouvre sa carte, touche Copier puis choisit Claude et ChatGPT
+THEN  : titre, summary, image 4/3 et corps distinct sont visibles, la copie restitue exactement le body, Claude reçoit le corps encodé via son lien officiel, ChatGPT garde son URL fixe et chaque action mesure au moins 44px`, async ({
   page,
 }) => {
   const prompt = await firstPrompt("FREE")
@@ -279,4 +279,27 @@ THEN  : titre, summary, image 4/3 et corps distinct sont visibles, la copie rest
   expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
     prompt.body,
   )
+
+  await page.evaluate(() => {
+    window.open = (url?: string | URL): Window | null => {
+      Reflect.set(window, "__synapseProviderUrl", String(url))
+      return null
+    }
+  })
+  await page.getByRole("button", { name: /ouvrir dans/i }).click()
+  await page.getByRole("menuitem", { name: /claude/i }).click()
+  const claudeUrl: unknown = await page.evaluate(() =>
+    Reflect.get(window, "__synapseProviderUrl"),
+  )
+  expect(claudeUrl).toBe(
+    `claude://claude.ai/new?q=${encodeURIComponent(prompt.body)}`,
+  )
+  await expect(page.getByRole("status")).toContainText(/prérempli|secours/i)
+
+  await page.getByRole("button", { name: /ouvrir dans/i }).click()
+  await page.getByRole("menuitem", { name: /chatgpt/i }).click()
+  const chatGptUrl: unknown = await page.evaluate(() =>
+    Reflect.get(window, "__synapseProviderUrl"),
+  )
+  expect(chatGptUrl).toBe("https://chatgpt.com/")
 })

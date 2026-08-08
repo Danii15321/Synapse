@@ -101,7 +101,10 @@ export default async function PromptDetailPage({
           <section className="detail-section prompt-content-box">
             <div className="prompt-content-heading">
               <h2 className="card-heading">Le prompt complet</h2>
-              <PromptActions body={prompt.body} />
+              <PromptActions
+                allowClaudePrefill={prompt.visibility !== "PREMIUM"}
+                body={prompt.body}
+              />
             </div>
             <PromptBody body={prompt.body} />
           </section>

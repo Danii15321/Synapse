@@ -2,29 +2,56 @@
 
 import { useState } from "react"
 
+const CLAUDE_PREFILL_MAX_LENGTH = 14_000
+
 const PROVIDERS = [
-  { label: "ChatGPT", url: "https://chatgpt.com/" },
-  { label: "Claude", url: "https://claude.ai/new" },
+  { id: "chatgpt", label: "ChatGPT", url: "https://chatgpt.com/" },
+  { id: "claude", label: "Claude", url: "https://claude.ai/new" },
 ] as const
 
-export function PromptActions({ body }: Readonly<{ body: string }>) {
+type PromptActionsProps = Readonly<{
+  allowClaudePrefill: boolean
+  body: string
+}>
+
+export function PromptActions({
+  allowClaudePrefill,
+  body,
+}: PromptActionsProps) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [message, setMessage] = useState("")
 
-  async function copyPrompt(nextMessage: string): Promise<void> {
+  async function copyPrompt(
+    nextMessage: string,
+    failureMessage = "La copie a échoué. Sélectionnez le texte manuellement.",
+  ): Promise<void> {
     try {
       await navigator.clipboard.writeText(body)
       setMessage(nextMessage)
     } catch {
-      setMessage("La copie a échoué. Sélectionnez le texte manuellement.")
+      setMessage(failureMessage)
     }
   }
 
   async function openProvider(provider: (typeof PROVIDERS)[number]) {
-    const popup = window.open(provider.url, "_blank", "noopener,noreferrer")
+    const prefillClaude =
+      provider.id === "claude" &&
+      allowClaudePrefill &&
+      body.length <= CLAUDE_PREFILL_MAX_LENGTH
+    const providerUrl = prefillClaude
+      ? `claude://claude.ai/new?q=${encodeURIComponent(body)}`
+      : provider.url
+    const popup = window.open(providerUrl, "_blank", "noopener,noreferrer")
     if (popup) popup.opener = null
     setMenuOpen(false)
-    await copyPrompt(`Prompt copié. À coller dans ${provider.label}.`)
+    await copyPrompt(
+      prefillClaude
+        ? "Ouverture de Claude avec le prompt prérempli. Une copie de secours est prête."
+        : `Prompt copié. À coller dans ${provider.label}.`,
+      prefillClaude
+        ? "Ouverture de Claude avec le prompt prérempli, mais la copie de secours a échoué."
+        : undefined,
+    )
   }
 
   return (

@@ -21,6 +21,12 @@ Questions « À trancher » : résolues par le porteur le 2026-08-08. Les deux p
 | Actions sur le corps | La tranche 07 livre Copier et un menu « Ouvrir dans ChatGPT / Claude » dans la même petite île cliente. Par sécurité, l'action copie le corps puis ouvre le nouveau chat du fournisseur avec une instruction accessible de collage ; elle ne place jamais le corps dans une URL. Les actions sont absentes si le serveur n'a pas livré le corps. | Demande du porteur, placement et garde-fou sécurité arrêtés le 2026-08-08 |
 | Injection automatique par lien | Pas en v1 : Claude documente un deep link avec le prompt en paramètre `q`, alors qu'aucun mécanisme public stable équivalent n'est documenté pour ChatGPT ; mettre un corps premium dans une URL violerait en outre le contrat de confidentialité. À réévaluer en v2 avec une revue sécurité et des intents officiels stables. Ce travail n'appartient à aucune tranche 08–12 et la pipeline n'est pas modifiée. | Arbitrage de sécurité demandé au chef-projet par le porteur le 2026-08-08 |
 
+### Amendement produit post-tranche — 2026-08-08
+
+Le porteur demande finalement d'activer dès la v1 le préremplissage officiel Claude et de maintenir celui de ChatGPT en v2. Cette décision supersède uniquement la ligne « Injection automatique par lien » ci-dessus, sans réécrire l'historique de validation de la tranche ni modifier la pipeline.
+
+La mise en œuvre reste soumise au contrat de sécurité du dépôt : seul un prompt `FREE`, déjà public et ne dépassant pas la limite documentée de 14 000 caractères, peut entrer dans le paramètre `q` du lien profond `claude://claude.ai/new`. Un corps plus long utilise le presse-papiers pour éviter toute troncature silencieuse. Un corps `PREMIUM`, même servi à un membre autorisé, reste copié puis ouvre l'URL Claude fixe afin qu'aucune donnée premium n'entre dans une URL. ChatGPT conserve ce même comportement « copier puis ouvrir » pour toutes les visibilités. Le presse-papiers sert aussi de solution de secours si l'application Claude n'est pas disponible.
+
 Toute question apparue en cours de tranche vient s'inscrire ici, jamais dans un test ni dans le code.
 
 ## Analyse — reste ici, n'est transmise à personne
@@ -109,6 +115,7 @@ e6ed7b81f5bc7a60b7f4ff4af5356926b047004937fffd251919dcd73386d9fb  tests/e2e/shel
 - La frontière éditoriale accepte `publishedAt` absent/null pour un brouillon ; elle borne `body` à 50 000 caractères, `excerpt` à 1 200, `coverImage` à 255, les tags à 20 × 80 et limite les images aux chemins locaux `/images/prompts/` en AVIF/JPEG/PNG/WebP.
 - L'accueil réutilise `PromptCard` avec les métadonnées réelles du repository ; aucune visibilité, aucun domaine, tag ou chemin d'image n'est inventé dans la page.
 - `PromptActions` est l'île cliente des actions de détail : copie exacte du corps, puis ouverture des URLs fixes ChatGPT/Claude avec `noopener,noreferrer`. Le corps n'entre jamais dans l'URL, les attributs, les logs ou les requêtes sortantes.
+- Amendement post-tranche : pour un prompt `FREE` uniquement, Claude utilise désormais son lien profond officiel avec un paramètre `q` encodé et une copie de secours. ChatGPT et tout prompt `PREMIUM` conservent les URLs fixes sans injection.
 
 ## Écarts
 

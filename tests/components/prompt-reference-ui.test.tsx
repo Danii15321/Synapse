@@ -1,6 +1,6 @@
 import type { ReactNode } from "react"
 
-import { cleanup, render, screen } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 type PromptCardModule = Readonly<{
@@ -54,12 +54,121 @@ async function loadDetailPage(): Promise<DetailPageModule> {
 
 afterEach(() => {
   cleanup()
+  vi.restoreAllMocks()
   vi.doUnmock("@/server/auth/config")
   vi.doUnmock("@/server/services/prompt-service")
   vi.resetModules()
 })
 
 describe("carte et détail de référence Prompts", () => {
+  it(
+    scenario(
+      "Claude reçoit automatiquement le corps d'un prompt public",
+      "un PromptActions autorisé à préremplir Claude et un corps public avec accents et caractères réservés",
+      "l'utilisateur choisit Claude dans le menu fournisseurs",
+      "le corps exact est copié en secours et transmis encodé au lien profond officiel Claude, sans être envoyé automatiquement",
+    ),
+    async () => {
+      const body = "Crée une synthèse : IA & jeunesse ? #1"
+      const writeText = vi.fn().mockResolvedValue(undefined)
+      Object.defineProperty(navigator, "clipboard", {
+        configurable: true,
+        value: { writeText },
+      })
+      const open = vi.spyOn(window, "open").mockReturnValue(null)
+      const { PromptActions } = await import(
+        "@/components/features/prompt-actions"
+      )
+
+      render(<PromptActions allowClaudePrefill body={body} />)
+      fireEvent.click(screen.getByRole("button", { name: /ouvrir dans/i }))
+      fireEvent.click(screen.getByRole("menuitem", { name: /claude/i }))
+
+      expect(open).toHaveBeenCalledWith(
+        `claude://claude.ai/new?q=${encodeURIComponent(body)}`,
+        "_blank",
+        "noopener,noreferrer",
+      )
+      await waitFor(() => expect(writeText).toHaveBeenCalledWith(body))
+      expect(screen.getByRole("status")).toHaveTextContent(/prérempli|secours/i)
+    },
+  )
+
+  it(
+    scenario(
+      "Aucun corps premium ni ChatGPT ne sont injectés dans une URL",
+      "un PromptActions non autorisé à préremplir Claude avec un corps premium",
+      "l'utilisateur ouvre successivement Claude et ChatGPT",
+      "les deux fournisseurs utilisent leurs URLs fixes et le corps est uniquement placé dans le presse-papiers",
+    ),
+    async () => {
+      const body = "CORPS_PREMIUM_CONFIDENTIEL"
+      const writeText = vi.fn().mockResolvedValue(undefined)
+      Object.defineProperty(navigator, "clipboard", {
+        configurable: true,
+        value: { writeText },
+      })
+      const open = vi.spyOn(window, "open").mockReturnValue(null)
+      const { PromptActions } = await import(
+        "@/components/features/prompt-actions"
+      )
+
+      render(<PromptActions allowClaudePrefill={false} body={body} />)
+      for (const provider of ["Claude", "ChatGPT"]) {
+        fireEvent.click(screen.getByRole("button", { name: /ouvrir dans/i }))
+        fireEvent.click(screen.getByRole("menuitem", { name: provider }))
+      }
+
+      expect(open).toHaveBeenNthCalledWith(
+        1,
+        "https://claude.ai/new",
+        "_blank",
+        "noopener,noreferrer",
+      )
+      expect(open).toHaveBeenNthCalledWith(
+        2,
+        "https://chatgpt.com/",
+        "_blank",
+        "noopener,noreferrer",
+      )
+      expect(JSON.stringify(open.mock.calls)).not.toContain(body)
+      await waitFor(() => expect(writeText).toHaveBeenCalledTimes(2))
+    },
+  )
+
+  it(
+    scenario(
+      "Un prompt public trop long n'est jamais tronqué silencieusement par Claude",
+      "un corps public de 14 001 caractères, au-delà de la limite documentée du lien profond Claude",
+      "l'utilisateur choisit Claude",
+      "Claude s'ouvre sur son URL fixe et le corps intégral reste disponible dans le presse-papiers",
+    ),
+    async () => {
+      const body = "a".repeat(14_001)
+      const writeText = vi.fn().mockResolvedValue(undefined)
+      Object.defineProperty(navigator, "clipboard", {
+        configurable: true,
+        value: { writeText },
+      })
+      const open = vi.spyOn(window, "open").mockReturnValue(null)
+      const { PromptActions } = await import(
+        "@/components/features/prompt-actions"
+      )
+
+      render(<PromptActions allowClaudePrefill body={body} />)
+      fireEvent.click(screen.getByRole("button", { name: /ouvrir dans/i }))
+      fireEvent.click(screen.getByRole("menuitem", { name: /claude/i }))
+
+      expect(open).toHaveBeenCalledWith(
+        "https://claude.ai/new",
+        "_blank",
+        "noopener,noreferrer",
+      )
+      await waitFor(() => expect(writeText).toHaveBeenCalledWith(body))
+      expect(screen.getByRole("status")).toHaveTextContent(/coller/i)
+    },
+  )
+
   it(
     scenario(
       "La carte de référence affiche une image 4/3 de repli et toutes les métadonnées publiques utiles",
