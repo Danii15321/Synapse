@@ -1,10 +1,12 @@
 import "server-only"
 
 import {
+  promptCardSchema,
   promptFullSchema,
   promptTeaserSchema,
-  type PromptDto,
+  type PromptCatalogPage,
   type PromptFull,
+  type PromptListQuery,
   type PromptTeaser,
 } from "@/lib/validators/prompt"
 import { canAccess } from "@/server/access/entitlement"
@@ -17,19 +19,26 @@ import {
 import type { SessionUser } from "@/lib/validators/auth"
 
 /**
- * Spécification : retourne les prompts publics dans l'ordre du repository et
- * une liste vide lorsque la base est vide. Cette tranche ne porte aucun champ
- * premium : aucune règle d'entitlement ne s'applique encore.
+ * Spécification : construit un catalogue paginé à partir de filtres validés.
+ * Chaque carte contient uniquement les métadonnées publiques d'un prompt
+ * publié ; le corps verrouillé n'est jamais sélectionné.
  */
-export async function getPrompts(): Promise<PromptDto[]> {
-  const rows = await findMany()
+export async function getPrompts(
+  query: PromptListQuery,
+): Promise<PromptCatalogPage> {
+  const rows = await findMany({
+    ...query,
+    take: query.take + 1,
+  })
+  const hasNextPage = rows.length > query.take
+  const items = rows
+    .slice(0, query.take)
+    .map((row) => promptCardSchema.parse(row))
 
-  return rows.map((row) => ({
-    id: row.id,
-    slug: row.slug,
-    title: row.title,
-    summary: row.summary,
-  }))
+  return {
+    items,
+    nextCursor: hasNextPage ? (items.at(-1)?.id ?? null) : null,
+  }
 }
 
 /**
@@ -48,7 +57,9 @@ export async function getPromptBySlug(
   }
 
   const entitled = canAccess(user, meta)
-  const row = await findBySlug(slug, { includeBody: entitled })
+  const row = await findBySlug(slug, {
+    includeBody: entitled,
+  })
   if (!row) {
     throw new ContentNotFoundError("prompt", slug)
   }

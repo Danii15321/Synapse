@@ -11,13 +11,29 @@ export async function getHomePageData() {
   const overview = await getHomeOverview()
 
   return {
-    recent: overview.recentPrompts.map((prompt) => ({
-      href: `/prompts/${prompt.slug}`,
-      id: prompt.id,
-      rubric: "Prompts",
-      summary: prompt.summary,
-      title: prompt.title,
-    })),
+    recent: overview.recentPrompts.map((prompt) => {
+      const cardMetadata = Object.prototype.hasOwnProperty.call(
+        prompt,
+        "coverImage",
+      )
+        ? {
+            coverImage: prompt.coverImage,
+            domain: prompt.domain,
+            slug: prompt.slug,
+            tags: prompt.tags,
+            visibility: prompt.visibility,
+          }
+        : {}
+
+      return {
+        href: `/prompts/${prompt.slug}`,
+        id: prompt.id,
+        rubric: "Prompts",
+        summary: prompt.summary,
+        title: prompt.title,
+        ...cardMetadata,
+      }
+    }),
     sections: [
       {
         count: overview.counts.prompts,

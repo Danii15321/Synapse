@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto"
 
 import { NextResponse } from "next/server"
 
+import { promptListQuerySchema } from "@/lib/validators/prompt"
 import { mapDomainError, RateLimitedError } from "@/server/errors"
 import { writeLog } from "@/server/logger"
 import { getPrompts } from "@/server/services/prompt-service"
@@ -12,7 +13,16 @@ export async function GET(request: Request): Promise<NextResponse> {
   const startedAt = Date.now()
 
   try {
-    const prompts = await getPrompts()
+    const rawQuery = Object.fromEntries(new URL(request.url).searchParams)
+    const parsedQuery = promptListQuerySchema.safeParse(rawQuery)
+    if (!parsedQuery.success) {
+      return NextResponse.json(
+        { message: GENERIC_ERROR_MESSAGE },
+        { status: 400 },
+      )
+    }
+
+    const prompts = await getPrompts(parsedQuery.data)
 
     return NextResponse.json(prompts)
   } catch (error) {

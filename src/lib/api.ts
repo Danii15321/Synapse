@@ -1,5 +1,8 @@
-import type { PromptDto } from "@/lib/validators/prompt"
-import { promptListSchema } from "@/lib/validators/prompt"
+import type {
+  PromptCatalogPage,
+  PromptListQuery,
+} from "@/lib/validators/prompt"
+import { promptCatalogPageSchema } from "@/lib/validators/prompt"
 import type {
   ChangePasswordInput,
   LoginInput,
@@ -7,8 +10,21 @@ import type {
 } from "@/lib/validators/auth"
 import { authMessageSchema } from "@/lib/validators/auth"
 
-export async function getPrompts(): Promise<PromptDto[]> {
-  const response = await fetch("/api/prompts")
+export async function getPrompts(
+  query: PromptListQuery = { take: 24 },
+): Promise<PromptCatalogPage> {
+  const searchParams = new URLSearchParams()
+  if (query.cursor) searchParams.set("cursor", query.cursor)
+  if (query.domain) searchParams.set("domain", query.domain)
+  if (query.search) searchParams.set("search", query.search)
+  if (query.tag) searchParams.set("tag", query.tag)
+  if (query.take !== 24) {
+    searchParams.set("take", String(query.take))
+  }
+  const queryString = searchParams.toString()
+  const response = queryString
+    ? await fetch(`/api/prompts?${queryString}`)
+    : await fetch("/api/prompts")
 
   if (!response.ok) {
     throw new Error("Impossible de charger les prompts.")
@@ -16,7 +32,7 @@ export async function getPrompts(): Promise<PromptDto[]> {
 
   const payload: unknown = await response.json()
 
-  return promptListSchema.parse(payload)
+  return promptCatalogPageSchema.parse(payload)
 }
 
 async function postAuthJson(pathname: string, input: unknown) {
