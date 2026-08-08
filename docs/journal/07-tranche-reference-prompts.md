@@ -129,3 +129,9 @@ Validation indépendante du chef-projet le 2026-08-08 :
 - Migration initiale : `1abc35ef5ec49d4a8b7b3745c6e2e86fca9921c64b37fbb38d1d80c017439aeb` ; migration corrective : `0468f27c159bec82d43ae1d0771c36cfa63caed79d1c392eb9e0738b1b5a14d0`.
 - `git diff --check` : vert ; `docs/pipeline-dev/` : aucun diff ; `next-env.d.ts` : restauré, aucun diff.
 - Audit final : **CONFORME — aucun constat résiduel**.
+
+Validation distante :
+
+- PR d'implémentation [#9](https://github.com/Danii15321/Synapse/pull/9), fusionnée dans `main` le 2026-08-08 — commit de fusion `d4cbc3d`.
+- CI GitHub Actions déclenchée par le push : [run 31267275837](https://github.com/Danii15321/Synapse/actions/runs/31267275837), conclusion `SUCCESS`.
+- CI GitHub Actions déclenchée par la pull request : [run 31267286499](https://github.com/Danii15321/Synapse/actions/runs/31267286499), conclusion `SUCCESS`.
