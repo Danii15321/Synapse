@@ -25,8 +25,11 @@ async function insertRecentPremiumPrompt(): Promise<HomePremiumFixture> {
   await db.prompt.create({
     data: {
       body: fixture.body,
+      coverImage: null,
       createdAt: new Date("2099-01-01T00:00:00.000Z"),
+      domain: "ia",
       excerpt: "Extrait public pour la carte récente.",
+      publishedAt: new Date("2099-01-01T00:00:00.000Z"),
       slug: fixture.slug,
       summary: "Résumé public pour la carte récente.",
       tags: ["accueil"],

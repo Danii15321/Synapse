@@ -1,12 +1,25 @@
 import Link from "next/link"
 import { Suspense, type ReactNode } from "react"
 
-import { ProvisionalContentCard } from "@/components/features/provisional-content-card"
+import { PromptCard } from "@/components/features/prompt-card"
+import type { PromptCardDto } from "@/lib/validators/prompt"
 import { getHomePageData } from "@/server/services/home-service"
 
 export const dynamic = "force-dynamic"
 
 type HomeData = Awaited<ReturnType<typeof getHomePageData>>
+
+function isPromptCardContent(
+  content: HomeData["recent"][number],
+): content is HomeData["recent"][number] & PromptCardDto {
+  return (
+    "coverImage" in content &&
+    "domain" in content &&
+    "slug" in content &&
+    "tags" in content &&
+    "visibility" in content
+  )
+}
 
 function HomeSectionsView({ data }: Readonly<{ data: HomeData }>) {
   return (
@@ -16,8 +29,8 @@ function HomeSectionsView({ data }: Readonly<{ data: HomeData }>) {
           Explorez les quatre rubriques
         </h2>
         <p className="section-intro">
-          Des contenus pratiques, des formations et des occasions concrètes
-          pour progresser.
+          Des contenus pratiques, des formations et des occasions concrètes pour
+          progresser.
         </p>
         <div className="rubric-grid">
           {data.sections.map((section) => (
@@ -45,9 +58,28 @@ function HomeSectionsView({ data }: Readonly<{ data: HomeData }>) {
           </p>
         ) : (
           <div className="recent-grid">
-            {data.recent.map((content) => (
-              <ProvisionalContentCard key={content.id} {...content} />
-            ))}
+            {data.recent.map((content) =>
+              isPromptCardContent(content) ? (
+                <PromptCard
+                  coverImage={content.coverImage}
+                  domain={content.domain}
+                  id={content.id}
+                  key={content.id}
+                  slug={content.slug}
+                  summary={content.summary}
+                  tags={content.tags}
+                  title={content.title}
+                  visibility={content.visibility}
+                />
+              ) : (
+                <article className="ui-card" key={content.id}>
+                  <Link href={content.href}>
+                    <h3>{content.title}</h3>
+                  </Link>
+                  <p>{content.summary}</p>
+                </article>
+              ),
+            )}
           </div>
         )}
       </section>
@@ -72,7 +104,8 @@ function HomePageFrame({ sections }: Readonly<{ sections: ReactNode }>) {
           <p className="hero-copy">
             Synapse œuvre dans l&apos;accompagnement et la formation des jeunes
             ivoiriens. Cette plateforme réunit nos contenus en intelligence
-            artificielle et en entrepreneuriat dans un point d&apos;entrée unique.
+            artificielle et en entrepreneuriat dans un point d&apos;entrée
+            unique.
           </p>
         </section>
 

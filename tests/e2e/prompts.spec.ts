@@ -6,22 +6,34 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null
 }
 
-function isPromptDto(
-  value: unknown,
-): value is { id: string; slug: string; summary: string; title: string } {
+function isPromptDto(value: unknown): value is {
+  coverImage: string | null
+  domain: string
+  id: string
+  slug: string
+  summary: string
+  tags: string[]
+  title: string
+  visibility: string
+} {
   return (
     isRecord(value) &&
+    (typeof value.coverImage === "string" || value.coverImage === null) &&
+    typeof value.domain === "string" &&
     typeof value.id === "string" &&
     typeof value.slug === "string" &&
     typeof value.summary === "string" &&
-    typeof value.title === "string"
+    Array.isArray(value.tags) &&
+    value.tags.every((tag) => typeof tag === "string") &&
+    typeof value.title === "string" &&
+    typeof value.visibility === "string"
   )
 }
 
 test(`La route publique /prompts affiche les deux prompts lus en base — ce qui est vérifié
 GIVEN : PostgreSQL migré, le seed rejoué et un viewport mobile de 390px
 WHEN  : un visiteur ouvre /prompts après lecture de la réponse HTTP brute de /api/prompts
-THEN  : l'API renvoie exactement deux DTO valides, leurs titres et résumés sont visibles sur la page, et aucun débordement horizontal n'apparaît`, async ({
+THEN  : l'API renvoie une page stable items/nextCursor avec les deux DTO publics du seed, leurs titres et résumés sont visibles sur la page, et aucun débordement horizontal n'apparaît`, async ({
   page,
   request,
 }) => {
@@ -30,12 +42,21 @@ THEN  : l'API renvoie exactement deux DTO valides, leurs titres et résumés son
 
   expect(apiResponse.status()).toBe(200)
   const payload: unknown = JSON.parse(rawBody)
-  expect(Array.isArray(payload)).toBe(true)
-  if (!Array.isArray(payload) || !payload.every(isPromptDto)) {
-    throw new Error("GET /api/prompts doit renvoyer un tableau de DTO prompts")
+  expect(isRecord(payload)).toBe(true)
+  if (
+    !isRecord(payload) ||
+    !Array.isArray(payload.items) ||
+    !payload.items.every(isPromptDto) ||
+    !(typeof payload.nextCursor === "string" || payload.nextCursor === null)
+  ) {
+    throw new Error(
+      "GET /api/prompts doit renvoyer une page { items, nextCursor }",
+    )
   }
-  expect(payload).toHaveLength(2)
-  const firstPrompt = payload[0]
+  expect(Object.keys(payload).sort()).toEqual(["items", "nextCursor"])
+  expect(payload.items).toHaveLength(2)
+  expect(payload.nextCursor).toBeNull()
+  const firstPrompt = payload.items[0]
   if (!firstPrompt) {
     throw new Error("le seed doit fournir un premier prompt")
   }
@@ -47,7 +68,7 @@ THEN  : l'API renvoie exactement deux DTO valides, leurs titres et résumés son
     has: page.getByRole("heading", { name: firstPrompt.title, exact: true }),
   })
   await expect(finalMain).toBeVisible()
-  for (const prompt of payload) {
+  for (const prompt of payload.items) {
     await expect(
       finalMain.getByRole("heading", { name: prompt.title }),
     ).toBeVisible()

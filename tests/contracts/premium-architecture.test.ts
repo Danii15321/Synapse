@@ -61,7 +61,7 @@ describe("contrats d'architecture du premium", () => {
       "PromptTeaser et PromptFull sont deux contrats stricts distincts",
       "les schémas Zod partagés et leurs types inférés contrôlés à la compilation",
       "les mêmes champs publics sont parsés avec et sans body",
-      "PromptTeaser interdit body, PromptFull l'exige comme string et les assertions TypeScript prouvent que body n'est pas optionnel",
+      "PromptTeaser exige domain et coverImage nullable mais interdit body, tandis que PromptFull exige body comme string",
     ),
     async () => {
       const module: unknown = await import("@/lib/validators/prompt")
@@ -77,6 +77,8 @@ describe("contrats d'architecture du premium", () => {
         )
       }
       const fields = {
+        coverImage: null,
+        domain: "ia",
         excerpt: "Extrait public distinct",
         id: "prompt-1",
         slug: "prompt-1",
@@ -95,6 +97,29 @@ describe("contrats d'architecture du premium", () => {
         module.promptTeaserSchema.safeParse({
           ...fields,
           body: "corps interdit",
+        }).success,
+      ).toBe(false)
+      expect(
+        module.promptTeaserSchema.safeParse({
+          excerpt: fields.excerpt,
+          id: fields.id,
+          slug: fields.slug,
+          summary: fields.summary,
+          tags: fields.tags,
+          title: fields.title,
+          visibility: fields.visibility,
+        }).success,
+      ).toBe(false)
+      expect(
+        module.promptTeaserSchema.safeParse({
+          domain: fields.domain,
+          excerpt: fields.excerpt,
+          id: fields.id,
+          slug: fields.slug,
+          summary: fields.summary,
+          tags: fields.tags,
+          title: fields.title,
+          visibility: fields.visibility,
         }).success,
       ).toBe(false)
       expect(module.promptFullSchema.safeParse(fields).success).toBe(false)

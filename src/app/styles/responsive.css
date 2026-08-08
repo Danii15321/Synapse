@@ -65,6 +65,11 @@
     grid-template-columns: 1fr auto;
     align-items: center;
   }
+
+  .prompt-filters {
+    grid-template-columns: 2fr 1fr 1fr auto;
+    align-items: end;
+  }
 }
 
 @media (min-width: 64rem) {

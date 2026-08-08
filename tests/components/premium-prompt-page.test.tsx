@@ -15,6 +15,8 @@ type ErrorModule = {
 
 const LOCKED_BODY_SENTINEL = "CORPS PREMIUM JAMAIS FOURNI AU COMPOSANT"
 const TEASER = {
+  coverImage: null,
+  domain: "entrepreneuriat",
   excerpt:
     "Voici un aperçu concret pour comprendre le bénéfice avant de devenir membre.",
   id: "prompt-premium",
@@ -88,6 +90,7 @@ describe("détail visuel d'un prompt premium", () => {
       ).toBeInTheDocument()
       expect(screen.getByText(TEASER.summary)).toBeInTheDocument()
       expect(screen.getByText(TEASER.excerpt)).toBeInTheDocument()
+      expect(screen.getByText(TEASER.domain)).toBeInTheDocument()
       expect(screen.getByText("business")).toBeInTheDocument()
       expect(screen.getByText("ia")).toBeInTheDocument()
       expect(screen.getByText(/premium/i)).toBeInTheDocument()

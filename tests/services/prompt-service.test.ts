@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 type PromptServiceModule = {
-  getPrompts: () => Promise<unknown>
+  getPrompts: (query: Readonly<{ take: number }>) => Promise<unknown>
 }
 
 function scenario(
@@ -40,27 +40,31 @@ describe("service de liste des prompts", () => {
   it(
     scenario(
       "Les rows repository sont mappées vers des DTO publics",
-      "deux rows en mémoire comprenant les timestamps techniques du modèle",
+      "deux rows en mémoire contenant uniquement les métadonnées publiques de carte",
       "le service construit la liste des prompts",
-      "il retourne les quatre champs publics de chaque DTO dans le même ordre et omet les timestamps",
+      "il retourne une page stable avec les cartes, domain et coverImage nullable, sans contenu verrouillé",
     ),
     async () => {
       const repositoryFindMany = vi.fn().mockResolvedValue([
         {
+          coverImage: null,
+          domain: "ia",
           id: "prompt-1",
           slug: "premier-prompt",
           title: "Premier prompt",
           summary: "Premier résumé",
-          createdAt: new Date("2026-08-01T10:00:00.000Z"),
-          updatedAt: new Date("2026-08-02T10:00:00.000Z"),
+          tags: ["test"],
+          visibility: "FREE",
         },
         {
+          coverImage: "/images/prompts/deuxieme.webp",
+          domain: "communication",
           id: "prompt-2",
           slug: "deuxieme-prompt",
           title: "Deuxième prompt",
           summary: "Deuxième résumé",
-          createdAt: new Date("2026-08-03T10:00:00.000Z"),
-          updatedAt: new Date("2026-08-04T10:00:00.000Z"),
+          tags: ["oral"],
+          visibility: "PREMIUM",
         },
       ])
       vi.doMock("@/server/repositories/prompt-repository", () => ({
@@ -68,23 +72,34 @@ describe("service de liste des prompts", () => {
       }))
       const service = await loadService()
 
-      const result = await service.getPrompts()
+      const result = await service.getPrompts({ take: 24 })
 
-      expect(repositoryFindMany).toHaveBeenCalledTimes(1)
-      expect(result).toEqual([
-        {
-          id: "prompt-1",
-          slug: "premier-prompt",
-          summary: "Premier résumé",
-          title: "Premier prompt",
-        },
-        {
-          id: "prompt-2",
-          slug: "deuxieme-prompt",
-          summary: "Deuxième résumé",
-          title: "Deuxième prompt",
-        },
-      ])
+      expect(repositoryFindMany).toHaveBeenCalledWith({ take: 25 })
+      expect(result).toEqual({
+        items: [
+          {
+            coverImage: null,
+            domain: "ia",
+            id: "prompt-1",
+            slug: "premier-prompt",
+            summary: "Premier résumé",
+            tags: ["test"],
+            title: "Premier prompt",
+            visibility: "FREE",
+          },
+          {
+            coverImage: "/images/prompts/deuxieme.webp",
+            domain: "communication",
+            id: "prompt-2",
+            slug: "deuxieme-prompt",
+            summary: "Deuxième résumé",
+            tags: ["oral"],
+            title: "Deuxième prompt",
+            visibility: "PREMIUM",
+          },
+        ],
+        nextCursor: null,
+      })
     },
   )
 
@@ -93,7 +108,7 @@ describe("service de liste des prompts", () => {
       "Une base sans prompt produit un DTO de liste vide",
       "un repository qui retourne un tableau vide en mémoire",
       "le service construit la liste des prompts",
-      "il retourne exactement un tableau vide sans inventer de contenu",
+      "il retourne exactement une page vide terminée sans inventer de contenu",
     ),
     async () => {
       const repositoryFindMany = vi.fn().mockResolvedValue([])
@@ -102,10 +117,10 @@ describe("service de liste des prompts", () => {
       }))
       const service = await loadService()
 
-      const result = await service.getPrompts()
+      const result = await service.getPrompts({ take: 24 })
 
-      expect(repositoryFindMany).toHaveBeenCalledTimes(1)
-      expect(result).toEqual([])
+      expect(repositoryFindMany).toHaveBeenCalledWith({ take: 25 })
+      expect(result).toEqual({ items: [], nextCursor: null })
     },
   )
 })

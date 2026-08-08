@@ -18,8 +18,8 @@
     transparent
   );
   --gradient-synapse: linear-gradient(90deg, #f15a00, #c00062, #1d25b5);
-  --font-heading: "Montserrat Variable", "Inter Variable", system-ui,
-    sans-serif;
+  --font-heading:
+    "Montserrat Variable", "Inter Variable", system-ui, sans-serif;
   --font-body: "Inter Variable", system-ui, sans-serif;
   --space-nano: 0.25rem;
   --space-tiny: 0.5rem;
@@ -78,13 +78,15 @@ a {
 }
 
 button,
-input {
+input,
+select {
   font: inherit;
 }
 
 a:focus-visible,
 button:focus-visible,
-input:focus-visible {
+input:focus-visible,
+select:focus-visible {
   outline: 0.2rem solid var(--color-orange);
   outline-offset: 0.2rem;
 }

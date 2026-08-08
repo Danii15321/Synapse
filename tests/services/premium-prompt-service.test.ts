@@ -13,6 +13,8 @@ type PromptServiceModule = {
 
 const PREMIUM_META = { visibility: "PREMIUM" } as const
 const TEASER_ROW = {
+  coverImage: null,
+  domain: "ia",
   excerpt: "Un aperçu utile et volontairement public.",
   id: "prompt-premium",
   slug: "prompt-premium",

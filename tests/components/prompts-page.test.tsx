@@ -60,20 +60,31 @@ describe("états de la page publique Prompts", () => {
     ),
     async () => {
       vi.doMock("@/server/services/prompt-service", () => ({
-        getPrompts: vi.fn().mockResolvedValue([
-          {
-            id: "prompt-1",
-            slug: "premier-prompt",
-            summary: "Premier résumé",
-            title: "Premier prompt",
-          },
-          {
-            id: "prompt-2",
-            slug: "deuxieme-prompt",
-            summary: "Deuxième résumé",
-            title: "Deuxième prompt",
-          },
-        ]),
+        getPrompts: vi.fn().mockResolvedValue({
+          items: [
+            {
+              coverImage: null,
+              domain: "ia",
+              id: "prompt-1",
+              slug: "premier-prompt",
+              summary: "Premier résumé",
+              tags: ["test"],
+              title: "Premier prompt",
+              visibility: "FREE",
+            },
+            {
+              coverImage: "/images/prompts/deuxieme.webp",
+              domain: "communication",
+              id: "prompt-2",
+              slug: "deuxieme-prompt",
+              summary: "Deuxième résumé",
+              tags: ["oral"],
+              title: "Deuxième prompt",
+              visibility: "PREMIUM",
+            },
+          ],
+          nextCursor: null,
+        }),
       }))
       const page = await loadPromptsPage()
 
@@ -100,7 +111,10 @@ describe("états de la page publique Prompts", () => {
     ),
     async () => {
       vi.doMock("@/server/services/prompt-service", () => ({
-        getPrompts: vi.fn().mockResolvedValue([]),
+        getPrompts: vi.fn().mockResolvedValue({
+          items: [],
+          nextCursor: null,
+        }),
       }))
       const page = await loadPromptsPage()
 

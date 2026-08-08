@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest"
 import { db } from "@/server/db"
 
 type FindManyRepository = {
-  findMany: () => Promise<unknown>
+  findMany: (options: Readonly<{ take: number }>) => Promise<unknown>
 }
 
 function scenario(
@@ -49,12 +49,22 @@ async function clearPrompts(): Promise<void> {
 
 async function insertPrompt(index: number): Promise<void> {
   await db.$executeRaw`
-    INSERT INTO "Prompt" ("id", "slug", "title", "summary", "createdAt", "updatedAt")
+    INSERT INTO "Prompt" (
+      "id", "slug", "title", "summary", "excerpt", "body", "domain",
+      "tags", "coverImage", "visibility", "publishedAt", "createdAt", "updatedAt"
+    )
     VALUES (
       ${`test-prompt-${index}`},
       ${`test-prompt-${index}`},
       ${`Prompt ${index}`},
       ${`Résumé ${index}`},
+      ${`Extrait ${index}`},
+      ${`Corps ${index}`},
+      'ia'::"PromptDomain",
+      ARRAY['test']::text[],
+      NULL,
+      'FREE'::"Visibility",
+      NOW(),
       NOW(),
       NOW()
     )
@@ -67,7 +77,7 @@ describe("repository des prompts sur PostgreSQL", () => {
       "La liste repository ne charge que les champs publics attendus",
       "une vraie base PostgreSQL 16 contenant un prompt avec ses timestamps techniques",
       "la liste des prompts est lue par le repository",
-      "chaque row contient exactement id, slug, title et summary, sans timestamps ni champ supplémentaire",
+      "chaque row contient exactement les métadonnées publiques de carte, dont domain et coverImage nullable, sans corps ni timestamps",
     ),
     async () => {
       const repository = await loadRepository()
@@ -75,23 +85,31 @@ describe("repository des prompts sur PostgreSQL", () => {
       await clearPrompts()
       await insertPrompt(1)
 
-      const rows = await repository.findMany()
+      const rows = await repository.findMany({ take: 24 })
 
       expect(Array.isArray(rows)).toBe(true)
       if (!Array.isArray(rows) || !isRecord(rows[0])) {
         throw new Error("findMany doit retourner un tableau de rows")
       }
       expect(Object.keys(rows[0]).sort()).toEqual([
+        "coverImage",
+        "domain",
         "id",
         "slug",
         "summary",
+        "tags",
         "title",
+        "visibility",
       ])
       expect(rows[0]).toEqual({
+        coverImage: null,
+        domain: "ia",
         id: "test-prompt-1",
         slug: "test-prompt-1",
         summary: "Résumé 1",
+        tags: ["test"],
         title: "Prompt 1",
+        visibility: "FREE",
       })
     },
   )
@@ -111,7 +129,7 @@ describe("repository des prompts sur PostgreSQL", () => {
         await insertPrompt(index)
       }
 
-      const rows = await repository.findMany()
+      const rows = await repository.findMany({ take: 100 })
 
       expect(Array.isArray(rows)).toBe(true)
       if (!Array.isArray(rows)) {

@@ -132,6 +132,72 @@
   box-shadow: var(--shadow-card);
 }
 
+.prompt-card {
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+}
+
+.prompt-card-link {
+  display: block;
+  min-height: var(--touch-target);
+}
+
+.prompt-card-image,
+.prompt-detail-image {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+
+.prompt-card-body {
+  display: grid;
+  gap: var(--space-tiny);
+  padding: var(--space-card);
+}
+
+.prompt-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-tiny);
+}
+
+.prompt-filters {
+  display: grid;
+  gap: var(--space-control);
+  margin-top: var(--space-card);
+}
+
+.prompt-filter-submit,
+.pagination-link {
+  min-height: var(--touch-target);
+}
+
+.prompt-filter-status {
+  display: none;
+  color: var(--color-muted);
+}
+
+.prompt-filters:has(.prompt-filter-submit:focus) .prompt-filter-status {
+  display: block;
+}
+
+.pagination-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: var(--space-card);
+  border-radius: var(--radius-control);
+  padding: var(--space-small) var(--space-card);
+  background: var(--color-indigo);
+  color: var(--color-surface);
+  font-weight: 700;
+}
+
 .provisional-visual {
   display: block;
   width: 100%;
