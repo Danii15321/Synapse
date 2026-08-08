@@ -1,0 +1,232 @@
+.page-shell,
+.centered-page-shell {
+  min-height: 65vh;
+  padding: var(--space-section) var(--space-control) var(--space-page);
+}
+
+.centered-page-shell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.content-narrow,
+.content-reading,
+.content-wide {
+  width: 100%;
+  margin-inline: auto;
+}
+
+.content-narrow {
+  max-width: var(--content-narrow);
+}
+
+.content-reading {
+  max-width: var(--content-reading);
+}
+
+.content-wide {
+  max-width: var(--content-wide);
+}
+
+.page-heading,
+.hero-heading {
+  font-weight: 800;
+}
+
+.page-heading {
+  font-size: clamp(2rem, 8vw, 3.25rem);
+}
+
+.hero-heading {
+  max-width: 18ch;
+  font-size: clamp(2.4rem, 11vw, 5.25rem);
+}
+
+.gradient-text {
+  background: var(--gradient-synapse);
+  background-clip: text;
+  color: transparent;
+}
+
+.eyebrow {
+  color: var(--color-magenta);
+  font-family: var(--font-heading);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.lead,
+.hero-copy {
+  margin-top: var(--space-control);
+  color: var(--color-muted);
+  font-size: 1.1rem;
+}
+
+.hero-copy {
+  max-width: 60ch;
+}
+
+.home-section,
+.section-stack,
+.detail-section,
+.legal-section,
+.account-section {
+  margin-top: var(--space-section);
+}
+
+.section-heading {
+  font-size: clamp(1.5rem, 5vw, 2.15rem);
+  font-weight: 750;
+}
+
+.section-intro {
+  margin-top: var(--space-tiny);
+  color: var(--color-muted);
+}
+
+.rubric-grid,
+.recent-grid,
+.institutional-grid {
+  display: grid;
+  gap: var(--space-control);
+  margin-top: var(--space-card);
+}
+
+.rubric-entry {
+  display: grid;
+  min-height: 9.5rem;
+  align-content: space-between;
+  gap: var(--space-control);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  padding: var(--space-card);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+}
+
+.rubric-entry:hover {
+  border-color: var(--color-indigo);
+  transform: translateY(-0.1rem);
+}
+
+.rubric-title {
+  font-family: var(--font-heading);
+  font-size: 1.15rem;
+  font-weight: 750;
+}
+
+.rubric-count {
+  color: var(--color-indigo);
+  font-size: 2rem;
+  font-weight: 800;
+}
+
+.provisional-card {
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+}
+
+.provisional-visual {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+
+.provisional-body,
+.auth-card,
+.message-card,
+.content-card,
+.legal-card {
+  padding: var(--space-card);
+}
+
+.provisional-title,
+.card-heading {
+  font-size: 1.15rem;
+  font-weight: 750;
+}
+
+.provisional-summary,
+.card-copy {
+  margin-top: var(--space-tiny);
+  color: var(--color-muted);
+}
+
+.empty-state,
+.loading-state {
+  margin-top: var(--space-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  padding: var(--space-card);
+  background: var(--color-surface);
+  color: var(--color-muted);
+}
+
+.premium-callout {
+  display: grid;
+  gap: var(--space-card);
+  border-radius: var(--radius-card);
+  padding: var(--space-card);
+  background: var(--color-night);
+  color: var(--color-surface);
+}
+
+.premium-callout-link {
+  display: inline-flex;
+  min-height: var(--touch-target);
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-control);
+  padding: var(--space-small) var(--space-card);
+  background: var(--gradient-synapse);
+  color: var(--color-surface);
+  font-weight: 750;
+}
+
+.form-stack,
+.field-stack,
+.account-list,
+.tag-list,
+.error-actions {
+  display: grid;
+  gap: var(--space-control);
+}
+
+.field-stack {
+  gap: var(--space-tiny);
+}
+
+.field-label {
+  font-weight: 650;
+}
+
+.form-message,
+.error-copy {
+  color: var(--color-error);
+  font-size: 0.9rem;
+}
+
+.form-submit {
+  width: 100%;
+}
+
+.auth-intro,
+.auth-switch,
+.message-copy,
+.detail-summary,
+.detail-copy,
+.legal-copy {
+  margin-top: var(--space-control);
+}
+
+.auth-switch,
+.message-card {
+  text-align: center;
+}

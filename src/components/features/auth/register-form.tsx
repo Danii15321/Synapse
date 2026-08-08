@@ -38,9 +38,9 @@ export default function RegisterForm() {
   })
 
   return (
-    <form className="space-y-5" noValidate onSubmit={submit}>
-      <div className="space-y-2">
-        <label className="block font-medium" htmlFor="register-email">
+    <form className="form-stack" noValidate onSubmit={submit}>
+      <div className="field-stack">
+        <label className="field-label" htmlFor="register-email">
           E-mail
         </label>
         <Input
@@ -51,8 +51,8 @@ export default function RegisterForm() {
           {...register("email")}
         />
       </div>
-      <div className="space-y-2">
-        <label className="block font-medium" htmlFor="register-password">
+      <div className="field-stack">
+        <label className="field-label" htmlFor="register-password">
           Mot de passe
         </label>
         <Input
@@ -63,17 +63,23 @@ export default function RegisterForm() {
           type="password"
           {...register("password")}
         />
-        <p className="text-sm text-foreground/70" id="password-help">
+        <p className="helper-text" id="password-help">
           Utilisez au moins 12 caractères.
         </p>
       </div>
       {(error || errors.email || errors.password) && (
-        <p className="text-sm text-error" role="alert">
+        <p className="form-message" role="alert">
           {error || "Vérifiez les informations saisies."}
         </p>
       )}
-      <Button className="min-h-touch w-full" disabled={pending} type="submit">
-        {pending ? "Créer mon compte…" : "Créer mon compte"}
+      <Button
+        className="form-submit"
+        disabled={pending}
+        isLoading={pending}
+        loadingLabel="Créer mon compte…"
+        type="submit"
+      >
+        Créer mon compte
       </Button>
     </form>
   )

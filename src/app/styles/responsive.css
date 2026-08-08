@@ -1,0 +1,82 @@
+@media (min-width: 48rem) {
+  .site-navigation {
+    flex-wrap: nowrap;
+    padding-inline: var(--space-card);
+  }
+
+  .mobile-menu-toggle,
+  .mobile-menu-close {
+    display: none;
+  }
+
+  .mobile-menu-panel,
+  .mobile-menu-panel-closed {
+    position: static;
+    display: flex;
+    flex: 1;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--space-control);
+    border: 0;
+    padding: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .primary-navigation-list {
+    display: flex;
+    align-items: center;
+  }
+
+  .session-indicator {
+    margin-left: auto;
+  }
+
+  .session-action {
+    width: auto;
+  }
+
+  .footer-inner {
+    grid-template-columns: 1fr 2fr;
+    padding-inline: var(--space-card);
+  }
+
+  .footer-link-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .page-shell,
+  .centered-page-shell {
+    padding-inline: var(--space-card);
+  }
+
+  .rubric-grid,
+  .recent-grid,
+  .institutional-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .premium-callout {
+    grid-template-columns: 1fr auto;
+    align-items: center;
+  }
+
+  .premium-gate-copy {
+    grid-template-columns: 1fr auto;
+    align-items: center;
+  }
+}
+
+@media (min-width: 64rem) {
+  .rubric-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .recent-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .footer-link-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}

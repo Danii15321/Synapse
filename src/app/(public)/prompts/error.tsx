@@ -1,25 +1,20 @@
 "use client"
 
+import { Button } from "@/components/ui/button"
+
 export default function PromptsError({
   reset,
 }: Readonly<{ error: Error; reset: () => void }>) {
   return (
-    <main className="flex min-h-screen items-center justify-center px-4 py-10 sm:px-6">
-      <section
-        className="w-full max-w-lg rounded-card bg-surface p-6 text-center shadow-card"
-        role="alert"
-      >
-        <h1 className="text-2xl font-bold">Les prompts sont indisponibles</h1>
-        <p className="mt-3 text-foreground/70">
+    <main className="centered-page-shell">
+      <section className="content-narrow ui-card message-card" role="alert">
+        <h1 className="page-heading">Les prompts sont indisponibles</h1>
+        <p className="message-copy">
           Une erreur empêche leur affichage pour le moment.
         </p>
-        <button
-          className="mt-6 min-h-touch rounded-control bg-accent px-5 font-semibold text-white"
-          onClick={reset}
-          type="button"
-        >
+        <Button onClick={reset} type="button">
           Réessayer
-        </button>
+        </Button>
       </section>
     </main>
   )

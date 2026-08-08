@@ -30,9 +30,9 @@ export default function LoginForm() {
   })
 
   return (
-    <form className="space-y-5" noValidate onSubmit={submit}>
-      <div className="space-y-2">
-        <label className="block font-medium" htmlFor="login-email">
+    <form className="form-stack" noValidate onSubmit={submit}>
+      <div className="field-stack">
+        <label className="field-label" htmlFor="login-email">
           E-mail
         </label>
         <Input
@@ -43,8 +43,8 @@ export default function LoginForm() {
           {...register("email")}
         />
       </div>
-      <div className="space-y-2">
-        <label className="block font-medium" htmlFor="login-password">
+      <div className="field-stack">
+        <label className="field-label" htmlFor="login-password">
           Mot de passe
         </label>
         <Input
@@ -56,12 +56,18 @@ export default function LoginForm() {
         />
       </div>
       {(error || errors.email || errors.password) && (
-        <p aria-live="assertive" className="text-sm text-error">
+        <p aria-live="assertive" className="form-message">
           {error || "Saisissez une adresse e-mail et un mot de passe valides."}
         </p>
       )}
-      <Button className="min-h-touch w-full" disabled={pending} type="submit">
-        {pending ? "Connexion…" : "Se connecter"}
+      <Button
+        className="form-submit"
+        disabled={pending}
+        isLoading={pending}
+        loadingLabel="Connexion…"
+        type="submit"
+      >
+        Se connecter
       </Button>
     </form>
   )

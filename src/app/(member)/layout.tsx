@@ -3,7 +3,11 @@ import { redirect } from "next/navigation"
 
 import { requireUser } from "@/server/auth/require-user"
 
-export default async function MemberLayout({ children }: { children: ReactNode }) {
+export default async function MemberLayout({
+  children,
+}: {
+  children: ReactNode
+}) {
   try {
     await requireUser()
   } catch {
