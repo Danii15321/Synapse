@@ -107,4 +107,9 @@ Validation distante initiale verte sur le commit `7aa6f97` :
 - CI `push` : https://github.com/Danii15321/Synapse/actions/runs/31236136719 ;
 - CI `pull_request` : https://github.com/Danii15321/Synapse/actions/runs/31236146166.
 
+Le commit de clôture `8236404` a lui aussi été validé sur les deux événements :
+
+- CI `push` de clôture : https://github.com/Danii15321/Synapse/actions/runs/31236270247 ;
+- CI `pull_request` de clôture : https://github.com/Danii15321/Synapse/actions/runs/31236272608.
+
 La tranche est auditée conforme et prête à fusionner. La preuve de fusion et la CI post-fusion seront consignées après intégration dans `main`.
