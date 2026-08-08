@@ -30,10 +30,10 @@ function sourceFiles(directory: string): string[] {
 describe("contrat du walking skeleton Prompts", () => {
   it(
     scenario(
-      "Le modèle Prompt reste volontairement pauvre",
-      "le schéma Prisma de la tranche walking skeleton",
+      "Le modèle Prompt conserve les six champs fondateurs du walking skeleton",
+      "le schéma Prisma enrichi par les tranches postérieures au walking skeleton",
       "la déclaration du modèle Prompt est inspectée",
-      "elle contient exactement id, slug unique, title, summary, createdAt et updatedAt, sans body, visibility ni tags",
+      "id, slug unique, title, summary, createdAt et updatedAt restent présents avec leurs types et contraintes d'origine, sans interdire les champs ajoutés par les tranches suivantes",
     ),
     () => {
       const schema = read("prisma/schema.prisma")
@@ -42,21 +42,22 @@ describe("contrat du walking skeleton Prompts", () => {
         (match) => match[1],
       )
 
-      expect(fields).toEqual([
-        "id",
-        "slug",
-        "title",
-        "summary",
-        "createdAt",
-        "updatedAt",
-      ])
+      expect(fields).toEqual(
+        expect.arrayContaining([
+          "id",
+          "slug",
+          "title",
+          "summary",
+          "createdAt",
+          "updatedAt",
+        ]),
+      )
       expect(model).toMatch(/^\s*id\s+String\s+@id\s+@default\(cuid\(\)\)/m)
       expect(model).toMatch(/^\s*slug\s+String\s+@unique/m)
       expect(model).toMatch(/^\s*title\s+String\s*$/m)
       expect(model).toMatch(/^\s*summary\s+String\s*$/m)
       expect(model).toMatch(/^\s*createdAt\s+DateTime\s+@default\(now\(\)\)/m)
       expect(model).toMatch(/^\s*updatedAt\s+DateTime\s+@updatedAt/m)
-      expect(model).not.toMatch(/\b(?:body|visibility|tags)\b/)
     },
   )
 
