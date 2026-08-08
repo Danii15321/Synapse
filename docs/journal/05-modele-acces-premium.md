@@ -1,6 +1,6 @@
 # Journal — tranche 05 : Modèle d'accès premium
 
-- Démarrée le : 2026-08-08 / Terminée le : — / Statut : EN COURS
+- Démarrée le : 2026-08-08 / Terminée le : 2026-08-08 / Statut : TERMINÉE
 
 ## Definition of Ready
 
@@ -101,4 +101,10 @@ Validation locale terminée le 2026-08-08 :
 - validation visuelle dans le navigateur intégré à 390 × 844 : titre sur deux lignes lisibles, extrait visible, badge premium, bloc verrouillé décoratif, aucun débordement horizontal (`scrollWidth` 375 pour un viewport utile de 390 avec barre de défilement), cible complète menant à `/register`, aucun message console ;
 - les huit empreintes de tests gelées sont exactes, `git diff --check` est propre et `docs/pipeline-dev/` est identique à `origin/main`.
 
-Validation distante, PR, fusion et CI post-fusion : en attente.
+Validation distante initiale verte sur le commit `7aa6f97` :
+
+- PR : https://github.com/Danii15321/Synapse/pull/6 ;
+- CI `push` : https://github.com/Danii15321/Synapse/actions/runs/31236136719 ;
+- CI `pull_request` : https://github.com/Danii15321/Synapse/actions/runs/31236146166.
+
+La tranche est auditée conforme et prête à fusionner. La preuve de fusion et la CI post-fusion seront consignées après intégration dans `main`.
