@@ -185,7 +185,7 @@ C'est la règle métier la plus sensible du projet. Elle est concentrée dans `s
 ### Principes
 
 1. **Deux formes pour chaque contenu.** Un contenu premium existe sous deux DTO distincts :
-   - `XxxTeaser` — titre, résumé, tags, badge premium. Servi à tout le monde.
+   - `XxxTeaser` — titre, résumé, extrait éditorial distinct, tags, badge premium. Servi à tout le monde. L'extrait est stocké dans un champ dédié et n'est jamais fabriqué par troncature du corps verrouillé.
    - `XxxFull` — le corps réel (texte du prompt, contenu de la formation, lien d'inscription…). Servi **uniquement** à un utilisateur entitled.
 
 2. **Le filtrage est fait par le `select` Prisma, pas par le mapping.** Le champ verrouillé ne doit pas être chargé en mémoire s'il ne doit pas être envoyé. C'est la seule défense qui survit à une erreur de sérialisation.
