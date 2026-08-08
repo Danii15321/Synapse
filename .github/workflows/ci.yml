@@ -9,6 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       DATABASE_URL: postgresql://synapse:example@localhost:5432/synapse
+      SITE_URL: http://localhost:3000
     services:
       postgres:
         image: postgres:16

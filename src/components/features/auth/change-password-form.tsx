@@ -29,7 +29,9 @@ export default function ChangePasswordForm({
     handleSubmit,
     register,
     reset,
-  } = useForm<ChangePasswordInput>({ resolver: zodResolver(changePasswordSchema) })
+  } = useForm<ChangePasswordInput>({
+    resolver: zodResolver(changePasswordSchema),
+  })
   const pending = isSubmitting
 
   const submit = handleSubmit(async (input) => {
@@ -44,9 +46,9 @@ export default function ChangePasswordForm({
   })
 
   return (
-    <form className="space-y-5" noValidate onSubmit={submit}>
-      <div className="space-y-2">
-        <label className="block font-medium" htmlFor="current-password">
+    <form className="form-stack" noValidate onSubmit={submit}>
+      <div className="field-stack">
+        <label className="field-label" htmlFor="current-password">
           Ancien mot de passe
         </label>
         <Input
@@ -57,8 +59,8 @@ export default function ChangePasswordForm({
           {...register("currentPassword")}
         />
       </div>
-      <div className="space-y-2">
-        <label className="block font-medium" htmlFor="new-password">
+      <div className="field-stack">
+        <label className="field-label" htmlFor="new-password">
           Nouveau mot de passe
         </label>
         <Input
@@ -71,12 +73,18 @@ export default function ChangePasswordForm({
       </div>
       {!successful &&
         (message || errors.currentPassword || errors.newPassword) && (
-        <p aria-live="polite" className="text-sm" role="alert">
-          {message || "Vérifiez les mots de passe saisis."}
-        </p>
+          <p aria-live="polite" className="form-message" role="alert">
+            {message || "Vérifiez les mots de passe saisis."}
+          </p>
         )}
-      <Button className="min-h-touch w-full" disabled={pending} type="submit">
-        {pending ? "Modification…" : "Changer le mot de passe"}
+      <Button
+        className="form-submit"
+        disabled={pending}
+        isLoading={pending}
+        loadingLabel="Modification…"
+        type="submit"
+      >
+        Changer le mot de passe
       </Button>
     </form>
   )

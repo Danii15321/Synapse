@@ -3,9 +3,9 @@ export function PromptCard({
   summary,
 }: Readonly<{ title: string; summary: string }>) {
   return (
-    <article className="rounded-card bg-surface p-5 shadow-card sm:p-6">
-      <h2 className="text-xl font-bold tracking-tight">{title}</h2>
-      <p className="mt-3 leading-7 text-foreground/70">{summary}</p>
+    <article className="ui-card">
+      <h2 className="card-heading">{title}</h2>
+      <p className="card-copy">{summary}</p>
     </article>
   )
 }

@@ -4,16 +4,16 @@ import LoginForm from "@/components/features/auth/login-form"
 
 export default function LoginPage() {
   return (
-    <main className="mx-auto w-full max-w-md px-5 py-10 sm:py-16">
-      <section className="rounded-card bg-surface p-6 shadow-card sm:p-8">
-        <h1 className="text-3xl font-bold">Connexion</h1>
-        <p className="mb-7 mt-2 text-foreground/70">
+    <main className="centered-page-shell">
+      <section className="content-narrow ui-card auth-card">
+        <h1 className="page-heading">Connexion</h1>
+        <p className="auth-intro text-muted">
           Retrouvez votre espace membre Synapse.
         </p>
         <LoginForm />
-        <p className="mt-6 text-center text-sm">
+        <p className="auth-switch">
           Pas encore de compte ?{" "}
-          <Link className="font-semibold text-accent" href="/register">
+          <Link className="inline-link" href="/register">
             S’inscrire
           </Link>
         </p>

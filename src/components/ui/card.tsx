@@ -4,10 +4,5 @@ export function Card({
   className = "",
   ...props
 }: HTMLAttributes<HTMLDivElement>) {
-  return (
-    <div
-      className={`rounded-card bg-surface p-6 shadow-card ${className}`}
-      {...props}
-    />
-  )
+  return <div className={`ui-card ${className}`.trim()} {...props} />
 }

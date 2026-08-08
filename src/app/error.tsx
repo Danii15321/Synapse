@@ -1,5 +1,9 @@
 "use client"
 
+import Link from "next/link"
+
+import { Button } from "@/components/ui/button"
+
 type ErrorPageProps = Readonly<{
   error: Error & { digest?: string }
   reset: () => void
@@ -15,24 +19,21 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
       : undefined
 
   return (
-    <main className="flex min-h-screen items-center justify-center px-6 py-16">
-      <section className="w-full max-w-lg rounded-card bg-surface p-8 text-center shadow-card">
-        <h1 className="text-2xl font-bold">Une erreur est survenue</h1>
-        <p className="mt-3 text-foreground/70">
+    <main className="centered-page-shell">
+      <section className="content-narrow ui-card message-card" role="alert">
+        <h1 className="page-heading">Une erreur est survenue</h1>
+        <p className="message-copy">
           La page ne peut pas être affichée pour le moment.
         </p>
-        {errorId ? (
-          <p className="mt-3 break-all text-sm text-foreground/70">
-            Référence : {errorId}
-          </p>
-        ) : null}
-        <button
-          className="mt-6 min-h-touch rounded-control bg-accent px-5 font-semibold text-white"
-          onClick={reset}
-          type="button"
-        >
-          Réessayer
-        </button>
+        {errorId ? <p className="message-copy">Référence : {errorId}</p> : null}
+        <div className="error-actions">
+          <Button onClick={reset} type="button">
+            Réessayer
+          </Button>
+          <Link className="inline-link" href="/">
+            Retour à l&apos;accueil
+          </Link>
+        </div>
       </section>
     </main>
   )
