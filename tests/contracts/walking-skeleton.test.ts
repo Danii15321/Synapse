@@ -159,7 +159,7 @@ describe("contrat du walking skeleton Prompts", () => {
     () => {
       const seed = read("prisma/seed.ts")
 
-      expect(seed.match(/\.upsert\s*\(/g) ?? []).toHaveLength(2)
+      expect(seed.match(/\bdb\.prompt\.upsert\s*\(/g) ?? []).toHaveLength(2)
       expect(seed).toMatch(/where\s*:\s*{\s*slug\s*:/)
       expect(seed).not.toMatch(/\.prompt\.create(?:Many)?\s*\(/)
     },

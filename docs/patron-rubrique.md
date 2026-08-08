@@ -33,6 +33,17 @@ champ. La preuve porte sur le JSON brut de la réponse, puis sur HTML/RSC et les
 métadonnées lorsque la page les sérialise. Un cadenas ou un flou reste purement
 visuel et ne constitue jamais une protection.
 
+Avant d'implémenter une nouvelle rubrique, tous les champs verrouillés sont
+recensés explicitement. Ils suivent ensemble la même décision d'accès et le
+même `select` conditionnel. Pour une opportunité, `externalUrl` est verrouillé
+avec `body` : aucun des deux champs n'est lu pour une personne non entitled.
+
 La liste ne sélectionne que les champs de carte, exclut les brouillons, combine
 les filtres dans une seule requête et expose un curseur opaque. Le détail garde
 le corps hors des URL, journaux et métadonnées de partage.
+
+Les règles de péremption et d'expiration appartiennent au repository, jamais à
+la vue. Une opportunité après sa `deadline` n'est plus accessible et n'a pas
+d'archive v1. Une formation `EVENEMENTIELLE` après `startsAt` expire également,
+tandis qu'une formation `PERMANENTE` reste consultable sans date ni inscription.
+Cette nature reste indépendante de la visibilité `FREE` ou `PREMIUM`.

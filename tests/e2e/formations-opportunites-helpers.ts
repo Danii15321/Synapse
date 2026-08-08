@@ -1,0 +1,140 @@
+import { randomUUID } from "node:crypto"
+
+import { PrismaClient } from "@prisma/client"
+import type { Page } from "@playwright/test"
+
+export const replicatedDb = new PrismaClient()
+const prefixes = new Set<string>()
+const emails = new Set<string>()
+
+export type ReplicatedFixtures = Readonly<{
+  expiredOpportunity: Readonly<{ slug: string; title: string }>
+  futureFormation: Readonly<{
+    body: string
+    slug: string
+    title: string
+  }>
+  permanentFormation: Readonly<{
+    body: string
+    slug: string
+    title: string
+  }>
+  premiumOpportunity: Readonly<{
+    body: string
+    externalUrl: string
+    slug: string
+    title: string
+  }>
+}>
+
+export async function insertReplicatedFixtures(): Promise<ReplicatedFixtures> {
+  const prefix = `t08-e2e-${randomUUID()}`
+  prefixes.add(prefix)
+  const permanentFormation = {
+    body: `PROGRAMME-PERMANENT-${prefix}`,
+    slug: `${prefix}-permanente`,
+    title: `${prefix} Formation permanente`,
+  }
+  const futureFormation = {
+    body: `PROGRAMME-PREMIUM-${prefix}`,
+    slug: `${prefix}-evenement-futur`,
+    title: `${prefix} Atelier futur`,
+  }
+  const expiredFormation = {
+    slug: `${prefix}-evenement-passe`,
+    title: `${prefix} Atelier passé`,
+  }
+  await replicatedDb.$executeRaw`
+    INSERT INTO "Formation" (
+      "id", "slug", "title", "summary", "excerpt", "body", "visibility",
+      "publishedAt", "level", "format", "durationH", "kind", "startsAt",
+      "coverImage", "createdAt", "updatedAt"
+    ) VALUES
+    (
+      ${`${prefix}-formation-permanente`}, ${permanentFormation.slug},
+      ${permanentFormation.title}, 'Consultable à tout moment', 'Extrait libre',
+      ${permanentFormation.body}, 'FREE'::"Visibility", NOW(),
+      'DEBUTANT'::"Level", 'EN_LIGNE'::"Format", 3,
+      'PERMANENTE'::"FormationKind", NULL, NULL, NOW(), NOW()
+    ),
+    (
+      ${`${prefix}-formation-future`}, ${futureFormation.slug},
+      ${futureFormation.title}, 'Session future', 'Extrait premium formation',
+      ${futureFormation.body}, 'PREMIUM'::"Visibility", NOW(),
+      'AVANCE'::"Level", 'HYBRIDE'::"Format", 5,
+      'EVENEMENTIELLE'::"FormationKind", NOW() + INTERVAL '30 days', NULL,
+      NOW(), NOW()
+    ),
+    (
+      ${`${prefix}-formation-past`}, ${expiredFormation.slug},
+      ${expiredFormation.title}, 'Session passée', 'Extrait passé',
+      'PROGRAMME PASSE', 'FREE'::"Visibility", NOW(),
+      'INTERMEDIAIRE'::"Level", 'PRESENTIEL'::"Format", 2,
+      'EVENEMENTIELLE'::"FormationKind", NOW() - INTERVAL '1 day', NULL,
+      NOW(), NOW()
+    )
+  `
+
+  const premiumOpportunity = {
+    body: `BODY-OPPORTUNITE-${prefix}`,
+    externalUrl: `https://candidature.example.test/${prefix}`,
+    slug: `${prefix}-opportunite-future`,
+    title: `${prefix} Financement futur`,
+  }
+  const expiredOpportunity = {
+    slug: `${prefix}-opportunite-expiree`,
+    title: `${prefix} Stage expiré`,
+  }
+  await replicatedDb.$executeRaw`
+    INSERT INTO "Opportunite" (
+      "id", "slug", "title", "summary", "excerpt", "body", "visibility",
+      "publishedAt", "type", "organisme", "deadline", "externalUrl",
+      "coverImage", "createdAt", "updatedAt"
+    ) VALUES
+    (
+      ${`${prefix}-opportunite-future`}, ${premiumOpportunity.slug},
+      ${premiumOpportunity.title}, 'Résumé financement', 'Extrait opportunité',
+      ${premiumOpportunity.body}, 'PREMIUM'::"Visibility", NOW(),
+      'FINANCEMENT'::"OpportuniteType", 'Synapse', NOW() + INTERVAL '30 days',
+      ${premiumOpportunity.externalUrl}, NULL, NOW(), NOW()
+    ),
+    (
+      ${`${prefix}-opportunite-expiree`}, ${expiredOpportunity.slug},
+      ${expiredOpportunity.title}, 'Résumé expiré', 'Extrait expiré',
+      'BODY EXPIRE', 'FREE'::"Visibility", NOW(),
+      'STAGE'::"OpportuniteType", 'Synapse', NOW() - INTERVAL '1 day',
+      'https://example.test/expire', NULL, NOW(), NOW()
+    )
+  `
+  return {
+    expiredOpportunity,
+    futureFormation,
+    permanentFormation,
+    premiumOpportunity,
+  }
+}
+
+export async function registerReplicatedMember(page: Page): Promise<string> {
+  const email = `t08-${randomUUID()}@example.test`
+  emails.add(email)
+  await page.goto("/register")
+  await page.getByLabel(/e-mail|email/i).fill(email)
+  await page.getByLabel(/^mot de passe/i).fill("MotDePasse!2026")
+  await page
+    .getByRole("button", { name: /créer|inscription|s'inscrire/i })
+    .click()
+  await page.waitForURL(/\/compte$/u)
+  return email
+}
+
+export async function cleanupReplicatedFixtures(): Promise<void> {
+  for (const prefix of prefixes) {
+    await replicatedDb.$executeRaw`DELETE FROM "Formation" WHERE "id" LIKE ${`${prefix}%`}`
+    await replicatedDb.$executeRaw`DELETE FROM "Opportunite" WHERE "id" LIKE ${`${prefix}%`}`
+  }
+  prefixes.clear()
+  for (const email of emails) {
+    await replicatedDb.user.deleteMany({ where: { email } })
+  }
+  emails.clear()
+}

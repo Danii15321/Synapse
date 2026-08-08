@@ -24,6 +24,31 @@ enum PromptDomain {
   communication
 }
 
+enum Level {
+  DEBUTANT
+  INTERMEDIAIRE
+  AVANCE
+}
+
+enum Format {
+  PRESENTIEL
+  EN_LIGNE
+  HYBRIDE
+}
+
+enum FormationKind {
+  PERMANENTE
+  EVENEMENTIELLE
+}
+
+enum OpportuniteType {
+  STAGE
+  EMPLOI
+  APPEL_OFFRE
+  FINANCEMENT
+  COLLABORATION
+}
+
 model User {
   id            String     @id @default(cuid())
   name          String?
@@ -94,6 +119,50 @@ model Prompt {
   updatedAt   DateTime     @updatedAt
 
   @@index([publishedAt, domain])
+}
+
+model Formation {
+  id          String        @id @default(cuid())
+  slug        String        @unique
+  title       String
+  summary     String
+  excerpt     String?
+  body        String
+  visibility  Visibility    @default(FREE)
+  publishedAt DateTime?
+  level       Level
+  format      Format
+  durationH   Int?
+  kind        FormationKind
+  startsAt    DateTime?
+  coverImage  String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([publishedAt, startsAt])
+  @@index([kind])
+  @@index([level])
+}
+
+model Opportunite {
+  id          String          @id @default(cuid())
+  slug        String          @unique
+  title       String
+  summary     String
+  excerpt     String?
+  body        String
+  visibility  Visibility      @default(FREE)
+  publishedAt DateTime?
+  type        OpportuniteType
+  organisme   String
+  deadline    DateTime?
+  externalUrl String?
+  coverImage  String?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@index([publishedAt, deadline])
+  @@index([type])
 }
 
 model RateLimit {
