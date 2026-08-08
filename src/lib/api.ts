@@ -4,6 +4,16 @@ import type {
 } from "@/lib/validators/prompt"
 import { promptCatalogPageSchema } from "@/lib/validators/prompt"
 import type {
+  FormationCatalogPage,
+  FormationListQuery,
+} from "@/lib/validators/formation"
+import { formationCatalogPageSchema } from "@/lib/validators/formation"
+import type {
+  OpportuniteCatalogPage,
+  OpportuniteListQuery,
+} from "@/lib/validators/opportunite"
+import { opportuniteCatalogPageSchema } from "@/lib/validators/opportunite"
+import type {
   ChangePasswordInput,
   LoginInput,
   RegisterInput,
@@ -33,6 +43,43 @@ export async function getPrompts(
   const payload: unknown = await response.json()
 
   return promptCatalogPageSchema.parse(payload)
+}
+
+export async function getFormations(
+  query: FormationListQuery = { take: 24 },
+): Promise<FormationCatalogPage> {
+  const searchParams = new URLSearchParams()
+  if (query.cursor) searchParams.set("cursor", query.cursor)
+  if (query.kind) searchParams.set("kind", query.kind)
+  if (query.level) searchParams.set("level", query.level)
+  if (query.search) searchParams.set("search", query.search)
+  if (query.take !== 24) searchParams.set("take", String(query.take))
+  const queryString = searchParams.toString()
+  const response = await fetch(
+    queryString ? `/api/formations?${queryString}` : "/api/formations",
+  )
+  if (!response.ok) throw new Error("Impossible de charger les formations.")
+
+  const payload: unknown = await response.json()
+  return formationCatalogPageSchema.parse(payload)
+}
+
+export async function getOpportunites(
+  query: OpportuniteListQuery = { take: 24 },
+): Promise<OpportuniteCatalogPage> {
+  const searchParams = new URLSearchParams()
+  if (query.cursor) searchParams.set("cursor", query.cursor)
+  if (query.search) searchParams.set("search", query.search)
+  if (query.type) searchParams.set("type", query.type)
+  if (query.take !== 24) searchParams.set("take", String(query.take))
+  const queryString = searchParams.toString()
+  const response = await fetch(
+    queryString ? `/api/opportunites?${queryString}` : "/api/opportunites",
+  )
+  if (!response.ok) throw new Error("Impossible de charger les opportunités.")
+
+  const payload: unknown = await response.json()
+  return opportuniteCatalogPageSchema.parse(payload)
 }
 
 async function postAuthJson(pathname: string, input: unknown) {
