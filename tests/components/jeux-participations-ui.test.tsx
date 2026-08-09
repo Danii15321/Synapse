@@ -1,9 +1,10 @@
 import type { ReactNode } from "react"
 
-import { cleanup, render, screen } from "@testing-library/react"
+import { cleanup, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { isRecord, scenario } from "../repositories/jeux-inscriptions-fixtures"
+import { renderWithQueryClient } from "./query-client-test-utils"
 
 type ListPage = Readonly<{
   default: (props: {
@@ -89,7 +90,7 @@ describe("interface Jeux et Mes participations", () => {
       }))
       const page = listPageOf(await import("@/app/(public)/jeux/page"))
 
-      const rendered = render(
+      const rendered = renderWithQueryClient(
         await page.default({ searchParams: Promise.resolve({}) }),
       )
 
@@ -150,7 +151,7 @@ describe("interface Jeux et Mes participations", () => {
       }))
       const page = detailPageOf(await import("@/app/(public)/jeux/[slug]/page"))
 
-      render(
+      renderWithQueryClient(
         await page.default({ params: Promise.resolve({ slug: "challenge" }) }),
       )
 
@@ -203,14 +204,14 @@ describe("interface Jeux et Mes participations", () => {
         await import("@/app/(public)/formations/[slug]/page"),
       )
 
-      const permanent = render(
+      const permanent = renderWithQueryClient(
         await page.default({ params: Promise.resolve({ slug: "permanente" }) }),
       )
       expect(
         screen.queryByRole("button", { name: /^je participe$/i }),
       ).not.toBeInTheDocument()
       permanent.unmount()
-      render(
+      renderWithQueryClient(
         await page.default({ params: Promise.resolve({ slug: "evenement" }) }),
       )
       expect(

@@ -3,13 +3,13 @@ import type { ComponentType } from "react"
 import {
   cleanup,
   fireEvent,
-  render,
   screen,
   waitFor,
 } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { isRecord, scenario } from "../repositories/jeux-inscriptions-fixtures"
+import { renderWithQueryClient } from "./query-client-test-utils"
 
 type ParticipationControlProps = Readonly<{
   activityType: "FORMATION" | "JEU"
@@ -73,7 +73,9 @@ describe("contrôle de participation mobile", () => {
         await import("@/components/features/participation-control"),
       )
       const Control = component.default
-      render(<Control {...BASE_PROPS} initialState={initialState} />)
+      renderWithQueryClient(
+        <Control {...BASE_PROPS} initialState={initialState} />,
+      )
 
       expect(screen.getByText(expectedMessage)).toBeVisible()
       expect(
@@ -102,7 +104,7 @@ describe("contrôle de participation mobile", () => {
         await import("@/components/features/participation-control"),
       )
       const Control = component.default
-      render(<Control {...BASE_PROPS} />)
+      renderWithQueryClient(<Control {...BASE_PROPS} />)
       const button = screen.getByRole("button", { name: /^je participe$/i })
 
       fireEvent.click(button)
@@ -145,7 +147,7 @@ describe("contrôle de participation mobile", () => {
         await import("@/components/features/participation-control"),
       )
       const Control = component.default
-      render(<Control {...BASE_PROPS} />)
+      renderWithQueryClient(<Control {...BASE_PROPS} />)
 
       fireEvent.click(screen.getByRole("button", { name: /^je participe$/i }))
 

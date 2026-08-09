@@ -1,9 +1,10 @@
 import type { ReactNode } from "react"
 
-import { cleanup, render, screen } from "@testing-library/react"
+import { cleanup, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { isRecord, scenario } from "../repositories/jeux-inscriptions-fixtures"
+import { renderWithQueryClient } from "./query-client-test-utils"
 
 type AccountPage = Readonly<{
   default: (props: {
@@ -70,7 +71,9 @@ describe("liste Mes participations du compte", () => {
       }))
       const page = pageOf(await import("@/app/(member)/compte/page"))
 
-      render(await page.default({ searchParams: Promise.resolve({}) }))
+      renderWithQueryClient(
+        await page.default({ searchParams: Promise.resolve({}) }),
+      )
 
       expect(
         screen.getByRole("heading", { name: /mes participations/i }),
@@ -110,7 +113,9 @@ describe("liste Mes participations du compte", () => {
       }))
       const page = pageOf(await import("@/app/(member)/compte/page"))
 
-      render(await page.default({ searchParams: Promise.resolve({}) }))
+      renderWithQueryClient(
+        await page.default({ searchParams: Promise.resolve({}) }),
+      )
 
       expect(
         screen.getByRole("heading", { name: /mes participations/i }),
