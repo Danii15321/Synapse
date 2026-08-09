@@ -1,6 +1,6 @@
 # Journal — tranche 09 : Jeux & concours et inscriptions
 
-- Démarrée le : 2026-08-09 / Terminée le : — / Statut : VALIDATION DISTANTE EN COURS
+- Démarrée le : 2026-08-09 / Terminée le : 2026-08-09 / Statut : TERMINÉE
 
 ## Definition of Ready
 
@@ -235,5 +235,13 @@ d'implémentation.
 - CI du push : exécution `31332969384`, verte en 3 min 24 s ;
 - CI de la pull request : exécution `31332972353`, verte en 3 min 43 s.
 
-La PR documentaire de clôture est créée à l'étape suivante ; son URL et ses
-preuves CI seront consignées dans un second commit avant fusion.
+### Validation GitHub — clôture documentaire
+
+- PR documentaire : [#15 — clore la validation de la tranche 09](https://github.com/Danii15321/Synapse/pull/15) ;
+- CI du premier push documentaire : exécution `31333181108`, verte en 3 min 57 s ;
+- CI de la pull request documentaire : exécution `31333182746`, verte en 3 min 45 s ;
+- le dernier commit ne modifie que ce journal et ne touche ni le code, ni les
+  tests, ni la pipeline.
+
+La tranche 09 est terminée. La fusion de cette PR et le contrôle post-fusion de
+`main` constituent les dernières opérations distantes du chef-projet.
