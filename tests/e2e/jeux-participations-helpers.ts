@@ -117,6 +117,11 @@ export async function insertParticipationFixtures(): Promise<ParticipationFixtur
 }
 
 export async function registerParticipationMember(page: Page): Promise<string> {
+  await participationDb.rateLimit.deleteMany({
+    where: {
+      identifier: "sensitive:auth-callback:ip:untrusted-client",
+    },
+  })
   const email = `t09-${randomUUID()}@example.test`
   emails.add(email)
   await page.goto("/register")

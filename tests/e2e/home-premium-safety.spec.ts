@@ -41,6 +41,11 @@ async function insertRecentPremiumPrompt(): Promise<HomePremiumFixture> {
 }
 
 async function registerFreeMember(page: Page): Promise<void> {
+  await db.rateLimit.deleteMany({
+    where: {
+      identifier: "sensitive:auth-callback:ip:untrusted-client",
+    },
+  })
   const email = `home-free-${randomUUID()}@example.test`
   const password = `Aa!${randomUUID()}2026`
   await page.goto("/register")
