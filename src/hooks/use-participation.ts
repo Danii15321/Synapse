@@ -40,11 +40,17 @@ export function useParticipationControl(input: {
   slug: string
 }) {
   const [transitionPending, startTransition] = useTransition()
+  const queryClient = useQueryClient()
+  const clearAccountParticipations = () => {
+    queryClient.removeQueries({ queryKey: PARTICIPATIONS_QUERY_KEY })
+  }
   const creation = useMutation({
     mutationFn: (request: ParticipationRequest) => request,
+    onSuccess: clearAccountParticipations,
   })
   const cancellation = useMutation({
     mutationFn: (request: ParticipationRequest) => request,
+    onSuccess: clearAccountParticipations,
   })
 
   const participate = () => {
