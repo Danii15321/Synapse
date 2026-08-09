@@ -129,11 +129,18 @@ export async function getMyParticipations(
   const sessionUser = requireSessionUser(user)
   const page = await findManyByUserId({ ...query, userId: sessionUser.id })
   return participationPageSchema.parse({
-    ...page,
     items: page.items.map((item) => ({
-      ...item,
+      activityType: item.activityType,
+      id: item.id,
+      location:
+        item.activityType === "FORMATION"
+          ? formatFormationLocation(item.format)
+          : item.location,
+      slug: item.slug,
       startsAt: item.startsAt?.toISOString() ?? null,
+      title: item.title,
     })),
+    nextCursor: page.nextCursor,
   })
 }
 

@@ -52,7 +52,10 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
         </section>
         <section className="account-section ui-card">
           <h2 className="section-heading">Mes participations</h2>
-          <AccountParticipations initialItems={participations.items} />
+          <AccountParticipations
+            initialItems={participations.items}
+            userId={user.id}
+          />
         </section>
         <section className="account-section ui-card">
           <h2 className="section-heading">Sécurité</h2>

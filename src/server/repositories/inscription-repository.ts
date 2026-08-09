@@ -161,12 +161,6 @@ function beforeCursorWhere(cursor: ParticipationCursor | null) {
   }
 }
 
-function formatLabel(format: "EN_LIGNE" | "HYBRIDE" | "PRESENTIEL") {
-  if (format === "EN_LIGNE") return "En ligne"
-  if (format === "HYBRIDE") return "Hybride"
-  return "Présentiel"
-}
-
 export async function findManyByUserId(input: {
   cursor?: string
   take: number
@@ -225,8 +219,8 @@ export async function findManyByUserId(input: {
     ...formations.map((row) => ({
       activityType: "FORMATION" as const,
       createdAt: row.createdAt,
+      format: row.formation.format,
       id: row.id,
-      location: formatLabel(row.formation.format),
       slug: row.formation.slug,
       startsAt: row.formation.startsAt,
       title: row.formation.title,
@@ -239,14 +233,25 @@ export async function findManyByUserId(input: {
   const pageRows = merged.slice(0, input.take)
   const hasNextPage = merged.length > input.take
   return {
-    items: pageRows.map((item) => ({
-      activityType: item.activityType,
-      id: item.id,
-      location: item.location,
-      slug: item.slug,
-      startsAt: item.startsAt,
-      title: item.title,
-    })),
+    items: pageRows.map((item) =>
+      item.activityType === "FORMATION"
+        ? {
+            activityType: "FORMATION" as const,
+            format: item.format,
+            id: item.id,
+            slug: item.slug,
+            startsAt: item.startsAt,
+            title: item.title,
+          }
+        : {
+            activityType: "JEU" as const,
+            id: item.id,
+            location: item.location,
+            slug: item.slug,
+            startsAt: item.startsAt,
+            title: item.title,
+          },
+    ),
     nextCursor: hasNextPage
       ? `${pageRows.at(-1)?.activityType}:${pageRows.at(-1)?.id}`
       : null,

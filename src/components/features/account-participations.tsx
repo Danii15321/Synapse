@@ -1,9 +1,7 @@
 "use client"
 
-import { useState } from "react"
-
 import { Button } from "@/components/ui/button"
-import { cancelFormationParticipation, cancelJeuParticipation } from "@/lib/api"
+import { useAccountParticipations } from "@/hooks/use-participation"
 import type { ParticipationPage } from "@/lib/validators/inscription"
 
 type ParticipationItem = ParticipationPage["items"][number]
@@ -17,25 +15,10 @@ function formatDate(value: string): string {
 
 export default function AccountParticipations({
   initialItems,
-}: Readonly<{ initialItems: ParticipationItem[] }>) {
-  const [items, setItems] = useState(initialItems)
-  const [pendingKey, setPendingKey] = useState<string | null>(null)
-
-  async function cancel(item: ParticipationItem): Promise<void> {
-    const key = `${item.activityType}:${item.slug}`
-    if (pendingKey) return
-    setPendingKey(key)
-    try {
-      if (item.activityType === "JEU") {
-        await cancelJeuParticipation(item.slug)
-      } else {
-        await cancelFormationParticipation(item.slug)
-      }
-      setItems((current) => current.filter((entry) => entry !== item))
-    } finally {
-      setPendingKey(null)
-    }
-  }
+  userId,
+}: Readonly<{ initialItems: ParticipationItem[]; userId: string }>) {
+  const { cancel, error, items, pending } =
+    useAccountParticipations(initialItems, userId)
 
   if (items.length === 0) {
     return <p className="empty-state">Aucune participation enregistrée.</p>
@@ -43,6 +26,12 @@ export default function AccountParticipations({
 
   return (
     <div className="participation-list">
+      {pending ? <p role="status">Annulation en cours…</p> : null}
+      {error ? (
+        <p className="form-message" role="alert">
+          L&apos;annulation n&apos;a pas pu être effectuée. Réessayez.
+        </p>
+      ) : null}
       {items.map((item) => {
         const key = `${item.activityType}:${item.slug}`
         return (
@@ -54,7 +43,7 @@ export default function AccountParticipations({
             {item.startsAt ? <p>{formatDate(item.startsAt)}</p> : null}
             {item.location ? <p>{item.location}</p> : null}
             <Button
-              disabled={pendingKey !== null}
+              disabled={pending}
               onClick={() => cancel(item)}
               type="button"
             >

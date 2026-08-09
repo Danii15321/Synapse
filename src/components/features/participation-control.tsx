@@ -1,18 +1,8 @@
 "use client"
 
-import { useState } from "react"
-
 import { Button } from "@/components/ui/button"
-import {
-  cancelFormationParticipation,
-  cancelJeuParticipation,
-  createFormationParticipation,
-  createJeuParticipation,
-} from "@/lib/api"
-import type {
-  ParticipationConfirmation,
-  ParticipationState,
-} from "@/lib/validators/inscription"
+import { useParticipationControl } from "@/hooks/use-participation"
+import type { ParticipationState } from "@/lib/validators/inscription"
 
 type ParticipationControlProps = Readonly<{
   activityType: "FORMATION" | "JEU"
@@ -49,47 +39,8 @@ export default function ParticipationControl({
   slug,
   startsAt,
 }: ParticipationControlProps) {
-  const [state, setState] = useState(initialState)
-  const [confirmation, setConfirmation] =
-    useState<ParticipationConfirmation | null>(null)
-  const [pending, setPending] = useState(false)
-  const [error, setError] = useState(false)
-
-  async function participate(): Promise<void> {
-    if (pending || state !== "AVAILABLE") return
-    setPending(true)
-    setError(false)
-    try {
-      const result =
-        activityType === "JEU"
-          ? await createJeuParticipation(slug)
-          : await createFormationParticipation(slug)
-      if (result) {
-        setConfirmation(result)
-        setState("ALREADY_REGISTERED")
-      }
-    } catch {
-      setError(true)
-    } finally {
-      setPending(false)
-    }
-  }
-
-  async function cancel(): Promise<void> {
-    if (pending) return
-    setPending(true)
-    setError(false)
-    try {
-      if (activityType === "JEU") await cancelJeuParticipation(slug)
-      else await cancelFormationParticipation(slug)
-      setConfirmation(null)
-      setState("AVAILABLE")
-    } catch {
-      setError(true)
-    } finally {
-      setPending(false)
-    }
-  }
+  const { cancel, confirmation, error, participate, pending, state } =
+    useParticipationControl({ activityType, initialState, slug })
 
   const confirmed = state === "ALREADY_REGISTERED"
   const shownLocation = confirmation?.location ?? location
@@ -116,12 +67,12 @@ export default function ParticipationControl({
         </p>
       ) : null}
       {state === "AVAILABLE" ? (
-        <Button disabled={pending} onClick={participate} type="button">
+        <Button disabled={pending} onClick={() => participate()} type="button">
           Je participe
         </Button>
       ) : null}
       {confirmed && confirmation ? (
-        <Button disabled={pending} onClick={cancel} type="button">
+        <Button disabled={pending} onClick={() => cancel()} type="button">
           Annuler ma participation
         </Button>
       ) : null}
