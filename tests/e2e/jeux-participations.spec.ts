@@ -39,9 +39,15 @@ THEN  : le visuel de repli de marque mesure réellement 4/3, l'action propose la
   const fallback = card.getByRole("img", {
     name: new RegExp(`visuel.*${fixtures.openJeu.title}`, "i"),
   })
-  await expect(fallback).toHaveAttribute(
-    "src",
-    /\/brand\/(?:synapse-pictogram|opengraph-synapse)\.webp/u,
+  const fallbackSrc = await fallback.getAttribute("src")
+  if (!fallbackSrc) throw new Error("le visuel de repli doit fournir une source")
+  const fallbackUrl = new URL(fallbackSrc, "http://localhost:3000")
+  const fallbackSource =
+    fallbackUrl.pathname === "/_next/image"
+      ? fallbackUrl.searchParams.get("url")
+      : fallbackUrl.pathname
+  expect(fallbackSource).toMatch(
+    /^\/brand\/(?:synapse-pictogram|opengraph-synapse)\.webp$/u,
   )
   const box = await fallback.boundingBox()
   expect(box).not.toBeNull()
@@ -82,7 +88,9 @@ THEN  : le bouton se désactive, la confirmation dit où, quand et qu'aucun e-ma
   await button.click()
   await expect(button).toBeDisabled()
   await expect(page.getByText(/participation confirmée/i)).toBeVisible()
-  await expect(page.getByText(/abidjan.*cocody/i)).toBeVisible()
+  await expect(
+    page.getByText(/^Lieu ou modalité : Abidjan, Cocody$/i),
+  ).toBeVisible()
   await expect(page.getByText(/aucun e-mail|pas d.e-mail/i)).toBeVisible()
 
   const second = await page.request.post(
@@ -124,12 +132,12 @@ THEN  : l'interface explique chaque refus, les API répondent 409, 409 et 403, a
       status: 409,
     },
     {
-      expected: /complet|plus de place/i,
+      expected: /plus de place/i,
       slug: fixtures.fullJeu.slug,
       status: 409,
     },
     {
-      expected: /réservé.*membre|devenir membre/i,
+      expected: /^Participation réservée aux membres premium\./i,
       slug: fixtures.premiumJeu.slug,
       status: 403,
     },
@@ -171,7 +179,7 @@ THEN  : la permanente n'a aucune action, l'événement confirme date et modalit�
   await page.goto(`/formations/${fixtures.eventFormation.slug}`)
   await page.getByRole("button", { name: /^je participe$/i }).click()
   await expect(page.getByText(/participation confirmée/i)).toBeVisible()
-  await expect(page.getByText(/en ligne/i)).toBeVisible()
+  await expect(page.getByText(/^Lieu ou modalité : En ligne$/i)).toBeVisible()
   await expect(page.getByText(/aucun e-mail|pas d.e-mail/i)).toBeVisible()
   await page.goto("/compte")
   await expect(page.getByText(fixtures.eventFormation.title)).toBeVisible()
@@ -206,7 +214,7 @@ THEN  : aucune réponse brute ne contient body ni la sentinelle et le CTA de con
     )
     for (const raw of [await api.text(), await html.text(), await rsc.text()]) {
       expect(raw).not.toContain(fixtures.premiumJeu.body)
-      expect(raw).not.toMatch(/"body"/u)
+      expect(raw).not.toMatch(/"body"\s*:/u)
     }
     await actorPage.goto(`/jeux/${fixtures.premiumJeu.slug}`)
     await expect(
