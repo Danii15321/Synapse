@@ -1,10 +1,17 @@
 type PremiumBadgeProps = Readonly<{
   className?: string
+  iconOnly?: boolean
 }>
 
-export function PremiumBadge({ className = "" }: PremiumBadgeProps) {
+export function PremiumBadge({
+  className = "",
+  iconOnly = false,
+}: PremiumBadgeProps) {
   return (
-    <span className={`premium-badge ${className}`.trim()}>
+    <span
+      aria-label={iconOnly ? "Réservé aux membres" : undefined}
+      className={`premium-badge ${className}`.trim()}
+    >
       <svg
         focusable="false"
         height="14"
@@ -20,7 +27,7 @@ export function PremiumBadge({ className = "" }: PremiumBadgeProps) {
           strokeLinejoin="round"
         />
       </svg>
-      Premium
+      {iconOnly ? null : "Premium"}
     </span>
   )
 }

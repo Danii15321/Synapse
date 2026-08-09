@@ -19,6 +19,12 @@ import type {
   RegisterInput,
 } from "@/lib/validators/auth"
 import { authMessageSchema } from "@/lib/validators/auth"
+import {
+  type ParticipationConfirmation,
+  participationConfirmationSchema,
+  type ParticipationPage,
+  participationPageSchema,
+} from "@/lib/validators/inscription"
 
 export async function getPrompts(
   query: PromptListQuery = { take: 24 },
@@ -113,4 +119,60 @@ export function changePassword(
   formData.set("currentPassword", input.currentPassword)
   formData.set("newPassword", input.newPassword)
   return action(formData)
+}
+
+async function mutateParticipation(
+  pathname: string,
+  method: "DELETE" | "POST",
+): Promise<ParticipationConfirmation | null> {
+  const response = await fetch(pathname, {
+    body: method === "POST" ? "{}" : undefined,
+    headers:
+      method === "POST" ? { "content-type": "application/json" } : undefined,
+    method,
+  })
+  if (!response.ok) {
+    throw new Error("La participation n'a pas pu être mise à jour.")
+  }
+  if (method === "DELETE") return null
+  const payload: unknown = await response.json()
+  return participationConfirmationSchema.parse(payload)
+}
+
+export function createJeuParticipation(slug: string) {
+  return mutateParticipation(
+    `/api/jeux/${encodeURIComponent(slug)}/inscriptions`,
+    "POST",
+  )
+}
+
+export function createFormationParticipation(slug: string) {
+  return mutateParticipation(
+    `/api/formations/${encodeURIComponent(slug)}/inscriptions`,
+    "POST",
+  )
+}
+
+export function cancelJeuParticipation(slug: string) {
+  return mutateParticipation(
+    `/api/jeux/${encodeURIComponent(slug)}/inscriptions`,
+    "DELETE",
+  )
+}
+
+export function cancelFormationParticipation(slug: string) {
+  return mutateParticipation(
+    `/api/formations/${encodeURIComponent(slug)}/inscriptions`,
+    "DELETE",
+  )
+}
+
+export async function getMyParticipations(
+  cursor?: string,
+): Promise<ParticipationPage> {
+  const query = cursor ? `?cursor=${encodeURIComponent(cursor)}` : ""
+  const response = await fetch(`/api/inscriptions${query}`)
+  if (!response.ok) throw new Error("Impossible de charger les participations.")
+  const payload: unknown = await response.json()
+  return participationPageSchema.parse(payload)
 }

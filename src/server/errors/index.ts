@@ -56,27 +56,80 @@ export class UnauthorizedError extends Error {
   }
 }
 
+export class RegistrationsClosedError extends Error {
+  constructor() {
+    super("Les participations sont closes")
+    this.name = "RegistrationsClosedError"
+  }
+}
+
+export class ActivityFullError extends Error {
+  constructor() {
+    super("L'activité est complète")
+    this.name = "ActivityFullError"
+  }
+}
+
+export class ParticipationNotAllowedError extends Error {
+  constructor() {
+    super("Cette activité n'accepte pas de participation")
+    this.name = "ParticipationNotAllowedError"
+  }
+}
+
 type ErrorMapping = Readonly<{
   status: number
 }>
 
+function hasErrorName(error: unknown, name: string): boolean {
+  return error instanceof Error && error.name === name
+}
+
 export function mapDomainError(error: unknown): ErrorMapping {
-  if (error instanceof ContentNotFoundError) {
+  if (
+    error instanceof ContentNotFoundError ||
+    hasErrorName(error, "ContentNotFoundError")
+  ) {
     return { status: 404 }
   }
-  if (error instanceof NotEntitledError) {
+  if (
+    error instanceof NotEntitledError ||
+    hasErrorName(error, "NotEntitledError")
+  ) {
     return { status: 403 }
   }
-  if (error instanceof ValidationError) {
+  if (
+    error instanceof ValidationError ||
+    hasErrorName(error, "ValidationError")
+  ) {
     return { status: 400 }
   }
-  if (error instanceof RateLimitedError) {
+  if (
+    error instanceof RateLimitedError ||
+    hasErrorName(error, "RateLimitedError")
+  ) {
     return { status: 429 }
   }
-  if (error instanceof UnauthorizedError) {
+  if (
+    error instanceof UnauthorizedError ||
+    hasErrorName(error, "UnauthorizedError")
+  ) {
     return { status: 401 }
   }
-  if (error instanceof InvalidCurrentPasswordError) {
+  if (
+    error instanceof RegistrationsClosedError ||
+    hasErrorName(error, "RegistrationsClosedError") ||
+    error instanceof ActivityFullError ||
+    hasErrorName(error, "ActivityFullError") ||
+    error instanceof ParticipationNotAllowedError ||
+    hasErrorName(error, "ParticipationNotAllowedError")
+  ) {
+    return { status: 409 }
+  }
+  if (
+    error instanceof InvalidCurrentPasswordError ||
+    hasErrorName(error, "InvalidCurrentPasswordError")
+  ) {
     return { status: 400 }
   }
 

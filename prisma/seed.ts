@@ -76,8 +76,7 @@ async function main(): Promise<void> {
       level: "DEBUTANT",
       publishedAt: new Date("2026-08-08T00:00:00.000Z"),
       startsAt: null,
-      summary:
-        "Construire un budget simple et durable adapté à ses revenus.",
+      summary: "Construire un budget simple et durable adapté à ses revenus.",
       title: "Maîtriser son budget au quotidien",
       visibility: "FREE",
     },
@@ -93,8 +92,7 @@ async function main(): Promise<void> {
       publishedAt: new Date("2026-08-08T00:00:00.000Z"),
       slug: "maitriser-son-budget",
       startsAt: null,
-      summary:
-        "Construire un budget simple et durable adapté à ses revenus.",
+      summary: "Construire un budget simple et durable adapté à ses revenus.",
       title: "Maîtriser son budget au quotidien",
       visibility: "FREE",
     },
@@ -203,6 +201,76 @@ async function main(): Promise<void> {
         "Financer une première preuve de concept portée par une équipe ivoirienne.",
       title: "Fonds d'amorçage pour projets à impact",
       type: "FINANCEMENT",
+      visibility: "PREMIUM",
+    },
+  })
+
+  await db.jeu.upsert({
+    where: { slug: "challenge-idee-impact" },
+    update: {
+      body: "Formez une équipe de deux à quatre personnes, choisissez un problème concret rencontré par les jeunes de votre quartier et préparez une solution testable. La présentation finale dure cinq minutes et doit expliquer le besoin, la proposition, les bénéficiaires et la première expérimentation.",
+      capacity: 40,
+      closesAt: new Date("2026-11-30T23:59:59.000Z"),
+      coverImage: null,
+      excerpt:
+        "Un défi collectif pour transformer un problème local en première solution testable.",
+      location: "Abidjan, Cocody",
+      publishedAt: new Date("2026-08-09T00:00:00.000Z"),
+      startsAt: new Date("2026-12-05T09:00:00.000Z"),
+      summary:
+        "Imaginer et présenter une solution utile pour les jeunes de son quartier.",
+      title: "Challenge idée à impact",
+      visibility: "FREE",
+    },
+    create: {
+      body: "Formez une équipe de deux à quatre personnes, choisissez un problème concret rencontré par les jeunes de votre quartier et préparez une solution testable. La présentation finale dure cinq minutes et doit expliquer le besoin, la proposition, les bénéficiaires et la première expérimentation.",
+      capacity: 40,
+      closesAt: new Date("2026-11-30T23:59:59.000Z"),
+      coverImage: null,
+      excerpt:
+        "Un défi collectif pour transformer un problème local en première solution testable.",
+      location: "Abidjan, Cocody",
+      publishedAt: new Date("2026-08-09T00:00:00.000Z"),
+      slug: "challenge-idee-impact",
+      startsAt: new Date("2026-12-05T09:00:00.000Z"),
+      summary:
+        "Imaginer et présenter une solution utile pour les jeunes de son quartier.",
+      title: "Challenge idée à impact",
+      visibility: "FREE",
+    },
+  })
+
+  await db.jeu.upsert({
+    where: { slug: "concours-pitch-premium" },
+    update: {
+      body: "Préparez un pitch de trois minutes présentant votre projet, le problème traité, la solution, les premiers résultats et votre prochaine étape. Les membres du jury évaluent la clarté, la connaissance du besoin, la faisabilité et la capacité à convaincre sans jargon.",
+      capacity: 20,
+      closesAt: new Date("2026-12-10T23:59:59.000Z"),
+      coverImage: null,
+      excerpt:
+        "Découvrez les critères du jury et vérifiez que votre projet est prêt pour un pitch court.",
+      location: "En ligne",
+      publishedAt: new Date("2026-08-09T00:00:00.000Z"),
+      startsAt: new Date("2026-12-15T15:00:00.000Z"),
+      summary:
+        "Présenter son projet à un jury et recevoir un retour structuré.",
+      title: "Concours pitch des membres",
+      visibility: "PREMIUM",
+    },
+    create: {
+      body: "Préparez un pitch de trois minutes présentant votre projet, le problème traité, la solution, les premiers résultats et votre prochaine étape. Les membres du jury évaluent la clarté, la connaissance du besoin, la faisabilité et la capacité à convaincre sans jargon.",
+      capacity: 20,
+      closesAt: new Date("2026-12-10T23:59:59.000Z"),
+      coverImage: null,
+      excerpt:
+        "Découvrez les critères du jury et vérifiez que votre projet est prêt pour un pitch court.",
+      location: "En ligne",
+      publishedAt: new Date("2026-08-09T00:00:00.000Z"),
+      slug: "concours-pitch-premium",
+      startsAt: new Date("2026-12-15T15:00:00.000Z"),
+      summary:
+        "Présenter son projet à un jury et recevoir un retour structuré.",
+      title: "Concours pitch des membres",
       visibility: "PREMIUM",
     },
   })
