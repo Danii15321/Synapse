@@ -1,8 +1,15 @@
 import { vi } from "vitest"
 
-import { isRecord, scenario } from "../repositories/jeux-inscriptions-fixtures"
+import { isRecord } from "../repositories/jeux-inscriptions-fixtures"
 
-export { scenario }
+export function scenario(
+  name: string,
+  given: string,
+  when: string,
+  then: string,
+): string {
+  return `${name} — ce qui est vérifié\nGIVEN : ${given}\nWHEN  : ${when}\nTHEN  : ${then}`
+}
 
 export type SessionUser = Readonly<{
   email: string
