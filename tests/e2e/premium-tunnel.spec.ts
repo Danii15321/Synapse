@@ -122,7 +122,9 @@ THEN  : la réponse vaut 200, annonce 7 550 FCFA une seule fois pour un paiement
     [/jeux|concours/i, jeux],
     [/opportunités/i, opportunites],
   ] as const) {
-    const labelNode = page.getByText(label, { exact: true }).first()
+    const labelNode = page
+      .getByRole("main")
+      .getByText(label, { exact: true })
     await expect(labelNode).toBeVisible()
     await expect(labelNode.locator("..")).toContainText(String(count))
   }
