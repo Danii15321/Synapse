@@ -65,6 +65,13 @@ export function findCredentialsUserByEmail(email: string) {
   })
 }
 
+export function findUserIdByEmail(email: string) {
+  return db.user.findUnique({
+    where: { email },
+    select: { id: true },
+  })
+}
+
 export function findCredentialsUserById(id: string) {
   return db.user.findUnique({
     where: { id },
