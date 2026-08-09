@@ -1,7 +1,9 @@
 import ChangePasswordForm from "@/components/features/auth/change-password-form"
 import SessionRotationReload from "@/components/features/auth/session-rotation-reload"
+import AccountParticipations from "@/components/features/account-participations"
 import { redirect } from "next/navigation"
 
+import { getMyParticipations } from "@/lib/account-participations-server"
 import { getAccount, requireUser } from "@/server"
 import { changePasswordAction } from "./change-password-action"
 
@@ -20,11 +22,14 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
   const params = await searchParams
   const passwordChanged = params.passwordChanged
   let account
+  let user
   try {
-    account = getAccount(await requireUser())
+    user = await requireUser()
+    account = getAccount(user)
   } catch {
     redirect("/login")
   }
+  const participations = await getMyParticipations({ take: 20 }, user)
 
   return (
     <main className="page-shell">
@@ -44,6 +49,13 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
               </dd>
             </div>
           </dl>
+        </section>
+        <section className="account-section ui-card">
+          <h2 className="section-heading">Mes participations</h2>
+          <AccountParticipations
+            initialItems={participations.items}
+            userId={user.id}
+          />
         </section>
         <section className="account-section ui-card">
           <h2 className="section-heading">Sécurité</h2>

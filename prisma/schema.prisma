@@ -50,17 +50,19 @@ enum OpportuniteType {
 }
 
 model User {
-  id            String     @id @default(cuid())
-  name          String?
-  email         String     @unique
-  emailVerified DateTime?
-  image         String?
-  passwordHash  String
-  membership    Membership @default(FREE)
-  accounts      Account[]
-  sessions      Session[]
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
+  id                    String                 @id @default(cuid())
+  name                  String?
+  email                 String                 @unique
+  emailVerified         DateTime?
+  image                 String?
+  passwordHash          String
+  membership            Membership             @default(FREE)
+  accounts              Account[]
+  sessions              Session[]
+  inscriptions          Inscription[]
+  formationInscriptions FormationInscription[]
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
 }
 
 model Account {
@@ -122,26 +124,72 @@ model Prompt {
 }
 
 model Formation {
-  id          String        @id @default(cuid())
-  slug        String        @unique
-  title       String
-  summary     String
-  excerpt     String?
-  body        String
-  visibility  Visibility    @default(FREE)
-  publishedAt DateTime?
-  level       Level
-  format      Format
-  durationH   Int?
-  kind        FormationKind
-  startsAt    DateTime?
-  coverImage  String?
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  id           String                 @id @default(cuid())
+  slug         String                 @unique
+  title        String
+  summary      String
+  excerpt      String?
+  body         String
+  visibility   Visibility             @default(FREE)
+  publishedAt  DateTime?
+  level        Level
+  format       Format
+  durationH    Int?
+  kind         FormationKind
+  startsAt     DateTime?
+  coverImage   String?
+  createdAt    DateTime               @default(now())
+  updatedAt    DateTime               @updatedAt
+  inscriptions FormationInscription[]
 
   @@index([publishedAt, startsAt])
   @@index([kind])
   @@index([level])
+}
+
+model Jeu {
+  id           String        @id @default(cuid())
+  slug         String        @unique
+  title        String
+  summary      String
+  excerpt      String?
+  body         String
+  visibility   Visibility    @default(FREE)
+  startsAt     DateTime?
+  closesAt     DateTime?
+  capacity     Int?
+  location     String?
+  coverImage   String?
+  publishedAt  DateTime?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  inscriptions Inscription[]
+
+  @@index([publishedAt])
+}
+
+model Inscription {
+  id        String   @id @default(cuid())
+  userId    String
+  jeuId     String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jeu       Jeu      @relation(fields: [jeuId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, jeuId])
+  @@index([jeuId])
+}
+
+model FormationInscription {
+  id          String    @id @default(cuid())
+  userId      String
+  formationId String
+  createdAt   DateTime  @default(now())
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  formation   Formation @relation(fields: [formationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, formationId])
+  @@index([formationId])
 }
 
 model Opportunite {

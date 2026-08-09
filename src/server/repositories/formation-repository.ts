@@ -110,3 +110,17 @@ export function findBySlug(
   })
 }
 
+export function findParticipationMetaBySlug(slug: string) {
+  return db.formation.findUnique({
+    select: {
+      format: true,
+      id: true,
+      kind: true,
+      publishedAt: true,
+      startsAt: true,
+      title: true,
+      visibility: true,
+    },
+    where: { slug },
+  })
+}

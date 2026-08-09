@@ -1,6 +1,8 @@
 import type { Metadata } from "next"
+import Link from "next/link"
 import { notFound } from "next/navigation"
 
+import ParticipationControl from "@/components/features/participation-control"
 import {
   FORMAT_LABELS,
   KIND_LABELS,
@@ -14,6 +16,7 @@ import { formationSlugParamsSchema } from "@/lib/validators/formation"
 import { auth } from "@/server/auth/config"
 import { ContentNotFoundError } from "@/server/errors"
 import { getFormationBySlug } from "@/server/services/formation-service"
+import { getParticipationState } from "@/server/services/inscription-service"
 
 export const dynamic = "force-dynamic"
 
@@ -58,6 +61,11 @@ export default async function FormationDetailPage({
     parsedParams.data.slug,
     session?.user ?? null,
   )
+  const user = session?.user ?? null
+  const participationState =
+    formation.kind === "EVENEMENTIELLE" && user
+      ? await getParticipationState("FORMATION", formation.slug, user)
+      : null
 
   return (
     <main className="page-shell">
@@ -110,8 +118,28 @@ export default async function FormationDetailPage({
         ) : (
           <PremiumGate />
         )}
+
+        {formation.kind === "EVENEMENTIELLE" && participationState ? (
+          <ParticipationControl
+            activityType="FORMATION"
+            initialState={participationState}
+            location={FORMAT_LABELS[formation.format]}
+            slug={formation.slug}
+            startsAt={formation.startsAt}
+          />
+        ) : null}
+        {formation.kind === "EVENEMENTIELLE" && !user ? (
+          <section className="detail-section participation-panel ui-card">
+            <h2 className="card-heading">Participation</h2>
+            <Link
+              className="ui-button participation-login-link"
+              href={`/login?callbackUrl=${encodeURIComponent(`/formations/${formation.slug}`)}`}
+            >
+              Se connecter pour participer
+            </Link>
+          </section>
+        ) : null}
       </article>
     </main>
   )
 }
-

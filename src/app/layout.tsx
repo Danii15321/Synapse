@@ -6,6 +6,7 @@ import "@fontsource-variable/montserrat/wght.css"
 
 import SiteFooter from "@/components/site-footer"
 import { SiteNavigation } from "@/components/site-navigation"
+import QueryProvider from "@/components/providers/query-provider"
 import { auth } from "@/server/auth/config"
 import { config } from "@/server/config"
 
@@ -47,12 +48,14 @@ export default async function RootLayout({
   return (
     <html lang="fr">
       <body>
-        <SiteNavigation
-          authenticated={Boolean(session?.user)}
-          membership={session?.user.membership ?? null}
-        />
-        {children}
-        <SiteFooter />
+        <QueryProvider>
+          <SiteNavigation
+            authenticated={Boolean(session?.user)}
+            membership={session?.user.membership ?? null}
+          />
+          {children}
+          <SiteFooter />
+        </QueryProvider>
       </body>
     </html>
   )
