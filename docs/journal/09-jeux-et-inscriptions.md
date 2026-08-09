@@ -1,6 +1,6 @@
 # Journal — tranche 09 : Jeux & concours et inscriptions
 
-- Démarrée le : 2026-08-09 / Terminée le : — / Statut : VALIDÉE LOCALEMENT
+- Démarrée le : 2026-08-09 / Terminée le : — / Statut : VALIDATION DISTANTE EN COURS
 
 ## Definition of Ready
 
@@ -227,3 +227,13 @@ L'écart est validé et clos avant la phase RED ; la pipeline reste inchangée.
 La validation distante, les URLs des deux PR et les exécutions CI seront
 ajoutées sur la branche documentaire de clôture après fusion de la PR
 d'implémentation.
+
+### Validation GitHub — implémentation
+
+- PR d'implémentation : [#14 — ajouter les participations aux activités](https://github.com/Danii15321/Synapse/pull/14), fusionnée le 2026-08-09 ;
+- commit de fusion : `adfe64402c190002913fe480d2fac9f0be0d0181` ;
+- CI du push : exécution `31332969384`, verte en 3 min 24 s ;
+- CI de la pull request : exécution `31332972353`, verte en 3 min 43 s.
+
+La PR documentaire de clôture est créée à l'étape suivante ; son URL et ses
+preuves CI seront consignées dans un second commit avant fusion.
