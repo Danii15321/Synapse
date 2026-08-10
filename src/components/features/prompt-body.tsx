@@ -5,18 +5,29 @@ function readableInlineMarkdown(line: string): string {
 }
 
 export function PromptBody({ body }: Readonly<{ body: string }>) {
-  const blocks: ReactNode[] = []
+  const lines = body.split(/\r?\n/u)
+  const hasMarkdownHeading = lines.some((line) =>
+    /^(#{1,3})\s+(.+)$/u.test(line.trim()),
+  )
 
-  for (const [index, rawLine] of body.split(/\r?\n/u).entries()) {
+  if (!hasMarkdownHeading) {
+    return (
+      <div className="prompt-body-text">
+        <p className="prompt-body-line">{body}</p>
+      </div>
+    )
+  }
+
+  const blocks: ReactNode[] = []
+  for (const [index, rawLine] of lines.entries()) {
     const line = rawLine.trim()
     if (!line) continue
 
     const heading = /^(#{1,3})\s+(.+)$/u.exec(line)
     if (heading) {
-      const text = readableInlineMarkdown(heading[2] ?? "")
       blocks.push(
         <h3 className="prompt-body-heading" key={index}>
-          {text}
+          {readableInlineMarkdown(heading[2] ?? "")}
         </h3>,
       )
       continue
