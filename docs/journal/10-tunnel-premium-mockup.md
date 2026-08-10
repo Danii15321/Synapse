@@ -1,6 +1,6 @@
 # Journal — tranche 10 : Tunnel premium (mockup)
 
-- Démarrée le : 2026-08-09 / Terminée le : — / Statut : VALIDÉE LOCALEMENT
+- Démarrée le : 2026-08-09 / Terminée le : 2026-08-10 / Statut : TERMINÉE
 
 ## Definition of Ready
 
@@ -220,3 +220,22 @@ L'écart est clos ; la pipeline reste inchangée.
 La validation distante, les URLs des deux PR et les exécutions CI seront
 ajoutées sur la branche documentaire de clôture après fusion de la PR
 d'implémentation.
+
+### Validation GitHub — implémentation
+
+- PR d'implémentation : [#16 — ajouter le tunnel de contact manuel](https://github.com/Danii15321/Synapse/pull/16), fusionnée le 2026-08-10 ;
+- commit de fusion : `d0970fabd1100bd6e8fd753c986889f92b43baf1` ;
+- CI du push : exécution `31339225671`, verte en 3 min 37 s ;
+- CI de la pull request : exécution `31339227601`, verte en 3 min 19 s ;
+- CI post-fusion de `main` : exécution `31349531483`, verte en 3 min 21 s.
+
+### Validation GitHub — clôture documentaire
+
+- PR documentaire : [#17 — clore la validation de la tranche 10](https://github.com/Danii15321/Synapse/pull/17) ;
+- CI du premier push documentaire : exécution `31349742831`, verte en 3 min 49 s ;
+- CI de la pull request documentaire : exécution `31349746119`, verte en 3 min 49 s ;
+- le dernier commit ne modifie que ce journal et ne touche ni le code, ni les
+  tests, ni la pipeline.
+
+La tranche 10 est terminée. La fusion de cette PR et le contrôle post-fusion de
+`main` constituent les dernières opérations distantes du chef-projet.
