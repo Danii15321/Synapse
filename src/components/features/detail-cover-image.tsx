@@ -13,24 +13,38 @@ const FALLBACK_ALT: Record<DetailCoverImageProps["fallback"], string> = {
   prompts: "Illustration par défaut des prompts Synapse",
 }
 
-const FALLBACK_IMAGE =
+const GEOMETRIC_FALLBACK_IMAGE =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='900' viewBox='0 0 1200 900'%3E%3Cpath fill='%2307183d' d='M0 0h1200v900H0z'/%3E%3Ccircle cx='600' cy='450' r='190' fill='%23f4b942'/%3E%3Cpath fill='%23fbf8f3' d='M505 355h190v190H505z'/%3E%3C/svg%3E"
+
+const FALLBACK_IMAGE: Record<DetailCoverImageProps["fallback"], string> = {
+  formations: GEOMETRIC_FALLBACK_IMAGE,
+  jeux: GEOMETRIC_FALLBACK_IMAGE,
+  opportunites: GEOMETRIC_FALLBACK_IMAGE,
+  prompts: "/images/fallbacks/fallback-prompts.webp",
+}
 
 export function DetailCoverImage({
   alt,
   coverImage,
   fallback,
 }: DetailCoverImageProps) {
+  const source = coverImage ?? FALLBACK_IMAGE[fallback]
+  const usesPromptFallback = !coverImage && fallback === "prompts"
+
   return (
     <CspImage
       alt={coverImage ? alt : FALLBACK_ALT[fallback]}
       className="prompt-detail-image"
-      height={900}
+      height={usesPromptFallback ? 600 : 900}
       priority
-      sizes="(min-width: 768px) 768px, calc(100vw - 32px)"
-      src={coverImage ?? FALLBACK_IMAGE}
-      unoptimized={!coverImage}
-      width={1200}
+      sizes={
+        usesPromptFallback
+          ? undefined
+          : "(min-width: 768px) 768px, calc(100vw - 32px)"
+      }
+      src={source}
+      unoptimized={!coverImage && !usesPromptFallback}
+      width={usesPromptFallback ? 800 : 1200}
     />
   )
 }

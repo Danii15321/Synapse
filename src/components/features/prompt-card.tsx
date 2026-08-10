@@ -25,6 +25,7 @@ export function PromptCard({
             alt={`Illustration du prompt ${title}`}
             className={`prompt-card-image${visibility === "PREMIUM" ? " prompt-card-image-premium" : ""}`}
             height={600}
+            priority={!coverImage}
             src={coverImage ?? PROMPT_FALLBACK_IMAGE}
             width={800}
           />
