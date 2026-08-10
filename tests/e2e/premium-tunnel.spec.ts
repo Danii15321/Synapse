@@ -14,6 +14,10 @@ const PRICE_PATTERN = /7[\s\u00a0\u202f]*550\s*FCFA/iu
 
 type PublishedRow = Readonly<{ id: string; publishedAt: Date }>
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value)
+}
+
 async function hidePublishedPremiumContents(): Promise<() => Promise<void>> {
   const [prompts, formations, jeux, opportunites] = await Promise.all([
     premiumTunnelDb.$queryRaw<PublishedRow[]>`
@@ -122,9 +126,7 @@ THEN  : la réponse vaut 200, annonce 7 550 FCFA une seule fois pour un paiement
     [/jeux|concours/i, jeux],
     [/opportunités/i, opportunites],
   ] as const) {
-    const labelNode = page
-      .getByRole("main")
-      .getByText(label, { exact: true })
+    const labelNode = page.getByRole("main").getByText(label, { exact: true })
     await expect(labelNode).toBeVisible()
     await expect(labelNode.locator("..")).toContainText(String(count))
   }
@@ -323,11 +325,21 @@ THEN  : /premium répond 200, le corps reste servi avant et après et son member
   if (!prompt) throw new Error("le seed doit fournir un prompt PREMIUM publié")
 
   const before = await page.request.get(`/api/prompts/${prompt.slug}`)
-  expect(await before.text()).toContain(prompt.body)
+  const beforePayload: unknown = await before.json()
+  expect(isRecord(beforePayload)).toBe(true)
+  if (!isRecord(beforePayload)) {
+    throw new Error("la réponse entitled avant l'offre doit être un objet JSON")
+  }
+  expect(beforePayload.body).toBe(prompt.body)
   const offer = await page.goto("/premium")
   expect(offer?.status()).toBe(200)
   const after = await page.request.get(`/api/prompts/${prompt.slug}`)
-  expect(await after.text()).toContain(prompt.body)
+  const afterPayload: unknown = await after.json()
+  expect(isRecord(afterPayload)).toBe(true)
+  if (!isRecord(afterPayload)) {
+    throw new Error("la réponse entitled après l'offre doit être un objet JSON")
+  }
+  expect(afterPayload.body).toBe(prompt.body)
 
   const persisted = await premiumTunnelDb.user.findUnique({
     select: { membership: true },

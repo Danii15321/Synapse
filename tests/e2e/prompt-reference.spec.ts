@@ -19,6 +19,23 @@ test.afterAll(async () => {
   await db.$disconnect()
 })
 
+function visiblePromptBody(body: string): string {
+  const lines = body.split(/\r?\n/u)
+  const hasMarkdownHeading = lines.some((line) =>
+    /^(#{1,3})\s+(.+)$/u.test(line.trim()),
+  )
+  if (!hasMarkdownHeading) return body
+
+  return lines
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => line.replace(/^(?:#{1,3})\s+/u, ""))
+    .map((line) =>
+      line.replace(/\*\*([^*]+)\*\*/gu, "$1").replace(/`([^`]+)`/gu, "$1"),
+    )
+    .join("\n")
+}
+
 test(`La liste reste utilisable à 390px sous réseau bridé, avec filtres, recherche et pagination — ce qui est vérifié
 GIVEN : 205 prompts publiés isolés par un tag, une image de repli et un profil réseau mobile dégradé
 WHEN  : un anonyme ouvre /prompts, soumet ses filtres, suit le curseur vers la page suivante puis soumet ses recherches
@@ -259,7 +276,7 @@ THEN  : titre, summary, image 4/3 et corps distinct sont visibles, la copie rest
 }) => {
   const prompt = await firstPrompt("FREE")
   await page.context().grantPermissions(["clipboard-read", "clipboard-write"])
-  await page.goto("/prompts")
+  await page.goto(`/prompts?search=${encodeURIComponent(prompt.title)}`)
   const cardLink = page.getByRole("link", {
     name: new RegExp(prompt.title, "i"),
   })
@@ -270,7 +287,9 @@ THEN  : titre, summary, image 4/3 et corps distinct sont visibles, la copie rest
     page.getByRole("heading", { name: prompt.title, exact: true }),
   ).toBeVisible()
   await expect(page.getByText(prompt.summary, { exact: true })).toBeVisible()
-  await expect(page.getByText(prompt.body, { exact: true })).toBeVisible()
+  const promptBody = page.locator(".prompt-body-text")
+  await expect(promptBody).toBeVisible()
+  expect(await promptBody.innerText()).toBe(visiblePromptBody(prompt.body))
   const copy = page.getByRole("button", { name: /^copier/i })
   const box = await copy.boundingBox()
   expect(box?.height ?? 0).toBeGreaterThanOrEqual(44)
