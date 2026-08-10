@@ -70,7 +70,7 @@ describe("détail visuel d'un prompt premium", () => {
       "Le teaser maximise la conversion sans transformer le flou en protection",
       "un visiteur anonyme et un PromptTeaser dont le service n'a jamais fourni body",
       "le Server Component de détail est rendu",
-      "titre, résumé, tags et excerpt restent lisibles, un badge premium et un cadenas sont annoncés, puis tout le bloc verrouillé mène à /register et contient un faux aperçu flouté aria-hidden sans corps réel",
+      "le titre et l'excerpt restent lisibles sans résumé, domaine ni tags, un badge premium et un cadenas sont annoncés, puis tout le bloc verrouillé mène à /register et contient un faux aperçu flouté aria-hidden sans corps réel",
     ),
     async () => {
       vi.doMock("@/server/auth/config", () => ({
@@ -88,11 +88,11 @@ describe("détail visuel d'un prompt premium", () => {
       expect(
         screen.getByRole("heading", { name: TEASER.title }),
       ).toBeInTheDocument()
-      expect(screen.getByText(TEASER.summary)).toBeInTheDocument()
       expect(screen.getByText(TEASER.excerpt)).toBeInTheDocument()
-      expect(screen.getByText(TEASER.domain)).toBeInTheDocument()
-      expect(screen.getByText("business")).toBeInTheDocument()
-      expect(screen.getByText("ia")).toBeInTheDocument()
+      expect(screen.queryByText(TEASER.summary)).not.toBeInTheDocument()
+      expect(screen.queryByText(TEASER.domain)).not.toBeInTheDocument()
+      expect(screen.queryByText("business")).not.toBeInTheDocument()
+      expect(screen.queryByText("ia")).not.toBeInTheDocument()
       expect(screen.getByText(/premium/i)).toBeInTheDocument()
       expect(screen.getByText(/verrouill|cadenas/i)).toBeInTheDocument()
 
