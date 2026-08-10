@@ -1,9 +1,17 @@
 import ChangePasswordForm from "@/components/features/auth/change-password-form"
 import SessionRotationReload from "@/components/features/auth/session-rotation-reload"
 import AccountParticipations from "@/components/features/account-participations"
+import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 
-import { getMyParticipations } from "@/lib/account-participations-server"
+import {
+  getMyParticipations,
+  waitForPendingParticipation,
+} from "@/lib/account-participations-server"
+import {
+  parsePendingParticipation,
+  PENDING_PARTICIPATION_COOKIE,
+} from "@/lib/validators/pending-participation"
 import { getAccount, requireUser } from "@/server"
 import { changePasswordAction } from "./change-password-action"
 
@@ -18,6 +26,17 @@ type AccountPageProps = Readonly<{
   searchParams: Promise<{ passwordChanged?: string | string[] }>
 }>
 
+async function readPendingParticipation() {
+  try {
+    const cookieStore = await cookies()
+    return parsePendingParticipation(
+      cookieStore.get(PENDING_PARTICIPATION_COOKIE)?.value,
+    )
+  } catch {
+    return null
+  }
+}
+
 export default async function AccountPage({ searchParams }: AccountPageProps) {
   const params = await searchParams
   const passwordChanged = params.passwordChanged
@@ -28,6 +47,10 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
     account = getAccount(user)
   } catch {
     redirect("/login")
+  }
+  const pendingParticipation = await readPendingParticipation()
+  if (pendingParticipation) {
+    await waitForPendingParticipation(pendingParticipation, user)
   }
   const participations = await getMyParticipations({ take: 20 }, user)
 

@@ -34,7 +34,11 @@ export default function SiteFooter() {
             <ul className="footer-link-list">
               {RUBRIC_LINKS.map(([label, href]) => (
                 <li key={href}>
-                  <Link className="footer-link" href={href}>
+                  <Link
+                    aria-label={`${label} — lien du pied de page`}
+                    className="footer-link"
+                    href={href}
+                  >
                     {label}
                   </Link>
                 </li>

@@ -2,7 +2,11 @@ import { randomUUID } from "node:crypto"
 
 import { NextRequest, NextResponse } from "next/server"
 
-import { contentDetailPathSchema } from "@/lib/validators/content-detail-path"
+import {
+  contentDetailPathSchema,
+  contentRubricSchema,
+  type ContentRubric,
+} from "@/lib/validators/content-detail-path"
 import { config as appConfig } from "@/server/config"
 import { SESSION_COOKIE_NAME } from "@/server/auth/session-cookie"
 import { mapDomainError, RateLimitedError } from "@/server/errors"
@@ -48,28 +52,36 @@ function isMemberPath(pathname: string): boolean {
   return pathname === "/compte" || pathname.startsWith("/compte/")
 }
 
-async function isMissingContentDetail(pathname: string): Promise<boolean> {
+async function missingContentRubric(
+  pathname: string,
+): Promise<ContentRubric | null> {
   const match = /^\/(formations|jeux|opportunites|prompts)\/([^/]+)\/?$/u.exec(
     pathname,
   )
-  if (!match) return false
+  if (!match) return null
+
+  const parsedRubric = contentRubricSchema.safeParse(match[1])
+  if (!parsedRubric.success) return null
 
   const parsed = contentDetailPathSchema.safeParse({
-    rubric: match[1],
+    rubric: parsedRubric.data,
     slug: match[2],
   })
-  if (!parsed.success) return true
+  if (!parsed.success) return parsedRubric.data
 
-  return !(await publishedContentExists(parsed.data))
+  return (await publishedContentExists(parsed.data)) ? null : parsed.data.rubric
 }
 
 function rewriteNotFound(
   request: NextRequest,
   requestHeaders: Headers,
   csp: string,
+  rubric: ContentRubric,
 ): NextResponse {
   const notFoundUrl = request.nextUrl.clone()
-  notFoundUrl.pathname = "/__synapse-content-not-found"
+  notFoundUrl.pathname = `/synapse-content-not-found/${rubric}`
+  notFoundUrl.search = ""
+  requestHeaders.set("x-synapse-contextual-not-found", "1")
   const response = NextResponse.rewrite(notFoundUrl, {
     request: { headers: requestHeaders },
     status: 404,
@@ -125,8 +137,11 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
       return response
     }
 
-    if (await isMissingContentDetail(request.nextUrl.pathname)) {
-      return rewriteNotFound(request, requestHeaders, csp)
+    const missingRubric = await missingContentRubric(
+      request.nextUrl.pathname,
+    )
+    if (missingRubric) {
+      return rewriteNotFound(request, requestHeaders, csp, missingRubric)
     }
 
     const response = NextResponse.next({
