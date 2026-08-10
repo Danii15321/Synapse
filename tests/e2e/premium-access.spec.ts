@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto"
+import { createHash, randomUUID } from "node:crypto"
 import { spawnSync } from "node:child_process"
 
 import { PrismaClient } from "@prisma/client"
@@ -71,6 +71,10 @@ function visiblePromptBody(body: string): string {
       line.replace(/\*\*([^*]+)\*\*/gu, "$1").replace(/`([^`]+)`/gu, "$1"),
     )
     .join("\n")
+}
+
+function sha256(value: string): string {
+  return createHash("sha256").update(value, "utf8").digest("hex")
 }
 
 async function registerFreeMember(
@@ -207,7 +211,10 @@ THEN  : la commande réussit et trace l'opération, le token ne change pas, le m
   expect(sessionToken(await page.context().cookies())).toBe(tokenBefore)
   const promptBody = page.locator(".prompt-body-text")
   await expect(promptBody).toBeVisible()
-  expect(await promptBody.innerText()).toBe(visiblePromptBody(prompt.body))
+  expect(
+    sha256(await promptBody.innerText()),
+    "le corps premium rendu doit correspondre intégralement à la ressource",
+  ).toBe(sha256(visiblePromptBody(prompt.body)))
   const entitledResponse = await page.request.get(`/api/prompts/${prompt.slug}`)
   const entitledRaw = await entitledResponse.text()
   const entitledPayload = parseJsonRecord(entitledRaw)

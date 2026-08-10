@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto"
+import { createHash, randomUUID } from "node:crypto"
 
 import { expect, test } from "@playwright/test"
 
@@ -34,6 +34,10 @@ function visiblePromptBody(body: string): string {
       line.replace(/\*\*([^*]+)\*\*/gu, "$1").replace(/`([^`]+)`/gu, "$1"),
     )
     .join("\n")
+}
+
+function sha256(value: string): string {
+  return createHash("sha256").update(value, "utf8").digest("hex")
 }
 
 test(`La liste reste utilisable à 390px sous réseau bridé, avec filtres, recherche et pagination — ce qui est vérifié
@@ -289,7 +293,10 @@ THEN  : titre, summary, image 4/3 et corps distinct sont visibles, la copie rest
   await expect(page.getByText(prompt.summary, { exact: true })).toBeVisible()
   const promptBody = page.locator(".prompt-body-text")
   await expect(promptBody).toBeVisible()
-  expect(await promptBody.innerText()).toBe(visiblePromptBody(prompt.body))
+  expect(
+    sha256(await promptBody.innerText()),
+    "le corps du prompt rendu doit correspondre intégralement à la ressource",
+  ).toBe(sha256(visiblePromptBody(prompt.body)))
   const copy = page.getByRole("button", { name: /^copier/i })
   const box = await copy.boundingBox()
   expect(box?.height ?? 0).toBeGreaterThanOrEqual(44)
