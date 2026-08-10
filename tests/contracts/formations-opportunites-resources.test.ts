@@ -1,9 +1,17 @@
-import { readFile, readdir } from "node:fs/promises"
+import { readFile } from "node:fs/promises"
 import path from "node:path"
 
 import { describe, expect, it } from "vitest"
 
+import { formationResourceSchema } from "@/lib/validators/formation"
+import {
+  opportuniteFullSchema,
+  opportuniteResourceSchema,
+  opportuniteTeaserSchema,
+} from "@/lib/validators/opportunite"
+
 const ROOT = process.cwd()
+const IMPORT_GUIDE = path.join(ROOT, "docs", "import-ressources.md")
 
 function scenario(
   name: string,
@@ -14,161 +22,88 @@ function scenario(
   return `${name} — ce qui est vérifié\nGIVEN : ${given}\nWHEN  : ${when}\nTHEN  : ${then}`
 }
 
-function parseFrontmatter(markdown: string): {
-  body: string
-  fields: Map<string, string>
-} {
-  const match = /^---\r?\n([\s\S]*?)\r?\n---\r?\n([\s\S]+)$/u.exec(markdown)
-  expect(match, "frontmatter puis corps Markdown requis").not.toBeNull()
-  if (!match) throw new Error("frontmatter puis corps Markdown requis")
-  const fields = new Map<string, string>()
-  for (const line of (match[1] ?? "").split(/\r?\n/u)) {
-    const separator = line.indexOf(":")
-    if (separator > 0) {
-      fields.set(
-        line.slice(0, separator).trim(),
-        line.slice(separator + 1).trim(),
-      )
-    }
-  }
-  return { body: match[2]?.trim() ?? "", fields }
-}
+const FORMATION_RESOURCE = {
+  body: "Programme synthétique réservé au contrat de validation.",
+  coverImage: null,
+  durationH: 4,
+  excerpt: "Extrait public synthétique",
+  format: "EN_LIGNE",
+  level: "DEBUTANT",
+  publishedAt: "2026-08-08",
+  slug: "formation-test",
+  summary: "Résumé public synthétique",
+  title: "Formation synthétique",
+} as const
 
-async function examplesOf(resource: string) {
-  const directory = path.join(ROOT, "ressources", resource)
-  const entries = await readdir(directory, { withFileTypes: true })
-  return Promise.all(
-    entries
-      .filter(
-        (entry) =>
-          entry.isFile() &&
-          entry.name.endsWith(".md") &&
-          entry.name.toLowerCase() !== "readme.md",
-      )
-      .map(async (entry) => ({
-        name: entry.name,
-        parsed: parseFrontmatter(
-          await readFile(path.join(directory, entry.name), "utf8"),
-        ),
-      })),
-  )
-}
-
-function schemaFrom(module: unknown, label: string) {
-  if (typeof module !== "object" || module === null) {
-    throw new Error(`${label} doit exporter un schéma Zod de ressource`)
-  }
-  const entry = Object.entries(module).find(
-    ([name, value]) =>
-      /resource|import/i.test(name) &&
-      typeof value === "object" &&
-      value !== null &&
-      "safeParse" in value &&
-      typeof value.safeParse === "function",
-  )
-  if (!entry)
-    throw new Error(`${label} doit exporter un schéma Zod de ressource`)
-  return entry[1]
-}
+const OPPORTUNITE_RESOURCE = {
+  body: "Modalités synthétiques réservées au contrat de validation.",
+  coverImage: null,
+  deadline: null,
+  excerpt: "Extrait public synthétique",
+  externalUrl: "https://example.com/candidature",
+  organisme: "Organisme synthétique",
+  publishedAt: "2026-08-08",
+  slug: "opportunite-test",
+  summary: "Résumé public synthétique",
+  title: "Opportunité synthétique",
+} as const
 
 describe("contrats éditoriaux Formations et Opportunités", () => {
   it(
     scenario(
-      "Le README Formations documente le contrat temporel et premium complet",
-      "ressources/formations/README.md destiné à une personne non développeuse",
-      "la documentation autonome est lue",
-      "tous les champs, enums, règles FREE/PREMIUM et cohérence kind/startsAt y figurent, sans inscription pour une permanente",
+      "Le guide versionné assume l'absence de ressources et de démonstrations",
+      "aucune Formation, Opportunité ou Jeu réel n'est fourni dans le dépôt",
+      "la procédure d'import versionnée est inspectée",
+      "seule la source uppercase PROMPTS est importée, les anciennes démonstrations sont supprimées et les trois rubriques restent explicitement à zéro",
     ),
     async () => {
-      const readme = await readFile(
-        path.join(ROOT, "ressources", "formations", "README.md"),
-        "utf8",
+      const guide = await readFile(IMPORT_GUIDE, "utf8")
+
+      expect(guide).toMatch(
+        /seuls les fichiers Markdown sous `ressources\/PROMPTS\/`/i,
       )
-      for (const field of [
-        "slug",
-        "title",
-        "summary",
-        "excerpt",
-        "visibility",
-        "publishedAt",
-        "level",
-        "format",
-        "durationH",
-        "kind",
-        "startsAt",
-        "coverImage",
-      ]) {
-        expect(readme).toMatch(new RegExp(`\\b${field}\\b`, "i"))
-      }
-      for (const value of [
-        "PERMANENTE",
-        "EVENEMENTIELLE",
-        "DEBUTANT",
-        "INTERMEDIAIRE",
-        "AVANCE",
-        "PRESENTIEL",
-        "EN_LIGNE",
-        "HYBRIDE",
-        "FREE",
-        "PREMIUM",
-      ]) {
-        expect(readme).toContain(value)
-      }
-      expect(readme).toMatch(
-        /PERMANENTE[\s\S]*startsAt|startsAt[\s\S]*PERMANENTE/i,
+      expect(guide).toMatch(
+        /toutes les anciennes données de\s+démonstration Formations, Opportunités et Jeux sont supprimés/i,
       )
-      expect(readme).toMatch(
-        /EVENEMENTIELLE[\s\S]*startsAt|startsAt[\s\S]*EVENEMENTIELLE/i,
+      expect(guide).toMatch(
+        /Formations, Opportunités et Jeux restent à 0 \/ 0/i,
       )
-      expect(readme).toMatch(/permanente[\s\S]*(?:sans|pas d.).*inscription/i)
+      expect(guide).toMatch(/clone CI ne contient jamais `ressources\/`/i)
     },
   )
 
   it(
     scenario(
-      "Deux formations exemples prouvent les deux natures et les deux visibilités",
-      "les Markdown de ressources/formations hors README",
-      "frontmatter et corps sont validés",
-      "au moins une PERMANENTE et une EVENEMENTIELLE, ainsi qu'une FREE et une PREMIUM, sont complètes et startsAt respecte leur nature",
+      "Le validateur Formation couvre les deux natures et les deux visibilités",
+      "deux fixtures synthétiques, une permanente FREE et une événementielle PREMIUM",
+      "le schéma Zod strict de ressource les parse sans fichier éditorial local",
+      "les deux natures et les deux niveaux d'accès restent explicites, avec startsAt cohérent",
     ),
-    async () => {
-      const examples = await examplesOf("formations")
-      expect(examples.length).toBeGreaterThanOrEqual(2)
-      const kinds = new Set<string>()
-      const visibilities = new Set<string>()
-      for (const { name, parsed } of examples) {
-        for (const required of [
-          "slug",
-          "title",
-          "summary",
-          "level",
-          "format",
-          "kind",
-          "visibility",
-          "publishedAt",
-        ]) {
-          expect(
-            parsed.fields.get(required),
-            `${name}: ${required}`,
-          ).toBeTruthy()
-        }
-        expect(parsed.body.length).toBeGreaterThan(40)
-        expect(
-          parsed.fields.has("startsAt"),
-          `${name}: startsAt doit être explicite`,
-        ).toBe(true)
-        const kind = parsed.fields.get("kind")
-        const startsAt = parsed.fields.get("startsAt")
-        if (kind === "PERMANENTE") expect(startsAt ?? "").toBe("")
-        if (kind === "EVENEMENTIELLE") {
-          expect(startsAt).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/u)
-        }
-        if (kind) kinds.add(kind)
-        const visibility = parsed.fields.get("visibility")
-        if (visibility) visibilities.add(visibility)
+    () => {
+      const permanent = formationResourceSchema.safeParse({
+        ...FORMATION_RESOURCE,
+        kind: "PERMANENTE",
+        startsAt: null,
+        visibility: "FREE",
+      })
+      const event = formationResourceSchema.safeParse({
+        ...FORMATION_RESOURCE,
+        kind: "EVENEMENTIELLE",
+        startsAt: "2026-12-12T10:00:00.000Z",
+        visibility: "PREMIUM",
+      })
+
+      expect(permanent.success).toBe(true)
+      expect(event.success).toBe(true)
+      if (!permanent.success || !event.success) {
+        throw new Error("les deux formes synthétiques doivent être acceptées")
       }
-      expect(kinds).toEqual(new Set(["PERMANENTE", "EVENEMENTIELLE"]))
-      expect(visibilities).toEqual(new Set(["FREE", "PREMIUM"]))
+      expect(new Set([permanent.data.kind, event.data.kind])).toEqual(
+        new Set(["PERMANENTE", "EVENEMENTIELLE"]),
+      )
+      expect(
+        new Set([permanent.data.visibility, event.data.visibility]),
+      ).toEqual(new Set(["FREE", "PREMIUM"]))
     },
   )
 
@@ -179,96 +114,108 @@ describe("contrats éditoriaux Formations et Opportunités", () => {
       "le schéma Zod strict parse les formes valides puis leurs inverses",
       "les formes valides passent, startsAt présent sur PERMANENTE ou absent sur EVENEMENTIELLE échoue, comme tout champ inconnu",
     ),
-    async () => {
-      const schema = schemaFrom(
-        await import("@/lib/validators/formation"),
-        "formation validator",
-      )
-      const common = {
-        body: "Programme complet de formation",
-        coverImage: null,
-        durationH: 4,
-        excerpt: "Extrait public",
-        format: "EN_LIGNE",
-        level: "DEBUTANT",
-        publishedAt: "2026-08-08",
-        slug: "formation-test",
-        summary: "Résumé public",
-        title: "Formation test",
+    () => {
+      const permanent = {
+        ...FORMATION_RESOURCE,
+        kind: "PERMANENTE",
+        startsAt: null,
         visibility: "FREE",
       }
-      const permanent = { ...common, kind: "PERMANENTE", startsAt: null }
       const event = {
-        ...common,
+        ...FORMATION_RESOURCE,
         kind: "EVENEMENTIELLE",
         startsAt: "2026-12-12T10:00:00.000Z",
+        visibility: "PREMIUM",
       }
-      expect(schema.safeParse(permanent).success).toBe(true)
-      expect(schema.safeParse(event).success).toBe(true)
+
+      expect(formationResourceSchema.safeParse(permanent).success).toBe(true)
+      expect(formationResourceSchema.safeParse(event).success).toBe(true)
       expect(
-        schema.safeParse({ ...permanent, startsAt: event.startsAt }).success,
+        formationResourceSchema.safeParse({
+          ...permanent,
+          startsAt: event.startsAt,
+        }).success,
       ).toBe(false)
-      expect(schema.safeParse({ ...event, startsAt: null }).success).toBe(false)
-      expect(schema.safeParse({ ...permanent, extra: true }).success).toBe(
-        false,
-      )
+      expect(
+        formationResourceSchema.safeParse({ ...event, startsAt: null }).success,
+      ).toBe(false)
+      expect(
+        formationResourceSchema.safeParse({ ...permanent, extra: true })
+          .success,
+      ).toBe(false)
     },
   )
 
   it(
     scenario(
-      "Le contrat Opportunités documente et illustre tous les champs verrouillés",
-      "ressources/opportunites/README.md et ses Markdown d'exemple",
-      "la documentation et deux ressources sont lues",
-      "types, deadline, organisme, FREE/PREMIUM sont documentés, body et externalUrl sont annoncés verrouillés ensemble, et deux exemples réels couvrent FREE et PREMIUM",
+      "Les validateurs Opportunité couvrent le contrat éditorial et les champs verrouillés",
+      "des fixtures synthétiques FREE et PREMIUM couvrant les cinq types, sans exemple réel",
+      "la ressource stricte et les DTO teaser/full sont validés",
+      "tous les types passent, la visibilité reste explicite et body/externalUrl sont absents du teaser mais obligatoires ensemble dans la forme complète",
     ),
-    async () => {
-      const readme = await readFile(
-        path.join(ROOT, "ressources", "opportunites", "README.md"),
-        "utf8",
-      )
-      for (const field of [
-        "slug",
-        "title",
-        "summary",
-        "excerpt",
-        "body",
-        "visibility",
-        "publishedAt",
-        "type",
-        "organisme",
-        "deadline",
-        "externalUrl",
-        "coverImage",
-      ]) {
-        expect(readme).toMatch(new RegExp(`\\b${field}\\b`, "i"))
-      }
-      for (const value of [
+    () => {
+      const types = [
         "STAGE",
         "EMPLOI",
         "APPEL_OFFRE",
         "FINANCEMENT",
         "COLLABORATION",
-        "FREE",
-        "PREMIUM",
-      ]) {
-        expect(readme).toContain(value)
+      ] as const
+      for (const type of types) {
+        expect(
+          opportuniteResourceSchema.safeParse({
+            ...OPPORTUNITE_RESOURCE,
+            type,
+            visibility: type === "STAGE" ? "FREE" : "PREMIUM",
+          }).success,
+          type,
+        ).toBe(true)
       }
-      expect(readme).toMatch(/body[\s\S]*externalUrl|externalUrl[\s\S]*body/i)
-      expect(readme).toMatch(/verrouill|accès|entitle/i)
-      const examples = await examplesOf("opportunites")
-      expect(examples.length).toBeGreaterThanOrEqual(2)
-      const visibilities = new Set(
-        examples.map(({ parsed }) => parsed.fields.get("visibility")),
-      )
-      expect(visibilities).toEqual(new Set(["FREE", "PREMIUM"]))
-      for (const { parsed } of examples) {
-        expect(parsed.body.length).toBeGreaterThan(40)
-        expect(parsed.fields.get("organisme")).toBeTruthy()
-        expect(parsed.fields.get("type")).toMatch(
-          /^(?:STAGE|EMPLOI|APPEL_OFFRE|FINANCEMENT|COLLABORATION)$/u,
-        )
+
+      expect(
+        opportuniteResourceSchema.safeParse({
+          ...OPPORTUNITE_RESOURCE,
+          type: "STAGE",
+        }).success,
+      ).toBe(false)
+      expect(
+        opportuniteResourceSchema.safeParse({
+          coverImage: null,
+          deadline: null,
+          excerpt: "Extrait public synthétique",
+          externalUrl: OPPORTUNITE_RESOURCE.externalUrl,
+          organisme: OPPORTUNITE_RESOURCE.organisme,
+          publishedAt: OPPORTUNITE_RESOURCE.publishedAt,
+          slug: OPPORTUNITE_RESOURCE.slug,
+          summary: OPPORTUNITE_RESOURCE.summary,
+          title: OPPORTUNITE_RESOURCE.title,
+          type: "STAGE",
+          visibility: "FREE",
+        }).success,
+      ).toBe(false)
+
+      const teaser = {
+        coverImage: null,
+        deadline: null,
+        excerpt: "Extrait public synthétique",
+        id: "opportunite-id",
+        organisme: OPPORTUNITE_RESOURCE.organisme,
+        slug: OPPORTUNITE_RESOURCE.slug,
+        summary: OPPORTUNITE_RESOURCE.summary,
+        title: OPPORTUNITE_RESOURCE.title,
+        type: "STAGE",
+        visibility: "PREMIUM",
       }
+      const full = {
+        ...teaser,
+        body: OPPORTUNITE_RESOURCE.body,
+        externalUrl: OPPORTUNITE_RESOURCE.externalUrl,
+      }
+
+      expect(opportuniteTeaserSchema.safeParse(teaser).success).toBe(true)
+      expect(opportuniteTeaserSchema.safeParse(full).success).toBe(false)
+      expect(opportuniteFullSchema.safeParse(teaser).success).toBe(false)
+      expect(opportuniteFullSchema.safeParse(full).success).toBe(true)
     },
   )
 })
