@@ -35,7 +35,7 @@ export default function SiteFooter() {
               {RUBRIC_LINKS.map(([label, href]) => (
                 <li key={href}>
                   <Link
-                    aria-label={`${label} — lien du pied de page`}
+                    aria-label={`Rubrique ${label} — pied de page`}
                     className="footer-link"
                     href={href}
                   >
