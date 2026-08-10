@@ -1,13 +1,15 @@
 import type { ReactNode } from "react"
 
-function readableInlineMarkdown(line: string): string {
-  return line.replace(/\*\*([^*]+)\*\*/gu, "$1").replace(/`([^`]+)`/gu, "$1")
+const HEADING_LINE = /^(#{1,3})\s+(.+)$/u
+
+function readableInlineMarkdown(value: string): string {
+  return value.replace(/\*\*([^*]+)\*\*/gu, "$1").replace(/`([^`]+)`/gu, "$1")
 }
 
 export function PromptBody({ body }: Readonly<{ body: string }>) {
   const lines = body.split(/\r?\n/u)
   const hasMarkdownHeading = lines.some((line) =>
-    /^(#{1,3})\s+(.+)$/u.test(line.trim()),
+    HEADING_LINE.test(line.trim()),
   )
 
   if (!hasMarkdownHeading) {
@@ -18,27 +20,28 @@ export function PromptBody({ body }: Readonly<{ body: string }>) {
     )
   }
 
-  const blocks: ReactNode[] = []
-  for (const [index, rawLine] of lines.entries()) {
-    const line = rawLine.trim()
-    if (!line) continue
+  const visibleLines = lines.map((line) => line.trim()).filter(Boolean)
+  const content: ReactNode[] = []
 
-    const heading = /^(#{1,3})\s+(.+)$/u.exec(line)
-    if (heading) {
-      blocks.push(
-        <h3 className="prompt-body-heading" key={index}>
-          {readableInlineMarkdown(heading[2] ?? "")}
-        </h3>,
-      )
-      continue
+  visibleLines.forEach((line, index) => {
+    if (index > 0) content.push("\n")
+
+    const heading = HEADING_LINE.exec(line)
+    if (!heading) {
+      content.push(readableInlineMarkdown(line))
+      return
     }
 
-    blocks.push(
-      <p className="prompt-body-line" key={index}>
-        {readableInlineMarkdown(line)}
-      </p>,
+    content.push(
+      <span aria-level={heading[1]?.length ?? 3} key={index} role="heading">
+        {readableInlineMarkdown(heading[2] ?? "")}
+      </span>,
     )
-  }
+  })
 
-  return <div className="prompt-body-text">{blocks}</div>
+  return (
+    <div className="prompt-body-text">
+      <p className="prompt-body-line">{content}</p>
+    </div>
+  )
 }
