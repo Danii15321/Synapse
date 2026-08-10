@@ -14,7 +14,7 @@
     "format": "prettier --write .",
     "test": "vitest run",
     "e2e": "playwright test",
-    "grant-premium": "tsx scripts/grant-premium.ts"
+    "grant-premium": "tsx --conditions=react-server scripts/grant-premium.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.3",

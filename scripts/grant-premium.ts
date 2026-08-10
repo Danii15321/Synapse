@@ -1,10 +1,13 @@
-import { PrismaClient } from "@prisma/client"
 import { z } from "zod"
 
-const emailSchema = z.string().trim().email().max(254).toLowerCase()
-const db = new PrismaClient()
+import { db } from "@/server/db"
+import { findUserIdByEmail } from "@/server/repositories/user-repository"
+import { membershipService } from "@/server/services/membership-service"
 
-async function grantPremium(): Promise<void> {
+const emailSchema = z.string().trim().email().max(254).toLowerCase()
+const SOURCE = "grant-premium-cli"
+
+async function run(): Promise<void> {
   const parsedEmail = emailSchema.safeParse(process.argv[2])
   if (!parsedEmail.success) {
     process.stderr.write(
@@ -14,12 +17,9 @@ async function grantPremium(): Promise<void> {
     return
   }
 
-  const result = await db.user.updateMany({
-    where: { email: parsedEmail.data },
-    data: { membership: "PREMIUM" },
-  })
+  const user = await findUserIdByEmail(parsedEmail.data)
 
-  if (result.count !== 1) {
+  if (!user) {
     process.stderr.write(
       `${JSON.stringify({ event: "membership.promotion", status: "account-not-found" })}\n`,
     )
@@ -27,19 +27,21 @@ async function grantPremium(): Promise<void> {
     return
   }
 
+  const result = await membershipService.grantPremium(user.id, SOURCE)
+
   process.stdout.write(
     `${JSON.stringify({
       email: parsedEmail.data,
       event: "membership.promotion",
       membership: "PREMIUM",
       occurredAt: new Date().toISOString(),
-      source: "grant-premium-cli",
-      status: "granted",
+      source: SOURCE,
+      status: result.granted ? "granted" : "already-premium",
     })}\n`,
   )
 }
 
-void grantPremium()
+void run()
   .catch(() => {
     process.stderr.write(
       `${JSON.stringify({ event: "membership.promotion", status: "failed" })}\n`,

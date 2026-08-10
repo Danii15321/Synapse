@@ -27,6 +27,7 @@ function createContentSecurityPolicy(nonce: string): string {
     "img-src 'self' data: blob:",
     "font-src 'self'",
     "connect-src 'self'",
+    "frame-src https://wa.me",
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
