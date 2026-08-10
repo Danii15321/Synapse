@@ -38,6 +38,8 @@ async function clearRateLimitState(): Promise<void> {
   }
 }
 
+test.afterEach(clearRateLimitState)
+
 test(`Le socle de sécurité protège /prompts jusque dans la réponse HTTP brute — ce qui est vérifié
 GIVEN : PostgreSQL migré, le compteur de rate limiting vide, un navigateur mobile de 390px et des valeurs X-Forwarded-For falsifiées
 WHEN  : le visiteur charge deux fois /prompts puis envoie rapidement 70 GET vers /api/prompts avec un faux X-Forwarded-For différent à chaque appel
