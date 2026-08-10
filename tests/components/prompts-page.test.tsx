@@ -128,10 +128,10 @@ describe("états de la page publique Prompts", () => {
 
   it(
     scenario(
-      "L'état loading annonce le chargement des prompts",
-      "la navigation vers /prompts pendant la lecture serveur",
-      "le fallback loading de la route est rendu",
-      "un statut accessible annonce explicitement le chargement",
+      "Le fichier loading.tsx expose déterministement un état de chargement accessible",
+      "le module loading.tsx de /prompts importé directement, sans dépendre du timing d'une navigation réseau",
+      "son composant par défaut est rendu isolément",
+      "le contenu principal contient un statut accessible qui annonce exactement le chargement des prompts",
     ),
     async () => {
       const module: unknown = await import("@/app/(public)/prompts/loading")
@@ -141,7 +141,10 @@ describe("états de la page publique Prompts", () => {
 
       render(await module.default())
 
-      expect(screen.getByRole("status")).toHaveTextContent(/chargement/i)
+      const status = screen.getByRole("status")
+
+      expect(screen.getByRole("main")).toContainElement(status)
+      expect(status).toHaveTextContent(/^Chargement des prompts…$/u)
     },
   )
 

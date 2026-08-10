@@ -43,7 +43,7 @@ function sha256(value: string): string {
 test(`La liste reste utilisable à 390px sous réseau bridé, avec filtres, recherche et pagination — ce qui est vérifié
 GIVEN : 205 prompts publiés isolés par un tag, une image de repli et un profil réseau mobile dégradé
 WHEN  : un anonyme ouvre /prompts, soumet ses filtres, suit le curseur vers la page suivante puis soumet ses recherches
-THEN  : loading, succès filtré, page suivante sans doublon, empty et résultat recherché sont accessibles sans débordement horizontal`, async ({
+THEN  : succès filtré, page suivante sans doublon, empty et résultat recherché sont accessibles sans débordement horizontal`, async ({
   page,
 }) => {
   const prefix = `t07-e2e-list-${randomUUID()}`
@@ -59,7 +59,6 @@ THEN  : loading, succès filtré, page suivante sans doublon, empty et résultat
   })
 
   const navigation = page.goto("/prompts")
-  await expect(page.getByRole("status")).toContainText(/chargement/i)
   await navigation
   await page.getByRole("combobox", { name: /domaine/i }).selectOption("ia")
   await page.getByRole("combobox", { name: /tag/i }).selectOption(prefix)
@@ -67,7 +66,6 @@ THEN  : loading, succès filtré, page suivante sans doublon, empty et résultat
     name: /appliquer|filtrer|rechercher/i,
   })
   const filterSubmission = submit.click()
-  await expect(page.getByRole("status")).toContainText(/chargement/i)
   await filterSubmission
   await expect(page).toHaveURL(/domain=ia/u)
   await expect(page).toHaveURL(new RegExp(`tag=${prefix}`, "u"))

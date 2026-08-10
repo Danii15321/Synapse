@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test"
+import { expect, test, type Page } from "@playwright/test"
 
 import {
   cleanupParticipationFixtures,
@@ -14,36 +14,50 @@ test.describe.configure({ mode: "default" })
 test.afterEach(cleanupParticipationFixtures)
 test.afterAll(async () => participationDb.$disconnect())
 
-test(`Performance mobile — liste et détail sont mesurés sous bridage 3G lent avec leur poids — ce qui est vérifié
-GIVEN : Chromium mobile, le catalogue réel et un réseau réglé à 400 kb/s, 400 kb/s et 2 secondes de latence
-WHEN  : la liste Prompts puis un détail libre sont chargés sans cache
-THEN  : les deux temps utiles et les octets transférés sont mesurés, les images ont des dimensions naturelles et la preuve publie les valeurs plutôt qu'une impression`, async ({
-  context,
-  page,
-}) => {
-  const prompt = await firstPrompt("FREE")
-  const session = await context.newCDPSession(page)
+async function measurePageUnderSlow3g(
+  page: Page,
+  path: string,
+  expectUsefulContent: (measuredPage: Page) => Promise<void>,
+) {
+  const session = await page.context().newCDPSession(page)
   await session.send("Network.enable")
   let transferBytes = 0
+  const appliedNetworkConditions = new Set<string>()
   session.on("Network.loadingFinished", ({ encodedDataLength }) => {
     transferBytes += encodedDataLength
   })
-  await session.send("Network.emulateNetworkConditions", {
-    connectionType: "cellular3g",
-    downloadThroughput: (400 * 1024) / 8,
-    latency: 2000,
-    offline: false,
-    uploadThroughput: (400 * 1024) / 8,
-  })
+  session.on(
+    "Network.requestWillBeSentExtraInfo",
+    ({ appliedNetworkConditionsId }) => {
+      if (appliedNetworkConditionsId) {
+        appliedNetworkConditions.add(appliedNetworkConditionsId)
+      }
+    },
+  )
+  const { ruleIds } = await session.send(
+    "Network.emulateNetworkConditionsByRule",
+    {
+      matchedNetworkConditions: [
+        {
+          connectionType: "cellular3g",
+          downloadThroughput: (400 * 1024) / 8,
+          latency: 2000,
+          offline: false,
+          uploadThroughput: (400 * 1024) / 8,
+          urlPattern: "",
+        },
+      ],
+    },
+  )
+  const slow3gRuleId = ruleIds[0]
+  if (!slow3gRuleId) {
+    throw new Error("Chromium doit activer la règle de bridage 3G lent")
+  }
 
-  const listStartedAt = Date.now()
-  await page.goto("/prompts", { waitUntil: "domcontentloaded" })
-  await expect(page.getByRole("main")).toBeVisible()
-  const listMs = Date.now() - listStartedAt
-  const detailStartedAt = Date.now()
-  await page.goto(`/prompts/${prompt.slug}`, { waitUntil: "domcontentloaded" })
-  await expect(page.getByText(prompt.body, { exact: true })).toBeVisible()
-  const detailMs = Date.now() - detailStartedAt
+  const startedAt = Date.now()
+  await page.goto(path, { waitUntil: "domcontentloaded" })
+  await expectUsefulContent(page)
+  const usefulMs = Date.now() - startedAt
   const invalidImages = await page
     .locator("img")
     .evaluateAll(
@@ -55,10 +69,52 @@ THEN  : les deux temps utiles et les octets transférés sont mesurés, les imag
         ).length,
     )
 
-  expect(listMs).toBeGreaterThan(0)
-  expect(detailMs).toBeGreaterThan(0)
-  expect(transferBytes).toBeGreaterThan(0)
-  expect(invalidImages).toBe(0)
+  return {
+    appliedNetworkConditions,
+    invalidImages,
+    slow3gRuleId,
+    transferBytes,
+    usefulMs,
+  }
+}
+
+test(`Performance mobile — liste et détail sont mesurés sous bridage 3G lent avec leur poids — ce qui est vérifié
+GIVEN : Chromium mobile, le catalogue réel et un réseau réglé à 400 kb/s, 400 kb/s et 2 secondes de latence
+WHEN  : la liste Prompts puis un détail libre sont chargés sans cache
+THEN  : les deux temps utiles et les octets transférés sont mesurés, les images ont des dimensions naturelles et la preuve publie les valeurs plutôt qu'une impression`, async ({
+  context,
+  page,
+}) => {
+  const prompt = await firstPrompt("FREE")
+  const listMeasurement = await measurePageUnderSlow3g(
+    page,
+    "/prompts",
+    async (listPage) => {
+      await expect(listPage.getByRole("main")).toBeVisible()
+    },
+  )
+  const detailPage = await context.newPage()
+  const detailMeasurement = await measurePageUnderSlow3g(
+    detailPage,
+    `/prompts/${prompt.slug}`,
+    async (measuredDetailPage) => {
+      await expect(
+        measuredDetailPage.getByText(prompt.body, { exact: true }),
+      ).toBeVisible()
+    },
+  )
+
+  expect(listMeasurement.usefulMs).toBeGreaterThan(0)
+  expect(detailMeasurement.usefulMs).toBeGreaterThan(0)
+  expect(listMeasurement.transferBytes).toBeGreaterThan(0)
+  expect(detailMeasurement.transferBytes).toBeGreaterThan(0)
+  expect(listMeasurement.appliedNetworkConditions).toContain(
+    listMeasurement.slow3gRuleId,
+  )
+  expect(detailMeasurement.appliedNetworkConditions).toContain(
+    detailMeasurement.slow3gRuleId,
+  )
+  expect(detailMeasurement.invalidImages).toBe(0)
   expectRecipeEvidence([
     /3G lent/iu,
     /liste[\s\S]{0,80}\d+\s*ms/iu,
