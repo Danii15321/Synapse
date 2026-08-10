@@ -1,16 +1,12 @@
-import { readFile, readdir } from "node:fs/promises"
+import { readFile } from "node:fs/promises"
 import path from "node:path"
 
 import { describe, expect, it } from "vitest"
 
+import { promptResourceSchema } from "@/lib/validators/prompt"
+
 const ROOT = process.cwd()
-const PROMPTS_DIRECTORY = path.join(ROOT, "ressources", "prompts")
-const ALLOWED_DOMAINS = [
-  "ia",
-  "entrepreneuriat",
-  "productivite",
-  "communication",
-] as const
+const IMPORT_GUIDE = path.join(ROOT, "docs", "import-ressources.md")
 
 function scenario(
   name: string,
@@ -21,210 +17,113 @@ function scenario(
   return `${name} — ce qui est vérifié\nGIVEN : ${given}\nWHEN  : ${when}\nTHEN  : ${then}`
 }
 
-function parseFrontmatter(markdown: string): {
-  body: string
-  fields: Map<string, string>
-} {
-  const match = /^---\r?\n([\s\S]*?)\r?\n---\r?\n([\s\S]+)$/u.exec(markdown)
-  expect(
-    match,
-    "un frontmatter délimité suivi d'un corps est requis",
-  ).not.toBeNull()
-  if (!match) {
-    throw new Error("un frontmatter délimité suivi d'un corps est requis")
-  }
-  const fields = new Map<string, string>()
-  for (const line of (match[1] ?? "").split(/\r?\n/u)) {
-    const separator = line.indexOf(":")
-    if (separator > 0) {
-      fields.set(
-        line.slice(0, separator).trim(),
-        line.slice(separator + 1).trim(),
-      )
-    }
-  }
-  return { body: match[2]?.trim() ?? "", fields }
-}
-
-function tagsFrom(value: string | undefined): string[] {
-  if (!value || !/^\[[\s\S]*\]$/u.test(value)) {
-    return []
-  }
-  return value
-    .slice(1, -1)
-    .split(",")
-    .map((tag) => tag.trim())
-}
+const VALID_PROMPT_RESOURCE = {
+  body: "Un corps synthétique réservé au contrat de validation.",
+  coverImage: null,
+  domain: "ia",
+  excerpt: "Extrait public synthétique",
+  publishedAt: "2026-08-01",
+  slug: "test-contrat-prompt",
+  summary: "Résumé public synthétique",
+  tags: ["contrat", "ia"],
+  title: "Tester le contrat Prompt",
+} as const
 
 describe("contrat éditorial de la rubrique Prompts", () => {
   it(
     scenario(
-      "Le README permet à une personne non développeuse d'écrire un prompt conforme",
-      "le répertoire contractuel ressources/prompts",
-      "son README est lu comme documentation autonome",
-      "il documente le frontmatter, le corps Markdown, tous les champs, les quatre domaines, la normalisation des tags, les brouillons et la distinction FREE/PREMIUM sans auteur",
+      "Le guide versionné documente la source éditoriale privée et son import",
+      "un clone frais volontairement dépourvu du dossier ressources",
+      "la procédure d'approvisionnement et de réimport suivie par Git est lue",
+      "elle assume l'absence des corps réels, désigne uniquement ressources/PROMPTS, décrit le format Markdown non fiable et la commande de seed sans réhabiliter l'ancien dossier lowercase",
     ),
     async () => {
-      const readme = await readFile(
-        path.join(PROMPTS_DIRECTORY, "README.md"),
-        "utf8",
-      )
+      const guide = await readFile(IMPORT_GUIDE, "utf8")
 
-      expect(readme).toMatch(/frontmatter/i)
-      expect(readme).toMatch(/markdown/i)
-      for (const field of [
-        "slug",
-        "title",
-        "summary",
-        "excerpt",
-        "domain",
-        "tags",
-        "coverImage",
-        "visibility",
-        "publishedAt",
-      ]) {
-        expect(readme).toMatch(new RegExp(`\\b${field}\\b`, "i"))
+      expect(guide).toMatch(/contenu éditorial[\s\S]*hors Git/i)
+      expect(guide).toMatch(/clone frais[\s\S]*aucun prompt réel/i)
+      expect(guide).toContain("ressources/PROMPTS/")
+      expect(guide).toMatch(
+        /ressources\/prompts\/[\s\S]*ne sont pas des sources du seed v1/i,
+      )
+      for (const marker of ["##", "Modèle Cible :", "### Prompt :"]) {
+        expect(guide).toContain(marker)
       }
-      for (const domain of ALLOWED_DOMAINS) {
-        expect(readme).toContain(domain)
-      }
-      expect(readme).toMatch(/minuscul/i)
-      expect(readme).toMatch(/accent/i)
-      expect(readme).toMatch(/doublon/i)
-      expect(readme).toMatch(/vide|brouillon/i)
-      expect(readme).toMatch(/FREE/)
-      expect(readme).toMatch(/PREMIUM/)
-      expect(readme).not.toMatch(/^\s*(?:author|auteur)\s*:/imu)
+      expect(guide).toMatch(/entrées non fiables[\s\S]*validées/i)
+      expect(guide).toContain("npx prisma db seed")
+      expect(guide).toMatch(
+        /sans changer leurs identifiants ni créer de\s+doublons/i,
+      )
     },
   )
 
   it(
     scenario(
-      "Deux exemples réels et utilisables prouvent le contrat FREE et PREMIUM",
-      "les fichiers Markdown d'exemple sous ressources/prompts, hors README",
-      "leur frontmatter et leur corps sont validés sans figer leur contenu éditorial exact",
-      "au moins un FREE et un PREMIUM possèdent les champs requis, un domaine fermé, des tags normalisés uniques, une date ISO, aucun auteur et un corps non vide",
+      "Le validateur accepte des ressources synthétiques FREE et PREMIUM complètes",
+      "deux fixtures sans contenu éditorial réel qui ne diffèrent que par leur visibilité explicite",
+      "le schéma Zod strict de ressource les parse puis reçoit des formes incomplètes",
+      "FREE et PREMIUM exigent toutes deux un corps non vide et une visibilité présente",
     ),
-    async () => {
-      const entries = await readdir(PROMPTS_DIRECTORY, { withFileTypes: true })
-      const examples = entries.filter(
-        (entry) =>
-          entry.isFile() &&
-          entry.name.endsWith(".md") &&
-          entry.name.toLowerCase() !== "readme.md",
-      )
-      expect(examples.length).toBeGreaterThanOrEqual(2)
+    () => {
+      const free = promptResourceSchema.safeParse({
+        ...VALID_PROMPT_RESOURCE,
+        visibility: "FREE",
+      })
+      const premium = promptResourceSchema.safeParse({
+        ...VALID_PROMPT_RESOURCE,
+        visibility: "PREMIUM",
+      })
 
-      const visibilities = new Set<string>()
-      for (const example of examples) {
-        const markdown = await readFile(
-          path.join(PROMPTS_DIRECTORY, example.name),
-          "utf8",
-        )
-        const { body, fields } = parseFrontmatter(markdown)
-        for (const required of [
-          "slug",
-          "title",
-          "summary",
-          "domain",
-          "tags",
-          "visibility",
-          "publishedAt",
-        ]) {
-          expect(
-            fields.get(required),
-            `${example.name}: ${required}`,
-          ).toBeTruthy()
-        }
-        expect(fields.has("author")).toBe(false)
-        expect(fields.has("auteur")).toBe(false)
-        expect(ALLOWED_DOMAINS).toContain(fields.get("domain"))
-        expect(fields.get("publishedAt")).toMatch(/^\d{4}-\d{2}-\d{2}$/u)
-        expect(body.length).toBeGreaterThan(40)
-
-        const tags = tagsFrom(fields.get("tags"))
-        expect(tags.length).toBeGreaterThan(0)
-        expect(tags).toEqual([...new Set(tags)])
-        for (const tag of tags) {
-          expect(tag).toBe(tag.trim())
-          expect(tag).toBe(tag.toLowerCase())
-          expect(tag.normalize("NFD")).not.toMatch(/[\u0300-\u036f]/u)
-        }
-        const visibility = fields.get("visibility")
-        expect(["FREE", "PREMIUM"]).toContain(visibility)
-        if (visibility) {
-          visibilities.add(visibility)
-        }
-      }
-      expect(visibilities).toEqual(new Set(["FREE", "PREMIUM"]))
+      expect(free.success).toBe(true)
+      expect(premium.success).toBe(true)
+      expect(
+        promptResourceSchema.safeParse({
+          ...VALID_PROMPT_RESOURCE,
+          body: "",
+          visibility: "FREE",
+        }).success,
+      ).toBe(false)
+      expect(
+        promptResourceSchema.safeParse(VALID_PROMPT_RESOURCE).success,
+      ).toBe(false)
     },
   )
 
   it(
     scenario(
       "La frontière d'import normalise les tags et refuse domaines, auteurs et champs inconnus",
-      "un frontmatter avec espaces, accents, casse, doublons et valeurs vides",
-      "le schéma Zod strict de ressource le parse puis reçoit des variantes invalides",
+      "une ressource synthétique avec espaces, accents, casse, doublons et valeurs vides",
+      "le schéma Zod strict de ressource la parse puis reçoit des variantes invalides",
       "les tags deviennent etude et ia une seule fois, tandis qu'un domaine libre, author et tout champ inconnu sont rejetés",
     ),
-    async () => {
-      const module: unknown = await import("@/lib/validators/prompt")
-      if (typeof module !== "object" || module === null) {
-        throw new Error(
-          "lib/validators/prompt doit exporter un schéma de ressource",
-        )
-      }
-      const schemaEntry = Object.entries(module).find(
-        ([name, value]) =>
-          /resource|import/i.test(name) &&
-          typeof value === "object" &&
-          value !== null &&
-          "safeParse" in value &&
-          typeof value.safeParse === "function",
-      )
-      const schema = schemaEntry?.[1]
-      if (
-        typeof schema !== "object" ||
-        schema === null ||
-        !("safeParse" in schema) ||
-        typeof schema.safeParse !== "function"
-      ) {
-        throw new Error(
-          "lib/validators/prompt doit exporter un schéma Zod de ressource ou d'import",
-        )
-      }
+    () => {
       const valid = {
-        body: "Un corps de prompt réellement utilisable.",
-        coverImage: null,
-        domain: "ia",
-        excerpt: null,
-        publishedAt: "2026-08-01",
-        slug: "test-normalisation",
-        summary: "Résumé public",
+        ...VALID_PROMPT_RESOURCE,
         tags: ["  ÉTUDE  ", "etude", "", " IA ", "ia"],
-        title: "Tester la normalisation",
         visibility: "FREE",
       }
 
-      const parsed = schema.safeParse(valid)
+      const parsed = promptResourceSchema.safeParse(valid)
       expect(parsed.success).toBe(true)
       if (!parsed.success) {
         throw new Error("la ressource conforme doit être acceptée")
       }
       expect(parsed.data.tags).toEqual(["etude", "ia"])
       expect(
-        schema.safeParse({
+        promptResourceSchema.safeParse({
           ...valid,
           domain: "marketing",
         }).success,
       ).toBe(false)
       expect(
-        schema.safeParse({
+        promptResourceSchema.safeParse({
           ...valid,
           author: "Auteur inventé",
         }).success,
       ).toBe(false)
-      expect(schema.safeParse({ ...valid, extra: true }).success).toBe(false)
+      expect(
+        promptResourceSchema.safeParse({ ...valid, extra: true }).success,
+      ).toBe(false)
     },
   )
 })

@@ -119,28 +119,37 @@ describe("contrat du shell et de l'identité Synapse", () => {
 
   it(
     scenario(
-      "Le logo source reste intact et fournit les déclinaisons du shell",
-      "le logo vertical fourni par le porteur et la décision de ne jamais le modifier",
-      "son empreinte et les actifs publics dérivés sont contrôlés",
-      "le PNG original garde son empreinte, un pictogramme distinct alimente le header et les icônes d'application",
+      "Les actifs dérivés de la marque restent intègres dans le dépôt",
+      "le logo source privé est volontairement absent d'un clone frais",
+      "les empreintes des actifs publics et des icônes d'application versionnés sont contrôlées",
+      "le pictogramme, l'image de partage et les deux icônes conservent exactement leurs déclinaisons validées",
     ),
     () => {
-      const logo = readFileSync(
-        join(ROOT, "ressources/charte-graphique/logo.png"),
-      )
-      const digest = createHash("sha256").update(logo).digest("hex")
-      const assets = filesUnder("public")
+      const expectedDigests = new Map([
+        [
+          "public/brand/synapse-pictogram.webp",
+          "362bdcefb74ac1655f702cc96d92472b9b9341fa9323acf1447049431e7a799c",
+        ],
+        [
+          "public/brand/opengraph-synapse.webp",
+          "adb1a2d3acd02afab4d758445a4eb8f28be5fc86554b8b10a75f41793db68673",
+        ],
+        [
+          "src/app/icon.png",
+          "29b2c5aae6a59b405dab3168018d83e06c814697919804fac8c82a4b1332d235",
+        ],
+        [
+          "src/app/apple-icon.png",
+          "4f681ebe64e7dacd681a723fc29368e94b19fb1770b40573d139da2818a7560b",
+        ],
+      ])
 
-      expect(digest).toBe(
-        "5d4b69fa2fac06624a8b51fe11e1c334acde8a17efac6714207884cef4333a12",
-      )
-      expect(
-        assets.some((file) =>
-          /(?:pictogram|mark|symbole).*\.(?:png|webp|svg)$/i.test(file),
-        ),
-      ).toBe(true)
-      expect(existsSync(join(ROOT, "src/app/icon.png"))).toBe(true)
-      expect(existsSync(join(ROOT, "src/app/apple-icon.png"))).toBe(true)
+      for (const [asset, expectedDigest] of expectedDigests) {
+        const digest = createHash("sha256")
+          .update(readFileSync(join(ROOT, asset)))
+          .digest("hex")
+        expect(digest, asset).toBe(expectedDigest)
+      }
     },
   )
 

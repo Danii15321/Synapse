@@ -30,10 +30,10 @@ function isPromptDto(value: unknown): value is {
   )
 }
 
-test(`La route publique /prompts affiche les deux prompts lus en base — ce qui est vérifié
-GIVEN : PostgreSQL migré, le seed rejoué et un viewport mobile de 390px
+test(`La route publique /prompts affiche une page bornée de prompts lus en base — ce qui est vérifié
+GIVEN : PostgreSQL migré, le seed rejoué avec un volume éditorial non figé et un viewport mobile de 390px
 WHEN  : un visiteur ouvre /prompts après lecture de la réponse HTTP brute de /api/prompts
-THEN  : l'API renvoie une page stable items/nextCursor avec les deux DTO publics du seed, leurs titres et résumés sont visibles sur la page, et aucun débordement horizontal n'apparaît`, async ({
+THEN  : l'API renvoie une page stable items/nextCursor non vide d'au plus 24 DTO publics, toutes ses cartes sont visibles et aucun débordement horizontal n'apparaît`, async ({
   page,
   request,
 }) => {
@@ -54,8 +54,8 @@ THEN  : l'API renvoie une page stable items/nextCursor avec les deux DTO publics
     )
   }
   expect(Object.keys(payload).sort()).toEqual(["items", "nextCursor"])
-  expect(payload.items).toHaveLength(2)
-  expect(payload.nextCursor).toBeNull()
+  expect(payload.items.length).toBeGreaterThan(0)
+  expect(payload.items.length).toBeLessThanOrEqual(24)
   const firstPrompt = payload.items[0]
   if (!firstPrompt) {
     throw new Error("le seed doit fournir un premier prompt")

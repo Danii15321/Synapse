@@ -47,6 +47,9 @@ jobs:
           echo "::add-mask::$auth_secret"
           echo "AUTH_SECRET=$auth_secret" >> "$GITHUB_ENV"
 
+      - name: Approvisionner les ressources synthétiques éphémères
+        run: npm run ci:resources
+
       - name: Bloquer les modifications de la pipeline
         if: github.event_name == 'pull_request'
         run: git diff --name-only origin/main... | grep -q '^docs/pipeline-dev/' && exit 1 || test $? -eq 1
@@ -60,7 +63,7 @@ jobs:
       - name: Appliquer les migrations
         run: npx prisma migrate deploy
 
-      - name: Peupler la base de démonstration
+      - name: Importer les ressources synthétiques
         run: npx prisma db seed
 
       - name: Tests

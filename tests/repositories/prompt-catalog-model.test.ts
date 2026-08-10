@@ -71,10 +71,12 @@ describe("modèle et sélection du catalogue Prompt sur PostgreSQL", () => {
       ).toBe("YES")
 
       const enumValues = await db.$queryRaw<Array<{ value: string }>>`
-        SELECT enumlabel AS value FROM pg_enum
+        SELECT pg_enum.enumlabel AS value FROM pg_enum
         JOIN pg_type ON pg_type.oid = pg_enum.enumtypid
-        WHERE pg_type.typname = ${domainColumn?.udtName ?? "enum-absent"}
-        ORDER BY enumsortorder
+        JOIN pg_namespace ON pg_namespace.oid = pg_type.typnamespace
+        WHERE pg_namespace.nspname = 'public'
+          AND pg_type.typname = ${domainColumn?.udtName ?? "enum-absent"}
+        ORDER BY pg_enum.enumsortorder
       `
       expect(enumValues.map(({ value }) => value)).toEqual([
         "ia",

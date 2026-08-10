@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto"
+import { createHash, randomUUID } from "node:crypto"
 import { spawnSync } from "node:child_process"
 
 import { PrismaClient } from "@prisma/client"
@@ -54,6 +54,27 @@ function parseJsonRecord(value: string): Record<string, unknown> | null {
   } catch {
     return null
   }
+}
+
+function visiblePromptBody(body: string): string {
+  const lines = body.split(/\r?\n/u)
+  const hasMarkdownHeading = lines.some((line) =>
+    /^(#{1,3})\s+(.+)$/u.test(line.trim()),
+  )
+  if (!hasMarkdownHeading) return body
+
+  return lines
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => line.replace(/^(?:#{1,3})\s+/u, ""))
+    .map((line) =>
+      line.replace(/\*\*([^*]+)\*\*/gu, "$1").replace(/`([^`]+)`/gu, "$1"),
+    )
+    .join("\n")
+}
+
+function sha256(value: string): string {
+  return createHash("sha256").update(value, "utf8").digest("hex")
 }
 
 async function registerFreeMember(
@@ -188,12 +209,17 @@ THEN  : la commande réussit et trace l'opération, le token ne change pas, le m
 
   await page.reload()
   expect(sessionToken(await page.context().cookies())).toBe(tokenBefore)
-  await expect(page.getByText(prompt.body, { exact: true })).toBeVisible()
+  const promptBody = page.locator(".prompt-body-text")
+  await expect(promptBody).toBeVisible()
+  expect(
+    sha256(await promptBody.innerText()),
+    "le corps premium rendu doit correspondre intégralement à la ressource",
+  ).toBe(sha256(visiblePromptBody(prompt.body)))
   const entitledResponse = await page.request.get(`/api/prompts/${prompt.slug}`)
   const entitledRaw = await entitledResponse.text()
+  const entitledPayload = parseJsonRecord(entitledRaw)
   expect(entitledResponse.status()).toBe(200)
-  expect(entitledRaw).toContain(prompt.body)
-  expect(entitledRaw).toMatch(/"body"/)
+  expect(entitledPayload?.body).toBe(prompt.body)
 
   const anonymousContext = await browser.newContext({
     viewport: { height: 844, width: 390 },

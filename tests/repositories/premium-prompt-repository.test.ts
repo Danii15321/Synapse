@@ -113,11 +113,13 @@ describe("repository de détail premium sur PostgreSQL", () => {
         ORDER BY column_name
       `
       const enumValues = await db.$queryRaw<Array<{ value: string }>>`
-        SELECT enumlabel AS value
+        SELECT pg_enum.enumlabel AS value
         FROM pg_enum
         JOIN pg_type ON pg_type.oid = pg_enum.enumtypid
-        WHERE pg_type.typname = 'Visibility'
-        ORDER BY enumsortorder
+        JOIN pg_namespace ON pg_namespace.oid = pg_type.typnamespace
+        WHERE pg_namespace.nspname = 'public'
+          AND pg_type.typname = 'Visibility'
+        ORDER BY pg_enum.enumsortorder
       `
 
       expect(columns.map((column) => column.columnName)).toEqual([
