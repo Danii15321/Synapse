@@ -64,28 +64,19 @@ export default async function PromptDetailPage({
   return (
     <main className="page-shell">
       <article className="content-reading">
-        <DetailCoverImage
-          alt=""
-          coverImage={prompt.coverImage}
-          fallback="prompts"
-        />
-        <div className="tag-list detail-section">
-          {prompt.domain && !prompt.tags.includes(prompt.domain) ? (
-            <span className="tag">{prompt.domain}</span>
-          ) : null}
+        <div
+          className={`prompt-detail-visual${prompt.visibility === "PREMIUM" ? " prompt-detail-visual-premium" : ""}`}
+        >
+          <DetailCoverImage
+            alt={`Illustration du prompt ${prompt.title}`}
+            coverImage={prompt.coverImage}
+            fallback="prompts"
+          />
           {prompt.visibility === "PREMIUM" ? (
-            <PremiumBadge />
-          ) : (
-            <span className="tag">Libre</span>
-          )}
-          {prompt.tags.map((tag) => (
-            <span className="tag" key={tag}>
-              {tag}
-            </span>
-          ))}
+            <PremiumBadge className="prompt-detail-premium-badge" />
+          ) : null}
         </div>
         <h1 className="page-heading detail-section">{prompt.title}</h1>
-        <p className="detail-summary">{prompt.summary}</p>
 
         {prompt.excerpt ? (
           <section className="detail-section ui-card">

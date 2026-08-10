@@ -273,7 +273,7 @@ THEN  : le corps exact est copié, une annonce demande de le coller, les nouveau
 test(`Un prompt FREE se copie et préremplit Claude, tandis que ChatGPT reste sans injection — ce qui est vérifié
 GIVEN : un prompt FREE publié visible dans la carte de référence sur un viewport de 390px
 WHEN  : un anonyme ouvre sa carte, touche Copier puis choisit Claude et ChatGPT
-THEN  : titre, summary, image 4/3 et corps distinct sont visibles, la copie restitue exactement le body, Claude reçoit le corps encodé via son lien officiel, ChatGPT garde son URL fixe et chaque action mesure au moins 44px`, async ({
+THEN  : titre, image 4/3 et corps distinct sont visibles sans paragraphe summary, la copie restitue exactement le body, Claude reçoit le corps encodé via son lien officiel, ChatGPT garde son URL fixe et chaque action mesure au moins 44px`, async ({
   page,
 }) => {
   const prompt = await firstPrompt("FREE")
@@ -288,7 +288,7 @@ THEN  : titre, summary, image 4/3 et corps distinct sont visibles, la copie rest
   await expect(
     page.getByRole("heading", { name: prompt.title, exact: true }),
   ).toBeVisible()
-  await expect(page.getByText(prompt.summary, { exact: true })).toBeVisible()
+  await expect(page.getByText(prompt.summary, { exact: true })).toHaveCount(0)
   const promptBody = page.locator(".prompt-body-text")
   await expect(promptBody).toBeVisible()
   expect(
