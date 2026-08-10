@@ -1,6 +1,12 @@
 import type { ReactNode } from "react"
 
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 type PromptCardModule = Readonly<{
@@ -76,9 +82,8 @@ describe("carte et détail de référence Prompts", () => {
         value: { writeText },
       })
       const open = vi.spyOn(window, "open").mockReturnValue(null)
-      const { PromptActions } = await import(
-        "@/components/features/prompt-actions"
-      )
+      const { PromptActions } =
+        await import("@/components/features/prompt-actions")
 
       render(<PromptActions allowClaudePrefill body={body} />)
       fireEvent.click(screen.getByRole("button", { name: /ouvrir dans/i }))
@@ -109,9 +114,8 @@ describe("carte et détail de référence Prompts", () => {
         value: { writeText },
       })
       const open = vi.spyOn(window, "open").mockReturnValue(null)
-      const { PromptActions } = await import(
-        "@/components/features/prompt-actions"
-      )
+      const { PromptActions } =
+        await import("@/components/features/prompt-actions")
 
       render(<PromptActions allowClaudePrefill={false} body={body} />)
       for (const provider of ["Claude", "ChatGPT"]) {
@@ -151,9 +155,8 @@ describe("carte et détail de référence Prompts", () => {
         value: { writeText },
       })
       const open = vi.spyOn(window, "open").mockReturnValue(null)
-      const { PromptActions } = await import(
-        "@/components/features/prompt-actions"
-      )
+      const { PromptActions } =
+        await import("@/components/features/prompt-actions")
 
       render(<PromptActions allowClaudePrefill body={body} />)
       fireEvent.click(screen.getByRole("button", { name: /ouvrir dans/i }))
@@ -171,10 +174,10 @@ describe("carte et détail de référence Prompts", () => {
 
   it(
     scenario(
-      "La carte de référence affiche une image 4/3 de repli et toutes les métadonnées publiques utiles",
+      "La carte de référence affiche une image 4/3 de repli et son contenu éditorial utile",
       "un DTO PREMIUM sans coverImage et sans body",
       "PromptCard est rendue dans la liste",
-      "une image de repli dimensionnée en 4/3, le titre, summary, domaine, tags, badge premium et un lien vers le détail sont présents, sans auteur ni corps inventé",
+      "une image de repli dimensionnée en 4/3, le titre, le résumé, le badge premium et un lien vers le détail sont présents, sans auteur ni corps inventé",
     ),
     async () => {
       const card = await loadCard()
@@ -206,6 +209,92 @@ describe("carte et détail de référence Prompts", () => {
       expect(width).toBeGreaterThan(0)
       expect(height).toBeGreaterThan(0)
       expect(width / height).toBeCloseTo(4 / 3, 2)
+    },
+  )
+
+  it(
+    scenario(
+      "Les cartes Prompts ne rendent aucun mot-clé éditorial",
+      "une carte FREE et une carte PREMIUM dont les domaines et tags sont tous distincts",
+      "les deux PromptCard sont rendues dans la liste",
+      "les titres et résumés restent visibles, mais aucun domaine ni tag n'apparaît dans le DOM des cartes",
+    ),
+    async () => {
+      const card = await loadCard()
+      const free = {
+        coverImage: null,
+        domain: "communication",
+        id: "prompt-free-sans-mots-cles",
+        slug: "prompt-free-sans-mots-cles",
+        summary: "Résumé public de la carte libre.",
+        tags: ["TAG-FREE-INTERDIT", "OUTIL-FREE-INTERDIT"],
+        title: "Prompt libre sans mots-clés",
+        visibility: "FREE",
+      } as const
+      const premium = {
+        coverImage: null,
+        domain: "productivite",
+        id: "prompt-premium-sans-mots-cles",
+        slug: "prompt-premium-sans-mots-cles",
+        summary: "Résumé public de la carte premium.",
+        tags: ["TAG-PREMIUM-INTERDIT", "OUTIL-PREMIUM-INTERDIT"],
+        title: "Prompt premium sans mots-clés",
+        visibility: "PREMIUM",
+      } as const
+
+      render(
+        <>
+          {card.PromptCard(free)}
+          {card.PromptCard(premium)}
+        </>,
+      )
+
+      expect(screen.getByText(free.title)).toBeInTheDocument()
+      expect(screen.getByText(free.summary)).toBeInTheDocument()
+      expect(screen.getByText(premium.title)).toBeInTheDocument()
+      expect(screen.getByText(premium.summary)).toBeInTheDocument()
+      for (const forbiddenKeyword of [
+        free.domain,
+        ...free.tags,
+        premium.domain,
+        ...premium.tags,
+      ]) {
+        expect(screen.queryByText(forbiddenKeyword)).not.toBeInTheDocument()
+      }
+    },
+  )
+
+  it(
+    scenario(
+      "Le cadenas Premium appartient au visuel de la carte verrouillée",
+      "une PromptCard PREMIUM avec une image, un titre et un résumé publics",
+      "la carte est rendue",
+      "le badge avec cadenas et libellé Premium partage le conteneur visuel de l'image tandis que le titre reste hors de cette surimpression",
+    ),
+    async () => {
+      const card = await loadCard()
+      const props = {
+        coverImage: null,
+        domain: "ia",
+        id: "prompt-premium-surimpression",
+        slug: "prompt-premium-surimpression",
+        summary: "Résumé public.",
+        tags: ["strategie"],
+        title: "Prompt premium en surimpression",
+        visibility: "PREMIUM",
+      } as const
+
+      render(card.PromptCard(props))
+
+      const image = screen.getByRole("img")
+      const badge = screen.getByText("Premium", { exact: true })
+      const heading = screen.getByRole("heading", { name: props.title })
+      const visualContainer = image.parentElement
+
+      expect(visualContainer).not.toBeNull()
+      expect(visualContainer).toContainElement(badge)
+      expect(visualContainer).not.toContainElement(heading)
+      expect(badge.querySelector("svg")).not.toBeNull()
     },
   )
 

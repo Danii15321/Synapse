@@ -1,6 +1,63 @@
+import { randomUUID } from "node:crypto"
+
+import { PrismaClient } from "@prisma/client"
 import { expect, test } from "@playwright/test"
 
 test.use({ viewport: { width: 390, height: 844 } })
+
+const db = new PrismaClient()
+const presentationFixtureSlugs = new Set<string>()
+
+type PresentationFixture = Readonly<{
+  domain: string
+  slug: string
+  tags: readonly [string, string]
+  title: string
+  visibility: "FREE" | "PREMIUM"
+}>
+
+async function insertPresentationFixture(
+  visibility: "FREE" | "PREMIUM",
+): Promise<PresentationFixture> {
+  const suffix = randomUUID()
+  const fixture = {
+    domain: visibility === "FREE" ? "communication" : "productivite",
+    slug: `presentation-${visibility.toLowerCase()}-${suffix}`,
+    tags: [
+      `TAG-${visibility}-INTERDIT-${suffix}`,
+      `OUTIL-${visibility}-INTERDIT-${suffix}`,
+    ],
+    title: `Prompt présentation ${visibility} ${suffix}`,
+    visibility,
+  } as const
+  presentationFixtureSlugs.add(fixture.slug)
+  await db.prompt.create({
+    data: {
+      body: `Corps ${visibility} ${suffix}`,
+      coverImage: null,
+      createdAt: new Date("2099-01-01T00:00:00.000Z"),
+      domain: fixture.domain,
+      excerpt: `Extrait public ${visibility} ${suffix}`,
+      publishedAt: new Date("2099-01-01T00:00:00.000Z"),
+      slug: fixture.slug,
+      summary: `Résumé public ${visibility} ${suffix}`,
+      tags: [...fixture.tags],
+      title: fixture.title,
+      visibility: fixture.visibility,
+    },
+  })
+  return fixture
+}
+
+test.afterEach(async () => {
+  if (presentationFixtureSlugs.size === 0) return
+  await db.prompt.deleteMany({
+    where: { slug: { in: Array.from(presentationFixtureSlugs) } },
+  })
+  presentationFixtureSlugs.clear()
+})
+
+test.afterAll(async () => db.$disconnect())
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null
@@ -91,4 +148,65 @@ THEN  : la réponse HTTP brute porte exactement le statut 405 Method Not Allowed
   const response = await request.post("/api/prompts")
 
   expect(response.status()).toBe(405)
+})
+
+test(`La présentation mobile distingue visuellement les cartes FREE et PREMIUM sans afficher leurs mots-clés — ce qui est vérifié
+GIVEN : une carte FREE et une carte PREMIUM publiées en tête du catalogue, avec des domaines distincts et des tags sentinelles
+WHEN  : un visiteur ouvre /prompts sur un viewport de 390px et les styles réellement calculés sont mesurés
+THEN  : aucune sentinelle de domaine ou tag n'est visible dans les cartes, seule l'image PREMIUM est floutée, et son cadenas avec le libellé Premium se superpose géométriquement au visuel`, async ({
+  page,
+}) => {
+  const free = await insertPresentationFixture("FREE")
+  const premium = await insertPresentationFixture("PREMIUM")
+
+  await page.goto("/prompts")
+
+  const cardFor = (fixture: PresentationFixture) =>
+    page.getByRole("article").filter({
+      has: page.getByRole("heading", { name: fixture.title, exact: true }),
+    })
+  const freeCard = cardFor(free)
+  const premiumCard = cardFor(premium)
+  await expect(freeCard).toBeVisible()
+  await expect(premiumCard).toBeVisible()
+
+  for (const fixture of [free, premium]) {
+    const card = cardFor(fixture)
+    await expect(card.getByText(fixture.domain, { exact: true })).toHaveCount(0)
+    for (const tag of fixture.tags) {
+      await expect(card.getByText(tag, { exact: true })).toHaveCount(0)
+    }
+  }
+
+  const freeFilter = await freeCard
+    .getByRole("img")
+    .evaluate((image) => getComputedStyle(image).filter)
+  const premiumFilter = await premiumCard
+    .getByRole("img")
+    .evaluate((image) => getComputedStyle(image).filter)
+  expect(freeFilter).toBe("none")
+  expect(premiumFilter).not.toBe("none")
+
+  const premiumOverlay = await premiumCard.evaluate((article) => {
+    const image = article.querySelector("img")
+    const badge = Array.from(article.querySelectorAll("span")).find(
+      (element) => element.textContent?.trim().toLowerCase() === "premium",
+    )
+    if (
+      !(image instanceof HTMLImageElement) ||
+      !(badge instanceof HTMLElement)
+    ) {
+      return false
+    }
+    const imageRect = image.getBoundingClientRect()
+    const badgeRect = badge.getBoundingClientRect()
+    return (
+      badgeRect.left < imageRect.right &&
+      badgeRect.right > imageRect.left &&
+      badgeRect.top < imageRect.bottom &&
+      badgeRect.bottom > imageRect.top
+    )
+  })
+  expect(premiumOverlay).toBe(true)
+  await expect(premiumCard.getByText("Premium", { exact: true })).toBeVisible()
 })
