@@ -195,39 +195,45 @@ describe("accueil et pages institutionnelles", () => {
 
   it(
     scenario(
-      "Contact expose des emplacements sans inventer de coordonnées",
-      "aucune adresse e-mail, aucun numéro WhatsApp ni réseau social n'a été fourni",
+      "Contact reste atteignable sans inventer de canal public",
+      "aucune coordonnée publique ni aucun canal de contact n'a été validé",
       "la page Contact est rendue",
-      "WhatsApp, e-mail et réseaux sociaux sont structurés et marqués À compléter et faire valider, sans formulaire",
+      "elle explique honnêtement l'absence de canal public sans placeholder, WhatsApp, numéro, e-mail, réseau social ni formulaire",
     ),
     async () => {
       const page = await loadPage("@/app/(public)/contact/page")
       const rendered = render(await page.default())
 
-      expect(screen.getByRole("main")).toHaveTextContent(/WhatsApp/i)
-      expect(screen.getByRole("main")).toHaveTextContent(/e-mail|email/i)
-      expect(screen.getByRole("main")).toHaveTextContent(/réseaux sociaux/i)
-      expect(
-        screen.getAllByText(/À compléter et faire valider/i).length,
-      ).toBeGreaterThanOrEqual(3)
+      const main = screen.getByRole("main")
+      expect(main).toHaveTextContent(/aucun canal.*public.*validé/i)
+      expect(main).not.toHaveTextContent(
+        /À compléter|WhatsApp|e-mail|email|réseaux sociaux/i,
+      )
+      expect(main).not.toHaveTextContent(/\+33\s*6\s*68\s*82\s*30\s*12/u)
       expect(rendered.container.querySelector("form")).toBeNull()
     },
   )
 
   it(
     scenario(
-      "Les trois pages légales restent des gabarits honnêtes",
-      "les informations juridiques et durées de conservation n'ont pas été fournies",
+      "Les trois pages d'information retirent les champs juridiques non fournis",
+      "E12-01 valide uniquement les faits du README et du comportement réel de la v1",
       "Mentions légales, Confidentialité et Conditions d'utilisation sont rendues",
-      "chaque page est structurée et marque explicitement les faits inconnus À compléter et faire valider",
+      "elles décrivent seulement la plateforme, les données réellement traitées et les limites v1 sans gabarit, placeholder, identité, adresse, responsable, juridiction ni coordonnée inventée",
     ),
     async () => {
       const pages = [
-        ["@/app/(public)/mentions-legales/page", /éditeur|hébergeur/i],
-        ["@/app/(public)/confidentialite/page", /données|conservation/i],
+        [
+          "@/app/(public)/mentions-legales/page",
+          /Synapse.*plateforme|plateforme.*Synapse/i,
+        ],
+        [
+          "@/app/(public)/confidentialite/page",
+          /adresse e-mail.*mot de passe|mot de passe.*adresse e-mail/i,
+        ],
         [
           "@/app/(public)/conditions-utilisation/page",
-          /compte|propriété intellectuelle/i,
+          /accès gratuit.*premium|premium.*accès gratuit/i,
         ],
       ] as const
 
@@ -236,7 +242,10 @@ describe("accueil et pages institutionnelles", () => {
         const rendered = render(await page.default())
         const main = screen.getAllByRole("main").at(-1)
         expect(main).toHaveTextContent(expectedStructure)
-        expect(main).toHaveTextContent(/À compléter et faire valider/i)
+        expect(main).not.toHaveTextContent(
+          /À compléter|gabarit juridique|raison sociale|adresse postale|responsable de publication|juridiction|droit applicable/i,
+        )
+        expect(main).not.toHaveTextContent(/\+33\s*6\s*68\s*82\s*30\s*12/u)
         rendered.unmount()
       }
     },

@@ -149,6 +149,7 @@ export async function clearParticipationRateLimits(): Promise<void> {
 }
 
 export async function cleanupParticipationFixtures(): Promise<void> {
+  await clearParticipationRateLimits()
   for (const prefix of prefixes) {
     const pattern = `${prefix}%`
     const tables = await participationDb.$queryRaw<Array<{ name: string }>>`

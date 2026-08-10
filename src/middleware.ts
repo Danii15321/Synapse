@@ -2,12 +2,18 @@ import { randomUUID } from "node:crypto"
 
 import { NextRequest, NextResponse } from "next/server"
 
+import {
+  contentDetailPathSchema,
+  contentRubricSchema,
+  type ContentRubric,
+} from "@/lib/validators/content-detail-path"
 import { config as appConfig } from "@/server/config"
 import { SESSION_COOKIE_NAME } from "@/server/auth/session-cookie"
 import { mapDomainError, RateLimitedError } from "@/server/errors"
 import { writeLog } from "@/server/logger"
 import { resolveRateLimitIdentifier } from "@/server/rate-limit/client-identifier"
 import { createRateLimitProof } from "@/server/rate-limit/proof"
+import { publishedContentExists } from "@/server/services/content-existence-service"
 import { enforceRateLimit } from "@/server/services/rate-limit-service"
 
 const GENERIC_ERROR_MESSAGE = "La requête n'a pas pu être traitée."
@@ -44,6 +50,44 @@ function applySecurityHeaders(response: NextResponse, csp: string): void {
 
 function isMemberPath(pathname: string): boolean {
   return pathname === "/compte" || pathname.startsWith("/compte/")
+}
+
+async function missingContentRubric(
+  pathname: string,
+): Promise<ContentRubric | null> {
+  const match = /^\/(formations|jeux|opportunites|prompts)\/([^/]+)\/?$/u.exec(
+    pathname,
+  )
+  if (!match) return null
+
+  const parsedRubric = contentRubricSchema.safeParse(match[1])
+  if (!parsedRubric.success) return null
+
+  const parsed = contentDetailPathSchema.safeParse({
+    rubric: parsedRubric.data,
+    slug: match[2],
+  })
+  if (!parsed.success) return parsedRubric.data
+
+  return (await publishedContentExists(parsed.data)) ? null : parsed.data.rubric
+}
+
+function rewriteNotFound(
+  request: NextRequest,
+  requestHeaders: Headers,
+  csp: string,
+  rubric: ContentRubric,
+): NextResponse {
+  const notFoundUrl = request.nextUrl.clone()
+  notFoundUrl.pathname = `/synapse-content-not-found/${rubric}`
+  notFoundUrl.search = ""
+  requestHeaders.set("x-synapse-contextual-not-found", "1")
+  const response = NextResponse.rewrite(notFoundUrl, {
+    request: { headers: requestHeaders },
+    status: 404,
+  })
+  applySecurityHeaders(response, csp)
+  return response
 }
 
 export async function middleware(request: NextRequest): Promise<NextResponse> {
@@ -91,6 +135,13 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
       const response = NextResponse.redirect(loginUrl)
       applySecurityHeaders(response, csp)
       return response
+    }
+
+    const missingRubric = await missingContentRubric(
+      request.nextUrl.pathname,
+    )
+    if (missingRubric) {
+      return rewriteNotFound(request, requestHeaders, csp, missingRubric)
     }
 
     const response = NextResponse.next({

@@ -127,9 +127,10 @@ async function mutateParticipation(
 ): Promise<ParticipationConfirmation | null> {
   const response = await fetch(pathname, {
     body: method === "POST" ? "{}" : undefined,
-    headers:
-      method === "POST" ? { "content-type": "application/json" } : undefined,
-    method,
+      headers:
+        method === "POST" ? { "content-type": "application/json" } : undefined,
+      keepalive: true,
+      method,
   })
   if (!response.ok) {
     throw new Error("La participation n'a pas pu être mise à jour.")

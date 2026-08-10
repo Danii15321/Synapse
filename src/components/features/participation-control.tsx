@@ -1,8 +1,14 @@
 "use client"
 
+import type { FormEvent } from "react"
+
 import { Button } from "@/components/ui/button"
 import { useParticipationControl } from "@/hooks/use-participation"
 import type { ParticipationState } from "@/lib/validators/inscription"
+import {
+  PENDING_PARTICIPATION_COOKIE,
+  serializePendingParticipation,
+} from "@/lib/validators/pending-participation"
 
 type ParticipationControlProps = Readonly<{
   activityType: "FORMATION" | "JEU"
@@ -45,6 +51,16 @@ export default function ParticipationControl({
   const confirmed = state === "ALREADY_REGISTERED"
   const shownLocation = confirmation?.location ?? location
   const shownStartsAt = confirmation?.startsAt ?? startsAt
+  const handleParticipation = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    const pendingParticipation = serializePendingParticipation({
+      activityType,
+      slug,
+    })
+    const secure = window.location.protocol === "https:" ? "; Secure" : ""
+    document.cookie = `${PENDING_PARTICIPATION_COOKIE}=${pendingParticipation}; Max-Age=10; Path=/; SameSite=Lax${secure}`
+    participate()
+  }
 
   return (
     <section className="detail-section participation-panel ui-card">
@@ -67,9 +83,15 @@ export default function ParticipationControl({
         </p>
       ) : null}
       {state === "AVAILABLE" ? (
-        <Button disabled={pending} onClick={() => participate()} type="button">
-          Je participe
-        </Button>
+        <form
+          action={`/api/${activityType === "JEU" ? "jeux" : "formations"}/${slug}/inscriptions`}
+          method="post"
+          onSubmit={handleParticipation}
+        >
+          <Button disabled={pending} type="submit">
+            Je participe
+          </Button>
+        </form>
       ) : null}
       {confirmed && confirmation ? (
         <Button disabled={pending} onClick={() => cancel()} type="button">

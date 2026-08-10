@@ -14,19 +14,20 @@ Le travail suit [docs/pipeline-dev/](docs/pipeline-dev/), tranche par tranche, d
 
 Un blocage, un désaccord avec le plan, un oubli constaté : **aucun de ces cas n'autorise à toucher la pipeline**. Trois sorties, et trois seulement :
 
-| Situation | Où ça va |
-|---|---|
-| Avancement, difficulté, décision d'implémentation | `docs/journal/NN-<tranche>.md` — tenu par le chef-projet |
+| Situation                                                 | Où ça va                                                                                           |
+| --------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| Avancement, difficulté, décision d'implémentation         | `docs/journal/NN-<tranche>.md` — tenu par le chef-projet                                           |
 | Le plan est faux, incomplet, ou infaisable dans cet ordre | Un **écart** consigné dans le journal, **puis tu t'arrêtes** et tu demandes une validation humaine |
-| Du travail nécessaire manque | Il entre dans la tranche courante si son périmètre le couvre ; sinon, écart |
+| Du travail nécessaire manque                              | Il entre dans la tranche courante si son périmètre le couvre ; sinon, écart                        |
 
 **Tu ne valides jamais ton propre écart.**
 
 **Règle d'arrêt :** trois tentatives infructueuses sur le même obstacle → tu t'arrêtes et tu demandes. Pas de quatrième tentative, pas de contournement inventé, pas de test assoupli, pas de plan réécrit pour rendre l'obstacle acceptable.
 
-L'exécution passe par le skill **[chef-projet](.claude/skills/chef-projet/SKILL.md)** (`/chef-projet <NN>`), qui pilote trois agents isolés en TDD : un écrit les tests, un implémente, un audite. Il porte la *Definition of Ready*, le gel des tests, la boucle audit ↔ implémentation et la validation. **Ne lance pas une tranche sans lui.**
+L'exécution passe par le skill **[chef-projet](.claude/skills/chef-projet/SKILL.md)** (`/chef-projet <NN>`), qui pilote trois agents isolés en TDD : un écrit les tests, un implémente, un audite. Il porte la _Definition of Ready_, le gel des tests, la boucle audit ↔ implémentation et la validation. **Ne lance pas une tranche sans lui.**
 
 Trois règles en découlent pour tout agent subordonné :
+
 - **L'agent d'implémentation ne modifie jamais un fichier de test.** S'il croit qu'un test est faux, il le signale et s'arrête — l'arbitrage appartient au chef-projet.
 - **L'agent de test n'écrit aucun code d'implémentation**, et ses tests doivent tous échouer avant qu'on implémente.
 - **L'agent d'audit n'écrit rien du tout.** Il constate et prouve ; il ne corrige jamais lui-même, sans quoi il devient l'auteur de ce qu'il juge.
@@ -38,6 +39,7 @@ Trois règles en découlent pour tout agent subordonné :
 Agis comme un **Senior Fullstack Engineer Next.js**, spécialisé sécurité applicative.
 
 **Priorités absolues (ordre décroissant) :**
+
 1. Sécurité by design — jamais de compromis, jamais de raccourci
 2. **Le contrôle d'accès au contenu premium se fait côté serveur, toujours** — un cache CSS ou un `if` React n'est pas une protection
 3. Typage strict partout (TypeScript `strict: true`, Zod à toutes les frontières)
@@ -60,23 +62,37 @@ Deux caractéristiques structurent tout le code :
 
 ## Stack Overview
 
-| Couche | Technologie |
-|---|---|
-| Application (front + BFF) | Next.js 15+ (App Router), TypeScript `strict` |
-| UI / Styles | Tailwind CSS, shadcn/ui |
-| Formulaires & validation | React Hook Form + Zod |
-| État / Data fetching client | TanStack Query (React Query) v5 |
-| Backend | Route Handlers + Server Actions Next.js (BFF) |
-| ORM / Migrations | Prisma |
-| Base de données | PostgreSQL 16 |
-| Auth | Auth.js (NextAuth v5) + Prisma Adapter, stratégie de session `database`, cookie httpOnly |
-| Hachage mots de passe | argon2id |
-| Tests | Vitest + Testing Library, Playwright (E2E) |
-| Lint / Format | ESLint (config Next + `@typescript-eslint`), Prettier |
-| CI/CD | GitHub Actions |
-| Gestionnaire de paquets | npm |
+| Couche                      | Technologie                                                                              |
+| --------------------------- | ---------------------------------------------------------------------------------------- |
+| Application (front + BFF)   | Next.js 15+ (App Router), TypeScript `strict`                                            |
+| UI / Styles                 | Tailwind CSS, shadcn/ui                                                                  |
+| Formulaires & validation    | React Hook Form + Zod                                                                    |
+| État / Data fetching client | TanStack Query (React Query) v5                                                          |
+| Backend                     | Route Handlers + Server Actions Next.js (BFF)                                            |
+| ORM / Migrations            | Prisma                                                                                   |
+| Base de données             | PostgreSQL 16                                                                            |
+| Auth                        | Auth.js (NextAuth v5) + Prisma Adapter, stratégie de session `database`, cookie httpOnly |
+| Hachage mots de passe       | argon2id                                                                                 |
+| Tests                       | Vitest + Testing Library, Playwright (E2E)                                               |
+| Lint / Format               | ESLint (config Next + `@typescript-eslint`), Prettier                                    |
+| CI/CD                       | GitHub Actions                                                                           |
+| Gestionnaire de paquets     | npm                                                                                      |
 
 **Pas de Redis, pas de service externe, pas de microservice.** L'architecture BFF Next.js + PostgreSQL est délibérément légère : toute proposition d'ajout d'infrastructure doit être justifiée par un besoin démontré, pas anticipé.
+
+### Déploiement et exploitation de la v1
+
+- La cible applicative est **Vercel**. Le runtime Prisma utilise dans
+  `DATABASE_URL` une connexion PostgreSQL **poolée et compatible serverless**.
+- Les migrations `prisma migrate deploy` utilisent une connexion directe dans
+  un environnement d'administration éphémère, jamais le pooler de transaction.
+- Aucun fournisseur PostgreSQL managé n'est imposé par le dépôt. Le porteur du
+  projet doit en sélectionner un qui fournit pooling, sauvegardes et restauration
+  isolée ; le code et la documentation restent indépendants du fournisseur.
+- Une sauvegarde active et un exercice de restauration vérifié sont des
+  prérequis bloquants avant le premier trafic public.
+- Après la v1, la prochaine étape est l'interface d'administration. Le paiement
+  réel reste ultérieur et aucun dashboard n'entre dans le périmètre v1.
 
 ---
 
@@ -170,6 +186,7 @@ Toute requête suit ce chemin sans exception — aucun saut de couche autorisé 
 **Chemin alternatif — Server Components :** une page peut appeler directement un **service** (pas un repository). Elle ne fait jamais de `fetch` vers sa propre API.
 
 **Règle d'or :**
+
 - Un `Route Handler` ne touche **jamais** Prisma directement.
 - Un `Service` ne retourne **jamais** de `NextResponse` et ne connaît pas HTTP.
 - Un `Repository` ne contient **jamais** de logique métier ni de règle d'accès.
@@ -192,7 +209,9 @@ C'est la règle métier la plus sensible du projet. Elle est concentrée dans `s
 
 ```ts
 // ✅ le corps n'est même pas lu en base si l'utilisateur n'y a pas droit
-const prompt = await promptRepository.findBySlug(slug, { includeBody: entitled })
+const prompt = await promptRepository.findBySlug(slug, {
+  includeBody: entitled,
+})
 
 // ❌ interdit — le corps transite en mémoire et finira par fuiter (log, erreur, RSC payload)
 const prompt = await promptRepository.findBySlug(slug)
@@ -205,7 +224,10 @@ return entitled ? prompt : omit(prompt, ["body"])
 
 ```ts
 // src/server/access/entitlement.ts
-export function canAccess(user: SessionUser | null, content: { visibility: Visibility }): boolean {
+export function canAccess(
+  user: SessionUser | null,
+  content: { visibility: Visibility },
+): boolean {
   if (content.visibility === "FREE") return true
   return user?.membership === "PREMIUM"
 }
@@ -222,6 +244,7 @@ export function canAccess(user: SessionUser | null, content: { visibility: Visib
 ### TypeScript
 
 **Interdictions absolues :**
+
 - `any` — utiliser `unknown` + type guard, ou typer correctement
 - `@ts-ignore` / `@ts-expect-error` sans commentaire expliquant pourquoi
 - `as` pour forcer un type sur une donnée externe — valider avec Zod à la place
@@ -232,6 +255,7 @@ export function canAccess(user: SessionUser | null, content: { visibility: Visib
 - Types DTO dupliqués à la main — dériver de Zod (`z.infer`) ou de Prisma (`Prisma.XxxGetPayload`)
 
 **Nommage :**
+
 - `camelCase` : variables, fonctions, hooks
 - `PascalCase` : composants, types, interfaces, modèles Prisma
 - `SCREAMING_SNAKE_CASE` : constantes
@@ -242,7 +266,10 @@ export function canAccess(user: SessionUser | null, content: { visibility: Visib
 ```ts
 // ── Route Handler (app/api/prompts/[slug]/route.ts) ──────────────
 // HTTP uniquement : session, validation, appel service, réponse.
-export async function GET(req: Request, { params }: { params: Promise<{ slug: string }> }) {
+export async function GET(
+  req: Request,
+  { params }: { params: Promise<{ slug: string }> },
+) {
   const { slug } = await params
   const session = await auth()
   const prompt = await promptService.getBySlug(slug, session?.user ?? null)
@@ -253,7 +280,10 @@ export async function GET(req: Request, { params }: { params: Promise<{ slug: st
 // Logique métier pure. Pas de NextResponse. Lève des erreurs domaine.
 import "server-only"
 
-export async function getBySlug(slug: string, user: SessionUser | null): Promise<PromptTeaser | PromptFull> {
+export async function getBySlug(
+  slug: string,
+  user: SessionUser | null,
+): Promise<PromptTeaser | PromptFull> {
   const meta = await promptRepository.findMetaBySlug(slug)
   if (!meta) throw new ContentNotFoundError("prompt", slug)
 
@@ -270,7 +300,12 @@ export function findBySlug(slug: string, opts: { includeBody: boolean }) {
   return db.prompt.findUnique({
     where: { slug, publishedAt: { not: null } },
     select: {
-      id: true, slug: true, title: true, summary: true, visibility: true, tags: true,
+      id: true,
+      slug: true,
+      title: true,
+      summary: true,
+      visibility: true,
+      tags: true,
       body: opts.includeBody,
     },
   })
@@ -278,6 +313,7 @@ export function findBySlug(slug: string, opts: { includeBody: boolean }) {
 ```
 
 **Règles Prisma :**
+
 - **Toujours** un `select` (ou `omit`) explicite. `findMany()` nu est interdit : il renvoie toute la ligne, y compris les champs qui deviendront sensibles plus tard.
 - Un seul `PrismaClient`, exporté depuis `src/server/db.ts` (singleton, protégé du HMR en dev).
 - Jamais de `$queryRawUnsafe`. `$queryRaw` en template tagué uniquement, et seulement si Prisma ne sait pas l'exprimer.
@@ -286,11 +322,13 @@ export function findBySlug(slug: string, opts: { includeBody: boolean }) {
 - Migrations générées par `prisma migrate dev`, jamais éditées à la main après application.
 
 **Validation :**
+
 - Un schéma Zod à **chaque frontière** : body de requête, query params, variables d'environnement, contenu lu depuis `ressources/`.
 - `.strict()` sur tous les schémas d'entrée — un champ inconnu est une erreur, pas un champ ignoré.
 - Le schéma Zod est la source de vérité du type : `type PromptCreate = z.infer<typeof promptCreateSchema>`.
 
 **Gestion d'erreurs :**
+
 - Erreurs domaine typées dans `server/errors/`, mappées en codes HTTP **dans le Route Handler uniquement**.
 - Réponse d'erreur : message générique + `errorId` (UUID) loggué côté serveur. Jamais de stack trace, jamais de message Prisma brut renvoyé au client.
 
@@ -313,13 +351,13 @@ export function findBySlug(slug: string, opts: { includeBody: boolean }) {
 
 Auth.js occupe **une seule frontière** : entre le cookie du navigateur et la couche BFF. Il produit un `SessionUser` et s'arrête là. Cinq points de contact, et aucun autre :
 
-| # | Emplacement | Rôle |
-|---|---|---|
-| 1 | `prisma/schema.prisma` | Modèles imposés par le Prisma Adapter (`User`, `Account`, `Session`, `VerificationToken`) + nos champs métier sur `User` : `passwordHash`, `membership` |
-| 2 | `src/server/auth/` | Config Auth.js : provider Credentials (vérification argon2id), adapter Prisma, options de cookie, callback `session` qui injecte `membership`. **Seul endroit du projet qui importe `next-auth`.** |
-| 3 | `app/api/auth/[...nextauth]/route.ts` | Routes gérées par Auth.js seul : signin, signout, callback, session, csrf. On n'y écrit rien. |
-| 4 | `middleware.ts` | Garde grossière du groupe `(member)` — redirection UX, **pas** une protection |
-| 5 | Handlers, Server Actions, Server Components | `requireUser()` — ou `auth()` quand l'anonyme est permis — qui alimente `canAccess(user, content)` |
+| #   | Emplacement                                 | Rôle                                                                                                                                                                                               |
+| --- | ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | `prisma/schema.prisma`                      | Modèles imposés par le Prisma Adapter (`User`, `Account`, `Session`, `VerificationToken`) + nos champs métier sur `User` : `passwordHash`, `membership`                                            |
+| 2   | `src/server/auth/`                          | Config Auth.js : provider Credentials (vérification argon2id), adapter Prisma, options de cookie, callback `session` qui injecte `membership`. **Seul endroit du projet qui importe `next-auth`.** |
+| 3   | `app/api/auth/[...nextauth]/route.ts`       | Routes gérées par Auth.js seul : signin, signout, callback, session, csrf. On n'y écrit rien.                                                                                                      |
+| 4   | `middleware.ts`                             | Garde grossière du groupe `(member)` — redirection UX, **pas** une protection                                                                                                                      |
+| 5   | Handlers, Server Actions, Server Components | `requireUser()` — ou `auth()` quand l'anonyme est permis — qui alimente `canAccess(user, content)`                                                                                                 |
 
 ```
 [cookie] → Auth.js → SessionUser { id, membership } → service(…, user) → canAccess()
@@ -328,6 +366,7 @@ Auth.js occupe **une seule frontière** : entre le cookie du navigateur et la co
 ```
 
 **Où Auth.js n'intervient jamais :**
+
 - **Ni dans un service, ni dans un repository.** Un service reçoit `SessionUser | null` **en paramètre** — il ne va jamais chercher la session lui-même. C'est ce qui le rend testable sans monter Next.js.
 - **Ni dans un composant client** pour une décision d'accès. `useSession` est toléré pour de l'affichage cosmétique (nom, avatar) ; jamais pour masquer ou révéler du contenu.
 - **Ni pour l'inscription.** `POST /api/auth/register` est notre route : validation Zod, hachage argon2id, création du `User`. Le provider Credentials ne fait que **vérifier** un mot de passe existant.
@@ -400,6 +439,7 @@ npm run dev                     # :3000
 ```
 
 **Workflow feature :**
+
 1. Écrire la spec en tête du fichier service : comportement attendu, edge cases, **règle d'accès premium applicable**.
 2. Modèle de données : `prisma/schema.prisma` → `npx prisma migrate dev --name add_feature`.
 3. Créer les stubs dans l'ordre : `validators/` (Zod) → `repositories/` → `services/` → `app/api/` → `hooks/` → `components/`.
@@ -442,38 +482,42 @@ docker compose down
 
 ---
 
-## New Feature Checklist
+## Points de revue pour toute nouvelle fonctionnalité
 
 ### Données & backend
-- [ ] Modèle ajouté dans `prisma/schema.prisma` avec `createdAt` / `updatedAt`, et `visibility` si c'est un contenu
-- [ ] Migration générée via `prisma migrate dev` (jamais éditée à la main)
-- [ ] Index sur les colonnes réellement filtrées ou triées
-- [ ] Schémas Zod dans `lib/validators/`, `.strict()` sur les entrées
-- [ ] Repository dans `server/repositories/` — `select` explicite, pagination, aucune règle métier
-- [ ] Service dans `server/services/` — `import "server-only"`, erreurs domaine, appel à `canAccess()` si contenu gated
-- [ ] Route Handler dans `app/api/` — session vérifiée, validation Zod, mapping des erreurs domaine → HTTP
-- [ ] Aucun champ premium chargé pour un utilisateur non entitled
+
+- Modèle ajouté dans `prisma/schema.prisma` avec `createdAt` / `updatedAt`, et `visibility` si c'est un contenu
+- Migration générée via `prisma migrate dev` (jamais éditée à la main)
+- Index sur les colonnes réellement filtrées ou triées
+- Schémas Zod dans `lib/validators/`, `.strict()` sur les entrées
+- Repository dans `server/repositories/` — `select` explicite, pagination, aucune règle métier
+- Service dans `server/services/` — `import "server-only"`, erreurs domaine, appel à `canAccess()` si contenu gated
+- Route Handler dans `app/api/` — session vérifiée, validation Zod, mapping des erreurs domaine → HTTP
+- Aucun champ premium chargé pour un utilisateur non entitled
 
 ### Frontend
-- [ ] Fonction(s) ajoutée(s) dans `lib/api.ts` uniquement
-- [ ] Hook dans `hooks/use-feature.ts`
-- [ ] Composant dans `components/features/`, page dans le bon groupe de routes
-- [ ] Server Component par défaut ; `"use client"` justifié et poussé au plus bas
-- [ ] États gérés : `loading` · `error` · `empty` · `success`
-- [ ] Aucun `any`, aucun style inline, aucun `console.log`
-- [ ] Touch targets ≥ 44px, testé sur viewport 390px
+
+- Fonction(s) ajoutée(s) dans `lib/api.ts` uniquement
+- Hook dans `hooks/use-feature.ts`
+- Composant dans `components/features/`, page dans le bon groupe de routes
+- Server Component par défaut ; `"use client"` justifié et poussé au plus bas
+- États gérés : `loading` · `error` · `empty` · `success`
+- Aucun `any`, aucun style inline, aucun `console.log`
+- Touch targets ≥ 44px, testé sur viewport 390px
 
 ### Tests
-- [ ] Test service : logique métier et edge cases
-- [ ] Test repository : vraie base de données, pas de mock Prisma
-- [ ] Test API : happy path + codes d'erreur
-- [ ] **Test d'accès : anonyme et `FREE` ne reçoivent jamais le champ premium** (assertion sur le JSON brut)
-- [ ] Test d'isolation : un utilisateur ne peut pas lire ou modifier la ressource d'un autre
+
+- Test service : logique métier et edge cases
+- Test repository : vraie base de données, pas de mock Prisma
+- Test API : happy path + codes d'erreur
+- **Test d'accès : anonyme et `FREE` ne reçoivent jamais le champ premium** (assertion sur le JSON brut)
+- Test d'isolation : un utilisateur ne peut pas lire ou modifier la ressource d'un autre
 
 ### Avant la PR
-- [ ] `npm run lint && npm run type-check && npm run test && npm run build` au vert
-- [ ] `npm audit` sans `high` / `critical` nouveau
-- [ ] Aucune nouvelle variable `NEXT_PUBLIC_` non justifiée
+
+- `npm run lint && npm run type-check && npm run test && npm run build` au vert
+- `npm audit` sans `high` / `critical` nouveau
+- Aucune nouvelle variable `NEXT_PUBLIC_` non justifiée
 
 ---
 
@@ -481,37 +525,37 @@ docker compose down
 
 ### Sécurité & accès
 
-| Piège | Cause | Solution |
-|---|---|---|
-| Contenu premium visible dans le HTML malgré le cadenas | Filtrage fait en React au lieu du serveur | Ne jamais charger le champ : `select: { body: entitled }` dans le repository |
-| Fuite via le RSC payload | Objet complet passé en props à un Client Component | Passer uniquement les champs utilisés, mappés explicitement |
-| Server Action appelée hors du formulaire prévu | On suppose que le contexte UI protège l'action | Revérifier session + valider le payload **dans** l'action, toujours |
-| `middleware.ts` seul comme protection | Le matcher ne couvre pas toutes les routes, ou est contourné | Vérification dupliquée dans chaque handler — défense en profondeur |
-| ID de ressource pris du body | Réflexe d'API non authentifiée | `userId` toujours issu de la session ; le body ne contient jamais d'ID d'utilisateur |
-| Secret exposé dans le bundle | Variable préfixée `NEXT_PUBLIC_` par habitude | Préfixe uniquement pour ce qui est réellement public, revu en PR |
-| Utilisateur promu `PREMIUM` qui reste bloqué | `membership` figé dans un JWT jusqu'à reconnexion | Stratégie de session `database` — jamais `jwt` tant que `membership` voyage dans la session |
-| `next-auth` importé dans un service pour lire la session | Réflexe de « récupérer l'utilisateur là où on en a besoin » | La session descend **en paramètre** depuis le handler ; un `import next-auth` hors de `server/auth/` est un défaut d'architecture |
+| Piège                                                    | Cause                                                        | Solution                                                                                                                          |
+| -------------------------------------------------------- | ------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------- |
+| Contenu premium visible dans le HTML malgré le cadenas   | Filtrage fait en React au lieu du serveur                    | Ne jamais charger le champ : `select: { body: entitled }` dans le repository                                                      |
+| Fuite via le RSC payload                                 | Objet complet passé en props à un Client Component           | Passer uniquement les champs utilisés, mappés explicitement                                                                       |
+| Server Action appelée hors du formulaire prévu           | On suppose que le contexte UI protège l'action               | Revérifier session + valider le payload **dans** l'action, toujours                                                               |
+| `middleware.ts` seul comme protection                    | Le matcher ne couvre pas toutes les routes, ou est contourné | Vérification dupliquée dans chaque handler — défense en profondeur                                                                |
+| ID de ressource pris du body                             | Réflexe d'API non authentifiée                               | `userId` toujours issu de la session ; le body ne contient jamais d'ID d'utilisateur                                              |
+| Secret exposé dans le bundle                             | Variable préfixée `NEXT_PUBLIC_` par habitude                | Préfixe uniquement pour ce qui est réellement public, revu en PR                                                                  |
+| Utilisateur promu `PREMIUM` qui reste bloqué             | `membership` figé dans un JWT jusqu'à reconnexion            | Stratégie de session `database` — jamais `jwt` tant que `membership` voyage dans la session                                       |
+| `next-auth` importé dans un service pour lire la session | Réflexe de « récupérer l'utilisateur là où on en a besoin »  | La session descend **en paramètre** depuis le handler ; un `import next-auth` hors de `server/auth/` est un défaut d'architecture |
 
 ### Prisma & base de données
 
-| Piège | Cause | Solution |
-|---|---|---|
-| Épuisement du pool de connexions en dev | Nouveau `PrismaClient` à chaque HMR | Singleton dans `server/db.ts` avec cache sur `globalThis` |
-| `findMany()` non borné | Oubli de pagination sur une table qui va grossir | `take` obligatoire sur toute liste, `cursor` pour la suite |
-| Requêtes N+1 | Boucle qui interroge la base par item | `include` / `select` imbriqué, ou une requête agrégée |
-| Champ sensible renvoyé par accident | Absence de `select` explicite | `select` obligatoire partout — jamais de retour de ligne complète |
-| Migration destructive en production | `migrate dev` lancé hors local, ou colonne supprimée sans étape | `migrate deploy` en production, sauvegarde avant, suppression en deux temps |
-| Décimales monétaires fausses | Montant stocké en `Float` | `Decimal` Prisma + `NUMERIC` Postgres ; jamais de `Float` pour de l'argent |
+| Piège                                   | Cause                                                           | Solution                                                                    |
+| --------------------------------------- | --------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| Épuisement du pool de connexions en dev | Nouveau `PrismaClient` à chaque HMR                             | Singleton dans `server/db.ts` avec cache sur `globalThis`                   |
+| `findMany()` non borné                  | Oubli de pagination sur une table qui va grossir                | `take` obligatoire sur toute liste, `cursor` pour la suite                  |
+| Requêtes N+1                            | Boucle qui interroge la base par item                           | `include` / `select` imbriqué, ou une requête agrégée                       |
+| Champ sensible renvoyé par accident     | Absence de `select` explicite                                   | `select` obligatoire partout — jamais de retour de ligne complète           |
+| Migration destructive en production     | `migrate dev` lancé hors local, ou colonne supprimée sans étape | `migrate deploy` en production, sauvegarde avant, suppression en deux temps |
+| Décimales monétaires fausses            | Montant stocké en `Float`                                       | `Decimal` Prisma + `NUMERIC` Postgres ; jamais de `Float` pour de l'argent  |
 
 ### Next.js & UI
 
-| Piège | Cause | Solution |
-|---|---|---|
-| Page premium mise en cache et servie à tout le monde | Route statique par défaut | Route dynamique + `cache: "no-store"` sur tout ce qui dépend de la session |
-| Erreur d'hydratation | Date ou locale rendue côté serveur | Formatage dans un `useEffect`, ou `suppressHydrationWarning` ciblé |
-| Double soumission de formulaire | Bouton non désactivé pendant la mutation | `isPending` de TanStack Query / `useFormStatus`, bouton désactivé |
-| Import serveur dans un composant client | Barrel file qui réexporte du code serveur | `import "server-only"` en tête de chaque fichier `server/` — le build casse |
-| Formation ou concours affiché après sa date de fin | Filtre de publication oublié | Filtrer sur `publishedAt` / `endsAt` dans le repository, pas dans la vue |
+| Piège                                                | Cause                                     | Solution                                                                    |
+| ---------------------------------------------------- | ----------------------------------------- | --------------------------------------------------------------------------- |
+| Page premium mise en cache et servie à tout le monde | Route statique par défaut                 | Route dynamique + `cache: "no-store"` sur tout ce qui dépend de la session  |
+| Erreur d'hydratation                                 | Date ou locale rendue côté serveur        | Formatage dans un `useEffect`, ou `suppressHydrationWarning` ciblé          |
+| Double soumission de formulaire                      | Bouton non désactivé pendant la mutation  | `isPending` de TanStack Query / `useFormStatus`, bouton désactivé           |
+| Import serveur dans un composant client              | Barrel file qui réexporte du code serveur | `import "server-only"` en tête de chaque fichier `server/` — le build casse |
+| Formation ou concours affiché après sa date de fin   | Filtre de publication oublié              | Filtrer sur `publishedAt` / `endsAt` dans le repository, pas dans la vue    |
 
 ---
 
@@ -536,4 +580,4 @@ perf(formations): indexer la colonne publishedAt
 
 ---
 
-*Dernière mise à jour : 2026-08-07*
+_Dernière mise à jour : 2026-08-07_

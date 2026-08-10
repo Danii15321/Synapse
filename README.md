@@ -28,13 +28,16 @@ Offrir un point d'entrée unique où la communauté Synapse retrouve, au même e
 ## 3. Les rubriques
 
 ### 3.1 Prompts
+
 Bibliothèque de prompts utiles et sophistiqués, couvrant une panoplie de domaines.
 Chaque prompt est présenté avec son cas d'usage, son domaine et son contenu copiable.
 
 ### 3.2 Formations
+
 Section réservée aux formations proposées par Synapse : présentation, contenu, format et modalités d'accès.
 
 ### 3.3 Jeux & mini-concours
+
 **Rôle : vitrine et enregistrement — rien de collaboratif ni de complexe.**
 
 La plateforme présente le jeu ou l'activité (règles, dates, lots, format) et permet à l'utilisateur de **s'inscrire**. Le déroulement effectif a lieu **ailleurs** : en présentiel ou sur un autre canal hors plateforme.
@@ -42,6 +45,7 @@ La plateforme présente le jeu ou l'activité (règles, dates, lots, format) et 
 Autrement dit : on présente, on inscrit, on n'héberge pas le jeu.
 
 ### 3.4 Bons plans & opportunités
+
 Opportunités en lien avec l'écosystème Synapse : programmes de recrutement, stages, collaborations, appels d'offres, fonds de financement de projets, etc.
 
 ---
@@ -52,16 +56,16 @@ Le contenu n'est **pas systématiquement gratuit**. Chaque élément des quatre 
 
 **Le modèle premium :**
 
-| Aspect | Choix retenu |
-|---|---|
-| Type | Paiement **unique**, pas d'abonnement |
+| Aspect       | Choix retenu                               |
+| ------------ | ------------------------------------------ |
+| Type         | Paiement **unique**, pas d'abonnement      |
 | Contrepartie | Accès **à vie** à l'intégralité du contenu |
-| Moyens visés | Wave, mobile money |
-| Prérequis | Créer un compte, puis payer une fois |
+| Moyens visés | Wave, mobile money                         |
+| Prérequis    | Créer un compte, puis payer une fois       |
 
 > **Périmètre v1 — important**
 > Le paiement **n'est pas implémenté** dans cette première version : pas d'agrégateur, pas de PSP, pas de webhook de paiement.
-> On se contente de **présenter le parcours visuellement** (logique *mockup*) : verrouillage du contenu premium, écran d'offre, tunnel d'achat factice.
+> On se contente de **présenter le parcours visuellement** (logique _mockup_) : verrouillage du contenu premium, écran d'offre, tunnel d'achat factice.
 > Le moyen de paiement réel arrivera en **v2**.
 >
 > Le verrouillage doit malgré tout être **réel côté serveur** dès la v1 : un contenu premium ne doit jamais transiter vers un utilisateur non premium, même si l'attribution du statut premium se fait manuellement pour l'instant.
@@ -70,11 +74,11 @@ Le contenu n'est **pas systématiquement gratuit**. Chaque élément des quatre 
 
 ## 5. Le contenu
 
-Le contenu éditorial **n'est pas à créer dans le cadre du développement**.
-
-Il sera fourni dans un dossier `ressources/`, créé ultérieurement. Le moment venu, ce dossier servira de source pour **peupler la base de données** (script de seed). L'étape de peuplement sera positionnée explicitement dans la pipeline, plus tard.
-
-Tant que `ressources/` n'existe pas, le développement s'appuie sur des **données de démonstration** clairement identifiées comme telles.
+Le contenu éditorial est fourni hors Git dans `ressources/`, puis validé et
+importé par la commande de seed Prisma. Le catalogue v1 contient **69 prompts : 20
+FREE et 49 PREMIUM**. Le dossier `ressources/` est absent de tout l'historique
+Git afin qu'aucun corps premium ne soit publié avec le code. Le contrat complet
+de l'import est décrit dans [docs/import-ressources.md](docs/import-ressources.md).
 
 ---
 
@@ -82,11 +86,11 @@ Tant que `ressources/` n'existe pas, le développement s'appuie sur des **donné
 
 Architecture **Backend For Frontend (BFF)** avec Next.js : le frontend et le backend vivent dans la même application, le backend étant exposé via les Route Handlers et Server Actions de Next.js. Souple, léger et largement suffisant pour ce projet.
 
-| Couche | Technologie |
-|---|---|
+| Couche                    | Technologie                             |
+| ------------------------- | --------------------------------------- |
 | Application (front + BFF) | Next.js (App Router), TypeScript strict |
-| Base de données | PostgreSQL |
-| ORM & migrations | Prisma |
+| Base de données           | PostgreSQL                              |
+| ORM & migrations          | Prisma                                  |
 
 Les conventions détaillées — architecture en couches, règles de sécurité, standards de code, workflow — sont décrites dans [AGENTS.md](AGENTS.md), qui fait autorité pour toute contribution.
 
@@ -102,22 +106,39 @@ reste l'unique entrée vers le repository Prisma et PostgreSQL.
 
 ---
 
-## 7. Périmètre v1 / v2
+## 7. Périmètre v1 / suite
 
 **Dans la v1**
+
 - Les quatre rubriques, en consultation
 - Compte utilisateur (inscription, connexion)
 - Distinction contenu libre / premium, avec verrouillage serveur effectif
-- Inscription aux jeux & concours
+- Inscription aux jeux & concours et aux formations événementielles
 - Parcours de paiement en mockup
 
-**Reporté en v2**
-- Paiement réel (Wave / mobile money) et attribution automatique du statut premium
-- Tout ce qui relève du collaboratif ou du déroulement des jeux sur la plateforme
+**Explicitement hors v1**
+
+- Paiement réel, PSP, webhook et attribution automatique du statut premium
+- E-mails de confirmation, notification ou récupération de compte
+- Interface d'administration et dashboard
+- Déroulement des jeux sur la plateforme
+- Recherche avancée, archive des opportunités expirées et listes d'attente
+- Fournisseurs OAuth, vérification d'adresse e-mail et mot de passe oublié
+- Suppression de compte et export de ses données en libre-service
+- Upload de fichiers ou d'images depuis l'interface
+- Thème sombre, PWA installable et formulaire de contact
+
+La prochaine étape est **l'administration en premier** pour remplacer le
+réimport manuel. Le paiement réel reste ultérieur, en v2. Aucun dashboard et
+aucune voie publique vers `grantPremium` ne font partie de la v1 : la promotion
+reste une opération d'administration explicite et tracée par script.
+
+Les limites et preuves de sortie sont détaillées dans
+[docs/recette-v1.md](docs/recette-v1.md).
 
 ---
 
-*Dernière mise à jour : 2026-08-07*
+_Dernière mise à jour : 2026-08-10_
 
 ## Démarrage local depuis zéro
 
@@ -133,3 +154,15 @@ npm run dev
 ```
 
 L’application est ensuite disponible sur `http://localhost:3000`.
+
+## Mise en ligne v1
+
+La cible retenue est **Vercel** avec un PostgreSQL managé. Aucun fournisseur de
+base n'est imposé par le dépôt. Le fournisseur choisi doit proposer une URL de
+pooling compatible serverless pour `DATABASE_URL`, une connexion directe pour
+`prisma migrate deploy`, des sauvegardes actives et une restauration vers une
+base isolée. Ces capacités sont des prérequis bloquants, pas des options à
+activer après le lancement.
+
+La procédure complète, y compris la vérification d'une restauration, se trouve
+dans [docs/deploiement-v1.md](docs/deploiement-v1.md).

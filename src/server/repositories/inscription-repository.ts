@@ -103,6 +103,26 @@ export async function hasFormationParticipation(input: {
   return row !== null
 }
 
+export async function hasParticipationBySlug(input: {
+  activityType: "FORMATION" | "JEU"
+  slug: string
+  userId: string
+}): Promise<boolean> {
+  if (input.activityType === "JEU") {
+    const row = await db.inscription.findFirst({
+      select: { id: true },
+      where: { jeu: { slug: input.slug }, userId: input.userId },
+    })
+    return row !== null
+  }
+
+  const row = await db.formationInscription.findFirst({
+    select: { id: true },
+    where: { formation: { slug: input.slug }, userId: input.userId },
+  })
+  return row !== null
+}
+
 export function countJeuParticipations(jeuId: string): Promise<number> {
   return db.inscription.count({ where: { jeuId } })
 }

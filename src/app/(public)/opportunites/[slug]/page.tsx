@@ -1,9 +1,9 @@
 import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 
+import { DetailCoverImage } from "@/components/features/detail-cover-image"
 import { TYPE_LABELS } from "@/components/features/opportunite-card"
 import { PremiumGate } from "@/components/features/premium-gate"
-import { CspImage } from "@/components/ui/csp-image"
 import { PremiumBadge } from "@/components/ui/premium-badge"
 import type { SessionUser } from "@/lib/validators/auth"
 import { opportuniteSlugParamsSchema } from "@/lib/validators/opportunite"
@@ -12,9 +12,6 @@ import { ContentNotFoundError } from "@/server/errors"
 import { getOpportuniteBySlug } from "@/server/services/opportunite-service"
 
 export const dynamic = "force-dynamic"
-
-const OPPORTUNITE_FALLBACK_IMAGE =
-  "/images/fallbacks/fallback-opportunites.webp"
 
 async function loadOpportunite(slug: string, user: SessionUser | null) {
   try {
@@ -58,13 +55,10 @@ export default async function OpportuniteDetailPage({
   return (
     <main className="page-shell">
       <article className="content-reading">
-        <CspImage
+        <DetailCoverImage
           alt=""
-          className="prompt-detail-image"
-          height={900}
-          priority
-          src={opportunite.coverImage ?? OPPORTUNITE_FALLBACK_IMAGE}
-          width={1200}
+          coverImage={opportunite.coverImage}
+          fallback="opportunites"
         />
         <div className="tag-list detail-section">
           {opportunite.type ? (
@@ -114,4 +108,3 @@ export default async function OpportuniteDetailPage({
     </main>
   )
 }
-

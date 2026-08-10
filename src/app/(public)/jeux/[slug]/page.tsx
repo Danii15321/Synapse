@@ -2,9 +2,9 @@ import type { Metadata } from "next"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 
+import { DetailCoverImage } from "@/components/features/detail-cover-image"
 import ParticipationControl from "@/components/features/participation-control"
 import { PremiumGate } from "@/components/features/premium-gate"
-import { CspImage } from "@/components/ui/csp-image"
 import { PremiumBadge } from "@/components/ui/premium-badge"
 import type { SessionUser } from "@/lib/validators/auth"
 import { jeuSlugParamsSchema } from "@/lib/validators/jeu"
@@ -14,8 +14,6 @@ import { getParticipationState } from "@/server/services/inscription-service"
 import { getJeuBySlug } from "@/server/services/jeu-service"
 
 export const dynamic = "force-dynamic"
-
-const JEU_FALLBACK_IMAGE = "/brand/opengraph-synapse.webp"
 
 async function loadJeu(slug: string, user: SessionUser | null) {
   try {
@@ -67,13 +65,10 @@ export default async function JeuDetailPage({
   return (
     <main className="page-shell">
       <article className="content-reading">
-        <CspImage
+        <DetailCoverImage
           alt={`Visuel du concours ${jeu.title}`}
-          className="prompt-detail-image"
-          height={900}
-          priority
-          src={jeu.coverImage ?? JEU_FALLBACK_IMAGE}
-          width={1200}
+          coverImage={jeu.coverImage}
+          fallback="jeux"
         />
         <div className="tag-list detail-section">
           <span className="tag">Jeu &amp; concours</span>

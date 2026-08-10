@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 
+import { DetailCoverImage } from "@/components/features/detail-cover-image"
 import ParticipationControl from "@/components/features/participation-control"
 import {
   FORMAT_LABELS,
@@ -9,7 +10,6 @@ import {
   LEVEL_LABELS,
 } from "@/components/features/formation-card"
 import { PremiumGate } from "@/components/features/premium-gate"
-import { CspImage } from "@/components/ui/csp-image"
 import { PremiumBadge } from "@/components/ui/premium-badge"
 import type { SessionUser } from "@/lib/validators/auth"
 import { formationSlugParamsSchema } from "@/lib/validators/formation"
@@ -19,8 +19,6 @@ import { getFormationBySlug } from "@/server/services/formation-service"
 import { getParticipationState } from "@/server/services/inscription-service"
 
 export const dynamic = "force-dynamic"
-
-const FORMATION_FALLBACK_IMAGE = "/images/fallbacks/fallback-formations.webp"
 
 async function loadFormation(slug: string, user: SessionUser | null) {
   try {
@@ -70,13 +68,10 @@ export default async function FormationDetailPage({
   return (
     <main className="page-shell">
       <article className="content-reading">
-        <CspImage
+        <DetailCoverImage
           alt=""
-          className="prompt-detail-image"
-          height={900}
-          priority
-          src={formation.coverImage ?? FORMATION_FALLBACK_IMAGE}
-          width={1200}
+          coverImage={formation.coverImage}
+          fallback="formations"
         />
         <div className="tag-list detail-section">
           <span className="tag">{KIND_LABELS[formation.kind]}</span>
