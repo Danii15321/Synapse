@@ -8,6 +8,13 @@ const FOOTER_LINKS = [
   ["Conditions d'utilisation", "/conditions-utilisation"],
 ] as const
 
+const RUBRIC_LINKS = [
+  ["Prompts", "/prompts"],
+  ["Formations", "/formations"],
+  ["Jeux & concours", "/jeux"],
+  ["Opportunités", "/opportunites"],
+] as const
+
 export default function SiteFooter() {
   return (
     <footer className="site-footer">
@@ -22,17 +29,30 @@ export default function SiteFooter() {
             © <span>{new Date().getFullYear()}</span> Synapse
           </p>
         </div>
-        <nav aria-label="Liens institutionnels">
-          <ul className="footer-link-list">
-            {FOOTER_LINKS.map(([label, href]) => (
-              <li key={href}>
-                <Link className="footer-link" href={href}>
-                  {label}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </nav>
+        <div>
+          <nav aria-label="Rubriques">
+            <ul className="footer-link-list">
+              {RUBRIC_LINKS.map(([label, href]) => (
+                <li key={href}>
+                  <Link className="footer-link" href={href}>
+                    {label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+          <nav aria-label="Liens institutionnels">
+            <ul className="footer-link-list">
+              {FOOTER_LINKS.map(([label, href]) => (
+                <li key={href}>
+                  <Link className="footer-link" href={href}>
+                    {label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        </div>
       </div>
     </footer>
   )

@@ -132,6 +132,10 @@
   white-space: pre-wrap;
 }
 
+.prompt-markdown-token {
+  display: none;
+}
+
 .premium-gate {
   display: block;
   overflow: hidden;

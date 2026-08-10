@@ -153,6 +153,27 @@
   object-fit: cover;
 }
 
+.detail-cover-fallback {
+  background-position: center;
+  background-size: cover;
+}
+
+.detail-cover-fallback-prompts {
+  background-image: url("/images/fallbacks/fallback-prompts.webp");
+}
+
+.detail-cover-fallback-formations {
+  background-image: url("/images/fallbacks/fallback-formations.webp");
+}
+
+.detail-cover-fallback-jeux {
+  background-image: url("/brand/opengraph-synapse.webp");
+}
+
+.detail-cover-fallback-opportunites {
+  background-image: url("/images/fallbacks/fallback-opportunites.webp");
+}
+
 .prompt-card-body {
   display: grid;
   gap: var(--space-tiny);

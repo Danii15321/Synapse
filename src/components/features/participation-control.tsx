@@ -67,9 +67,15 @@ export default function ParticipationControl({
         </p>
       ) : null}
       {state === "AVAILABLE" ? (
-        <Button disabled={pending} onClick={() => participate()} type="button">
-          Je participe
-        </Button>
+        <form
+          action={`/api/${activityType === "JEU" ? "jeux" : "formations"}/${slug}/inscriptions`}
+          method="post"
+          onSubmit={() => participate()}
+        >
+          <Button disabled={pending} type="submit">
+            Je participe
+          </Button>
+        </form>
       ) : null}
       {confirmed && confirmation ? (
         <Button disabled={pending} onClick={() => cancel()} type="button">

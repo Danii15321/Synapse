@@ -2,12 +2,14 @@ import { randomUUID } from "node:crypto"
 
 import { NextRequest, NextResponse } from "next/server"
 
+import { contentDetailPathSchema } from "@/lib/validators/content-detail-path"
 import { config as appConfig } from "@/server/config"
 import { SESSION_COOKIE_NAME } from "@/server/auth/session-cookie"
 import { mapDomainError, RateLimitedError } from "@/server/errors"
 import { writeLog } from "@/server/logger"
 import { resolveRateLimitIdentifier } from "@/server/rate-limit/client-identifier"
 import { createRateLimitProof } from "@/server/rate-limit/proof"
+import { publishedContentExists } from "@/server/services/content-existence-service"
 import { enforceRateLimit } from "@/server/services/rate-limit-service"
 
 const GENERIC_ERROR_MESSAGE = "La requête n'a pas pu être traitée."
@@ -44,6 +46,36 @@ function applySecurityHeaders(response: NextResponse, csp: string): void {
 
 function isMemberPath(pathname: string): boolean {
   return pathname === "/compte" || pathname.startsWith("/compte/")
+}
+
+async function isMissingContentDetail(pathname: string): Promise<boolean> {
+  const match = /^\/(formations|jeux|opportunites|prompts)\/([^/]+)\/?$/u.exec(
+    pathname,
+  )
+  if (!match) return false
+
+  const parsed = contentDetailPathSchema.safeParse({
+    rubric: match[1],
+    slug: match[2],
+  })
+  if (!parsed.success) return true
+
+  return !(await publishedContentExists(parsed.data))
+}
+
+function rewriteNotFound(
+  request: NextRequest,
+  requestHeaders: Headers,
+  csp: string,
+): NextResponse {
+  const notFoundUrl = request.nextUrl.clone()
+  notFoundUrl.pathname = "/__synapse-content-not-found"
+  const response = NextResponse.rewrite(notFoundUrl, {
+    request: { headers: requestHeaders },
+    status: 404,
+  })
+  applySecurityHeaders(response, csp)
+  return response
 }
 
 export async function middleware(request: NextRequest): Promise<NextResponse> {
@@ -91,6 +123,10 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
       const response = NextResponse.redirect(loginUrl)
       applySecurityHeaders(response, csp)
       return response
+    }
+
+    if (await isMissingContentDetail(request.nextUrl.pathname)) {
+      return rewriteNotFound(request, requestHeaders, csp)
     }
 
     const response = NextResponse.next({

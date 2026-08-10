@@ -1,10 +1,10 @@
 import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 
+import { DetailCoverImage } from "@/components/features/detail-cover-image"
 import { PromptActions } from "@/components/features/prompt-actions"
 import { PromptBody } from "@/components/features/prompt-body"
 import { PremiumGate } from "@/components/features/premium-gate"
-import { CspImage } from "@/components/ui/csp-image"
 import { PremiumBadge } from "@/components/ui/premium-badge"
 import type { SessionUser } from "@/lib/validators/auth"
 import { promptSlugParamsSchema } from "@/lib/validators/prompt"
@@ -64,13 +64,10 @@ export default async function PromptDetailPage({
   return (
     <main className="page-shell">
       <article className="content-reading">
-        <CspImage
+        <DetailCoverImage
           alt=""
-          className="prompt-detail-image"
-          height={900}
-          priority
-          src={prompt.coverImage ?? PROMPT_FALLBACK_IMAGE}
-          width={1200}
+          coverImage={prompt.coverImage}
+          fallback="prompts"
         />
         <div className="tag-list detail-section">
           {prompt.domain && !prompt.tags.includes(prompt.domain) ? (

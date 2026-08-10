@@ -70,13 +70,23 @@ export async function POST(
     await secureMutation(request)
     const parsedParams = formationSlugParamsSchema.safeParse(await params)
     if (!parsedParams.success) throw new ValidationError("Route invalide")
-    participationMutationSchema.parse(
-      await parseJsonBody(request, participationMutationSchema),
-    )
+    const browserForm = request.headers
+      .get("content-type")
+      ?.startsWith("application/x-www-form-urlencoded")
+    const input = browserForm
+      ? Object.fromEntries(await request.formData())
+      : await parseJsonBody(request, participationMutationSchema)
+    participationMutationSchema.parse(input)
     const confirmation = await participateInFormation(
       parsedParams.data.slug,
       await requireUser(),
     )
+    if (browserForm) {
+      return NextResponse.redirect(
+        new URL(`/formations/${parsedParams.data.slug}`, request.url),
+        303,
+      )
+    }
     return NextResponse.json(confirmation, {
       status: confirmation.status === "CREATED" ? 201 : 200,
     })

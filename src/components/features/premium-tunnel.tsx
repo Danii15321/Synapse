@@ -159,11 +159,7 @@ export function PremiumTunnel({ accountEmail, offer }: PremiumTunnelProps) {
           <fieldset className="premium-payment-options">
             <legend className="field-label">Moyen choisi</legend>
             <label className="premium-payment-option">
-              <input
-                type="radio"
-                value="WAVE"
-                {...register("paymentMethod")}
-              />
+              <input type="radio" value="WAVE" {...register("paymentMethod")} />
               Wave
             </label>
             <label className="premium-payment-option">
@@ -231,7 +227,7 @@ export function PremiumTunnel({ accountEmail, offer }: PremiumTunnelProps) {
     <section aria-labelledby="premium-offer-title">
       <p className="eyebrow">Premium Synapse</p>
       <h1 className="page-heading" id="premium-offer-title">
-        Un paiement unique, un accès à vie
+        Premium Synapse : un paiement unique, un accès à vie
       </h1>
       <p className="lead">
         {formattedPrice}, pas d’abonnement. Débloquez les contenus Premium
