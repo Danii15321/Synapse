@@ -151,17 +151,25 @@ describe("contrat du walking skeleton Prompts", () => {
 
   it(
     scenario(
-      "Le seed déclare deux upserts et aucune création aveugle",
-      "le seed embryonnaire de la rubrique Prompts",
-      "ses opérations d'écriture sont inspectées",
-      "deux prompts sont écrits par upsert sur leur slug et prompt.create n'est jamais utilisé",
+      "Le seed délègue à l'import industrialisé sans donnée de démonstration codée en dur",
+      "le seed enrichi par la tranche 11 et sa source ressources/PROMPTS",
+      "ses imports, sa délégation et ses éventuelles écritures directes sont inspectés",
+      "il appelle resource-import-service et son repository, sans create, createMany, upsert ni littéral éditorial title/summary/excerpt/body/slug",
     ),
     () => {
       const seed = read("prisma/seed.ts")
 
-      expect(seed.match(/\bdb\.prompt\.upsert\s*\(/g) ?? []).toHaveLength(2)
-      expect(seed).toMatch(/where\s*:\s*{\s*slug\s*:/)
-      expect(seed).not.toMatch(/\.prompt\.create(?:Many)?\s*\(/)
+      expect(seed).toMatch(
+        /server\/services\/resource-import-service["')\s\S]*\bimportPromptResources\s*\(/,
+      )
+      expect(seed).toMatch(/server\/repositories\/resource-import-repository/)
+      expect(seed).toMatch(/ressources["']\s*,\s*["']PROMPTS/)
+      expect(seed).not.toMatch(
+        /\.(?:prompt|formation|opportunite|jeu)\.(?:create|createMany|upsert)\s*\(/i,
+      )
+      expect(seed).not.toMatch(
+        /\b(?:title|summary|excerpt|body|slug)\s*:\s*["']/,
+      )
     },
   )
 })

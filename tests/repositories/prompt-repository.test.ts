@@ -143,9 +143,9 @@ describe("repository des prompts sur PostgreSQL", () => {
   it(
     scenario(
       "Le seed peut être rejoué sans dupliquer les prompts",
-      "une vraie base PostgreSQL 16 vide et la commande Prisma configurée",
+      "une vraie base PostgreSQL 16 vide, la commande Prisma configurée et un contenu local dont le volume n'est pas figé par ce test historique",
       "prisma db seed est exécuté deux fois de suite",
-      "les deux exécutions réussissent et la base contient toujours exactement deux prompts aux slugs distincts",
+      "les deux exécutions réussissent et le second état count plus slugs triés est strictement identique au premier",
     ),
     async () => {
       await expectPostgreSql()
@@ -156,17 +156,25 @@ describe("repository des prompts sur PostgreSQL", () => {
         encoding: "utf8",
         env: process.env,
       })
+      const firstState = await db.$queryRaw<
+        Array<{ prompts: number; slugs: string[] | null }>
+      >`
+        SELECT
+          COUNT(*)::int AS prompts,
+          ARRAY_AGG("slug" ORDER BY "slug") AS slugs
+        FROM "Prompt"
+      `
       const secondRun = spawnSync("npx", ["prisma", "db", "seed"], {
         cwd: process.cwd(),
         encoding: "utf8",
         env: process.env,
       })
-      const counts = await db.$queryRaw<
-        Array<{ prompts: number; slugs: number }>
+      const secondState = await db.$queryRaw<
+        Array<{ prompts: number; slugs: string[] | null }>
       >`
         SELECT
           COUNT(*)::int AS prompts,
-          COUNT(DISTINCT "slug")::int AS slugs
+          ARRAY_AGG("slug" ORDER BY "slug") AS slugs
         FROM "Prompt"
       `
 
@@ -174,7 +182,7 @@ describe("repository des prompts sur PostgreSQL", () => {
       expect(secondRun.status, `${secondRun.stdout}\n${secondRun.stderr}`).toBe(
         0,
       )
-      expect(counts).toEqual([{ prompts: 2, slugs: 2 }])
+      expect(secondState).toEqual(firstState)
     },
     60_000,
   )
