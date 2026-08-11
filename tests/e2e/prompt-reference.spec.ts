@@ -100,12 +100,13 @@ THEN  : recherche et Tag sont absents, Domaine filtre réellement, la page suiva
   expect(nextPageUrl.searchParams.get("domain")).toBe("ia")
   expect(nextPageUrl.searchParams.has("search")).toBe(false)
   expect(nextPageUrl.searchParams.has("tag")).toBe(false)
-  const nextPageHrefs = await page
+  const nextPageLinks = page
     .getByRole("main")
     .locator('article a[href^="/prompts/"]')
-    .evaluateAll((links) =>
-      links.map((link) => link.getAttribute("href") ?? ""),
-    )
+  await expect(nextPageLinks.first()).toBeVisible()
+  const nextPageHrefs = await nextPageLinks.evaluateAll((links) =>
+    links.map((link) => link.getAttribute("href") ?? ""),
+  )
   expect(nextPageHrefs.length).toBeGreaterThan(0)
   expect(nextPageHrefs.filter((href) => firstPageHrefs.includes(href))).toEqual(
     [],
