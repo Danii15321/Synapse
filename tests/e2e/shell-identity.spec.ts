@@ -109,9 +109,14 @@ THEN  : l'accueil affiche exactement la promesse validée, le header ordonne ham
   for (const [name, href] of institutionalRoutes) {
     await page.goto(href)
     await expect(page).toHaveURL(new RegExp(`${href}$`))
-    await expect(page.getByRole("heading", { level: 1 })).toContainText(
-      new RegExp(name, "i"),
-    )
+    const heading = page.getByRole("heading", { level: 1 })
+    if (href === "/a-propos") {
+      await expect(heading).toHaveText(
+        "Une startup ivoirienne qui transforme l'information en opportunités.",
+      )
+    } else {
+      await expect(heading).toContainText(new RegExp(name, "i"))
+    }
     await expect(page.getByRole("banner")).toBeVisible()
     await expect(page.getByRole("contentinfo")).toBeVisible()
   }
