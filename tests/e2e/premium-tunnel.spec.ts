@@ -245,11 +245,11 @@ THEN  : l'e-mail est en lecture seule, les actions tactiles font au moins 44px, 
   await page.goto("/premium")
   const start = page
     .getByRole("button", {
-      name: /commencer|demander|continuer|choisir.*premium/i,
+      name: /commencer|demander|continuer|choisir.*premium|débloquer.*premium/i,
     })
     .or(
       page.getByRole("link", {
-        name: /commencer|demander|continuer|choisir.*premium/i,
+        name: /commencer|demander|continuer|choisir.*premium|débloquer.*premium/i,
       }),
     )
     .first()
