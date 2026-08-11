@@ -78,6 +78,7 @@ describe("détail visuel d'un prompt premium", () => {
       }))
       vi.doMock("@/server/services/prompt-service", () => ({
         getPromptBySlug: vi.fn().mockResolvedValue(TEASER),
+        getRelatedPrompts: vi.fn().mockResolvedValue([]),
       }))
       const page = await loadPage()
 
@@ -132,6 +133,7 @@ describe("détail visuel d'un prompt premium", () => {
       }))
       vi.doMock("@/server/services/prompt-service", () => ({
         getPromptBySlug: vi.fn().mockResolvedValue({ ...TEASER, body }),
+        getRelatedPrompts: vi.fn().mockResolvedValue([]),
       }))
       const page = await loadPage()
 
