@@ -80,7 +80,10 @@ async function expectEditorialDetail(
   await expect(page.getByText(fixture.summary, { exact: true })).toHaveCount(0)
   await expect(page.getByText(fixture.excerpt, { exact: true })).toBeVisible()
 
-  const image = page.getByRole("main").getByRole("img")
+  const image = page
+    .getByRole("main")
+    .locator(":scope > article")
+    .getByRole("img")
   await expect(image).toBeVisible()
   const imageSource = decodeURIComponent((await image.getAttribute("src")) ?? "")
   expect(imageSource).toContain("/images/fallbacks/fallback-prompts.webp")
@@ -100,7 +103,10 @@ THEN  : domaine, tags et résumé ne sont pas rendus, l'extrait reste visible, l
   expect(await image.evaluate((node) => getComputedStyle(node).filter)).not.toBe(
     "none",
   )
-  const badge = page.getByText("Premium", { exact: true })
+  const badge = page
+    .getByRole("main")
+    .locator(":scope > article")
+    .getByText("Premium", { exact: true })
   await expect(badge).toBeVisible()
   expect(
     await page.getByRole("main").evaluate((main) => {
@@ -138,5 +144,10 @@ THEN  : domaine, tags et résumé ne sont pas rendus, l'extrait reste visible, l
   expect(await image.evaluate((node) => getComputedStyle(node).filter)).toBe(
     "none",
   )
-  await expect(page.getByText("Premium", { exact: true })).toHaveCount(0)
+  await expect(
+    page
+      .getByRole("main")
+      .locator(":scope > article")
+      .getByText("Premium", { exact: true }),
+  ).toHaveCount(0)
 })
