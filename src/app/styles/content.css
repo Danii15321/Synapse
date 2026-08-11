@@ -371,6 +371,129 @@
   width: 100%;
 }
 
+.account-page,
+.account-view,
+.account-profile-panel,
+.account-profile-grid,
+.account-form-grid,
+.account-privacy-stack {
+  display: grid;
+  gap: var(--space-control);
+}
+
+.account-navigation {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-tiny);
+  margin-top: var(--space-card);
+  border-radius: var(--radius-control);
+  padding: var(--space-tiny);
+  background: color-mix(in srgb, var(--color-night) 6%, transparent);
+}
+
+.account-navigation-link {
+  display: inline-flex;
+  min-height: var(--touch-target);
+  align-items: center;
+  justify-content: center;
+  border-radius: calc(var(--radius-control) - var(--space-nano));
+  padding: var(--space-tiny);
+  text-align: center;
+  font-weight: 700;
+}
+
+.account-navigation-link[aria-current="page"] {
+  background: var(--color-surface);
+  color: var(--color-indigo);
+  box-shadow: var(--shadow-card);
+}
+
+.account-view {
+  margin-top: var(--space-card);
+}
+
+.account-membership {
+  display: grid;
+  gap: var(--space-control);
+}
+
+.account-membership-value {
+  margin-top: var(--space-nano);
+  color: var(--color-indigo);
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+
+.account-subheading {
+  font-size: 1.2rem;
+}
+
+.account-profile-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0;
+}
+
+.account-profile-grid > div {
+  min-width: 0;
+}
+
+.account-profile-form,
+.account-profile-panel,
+.account-privacy-stack .form-stack {
+  margin-top: var(--space-control);
+}
+
+.account-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-tiny);
+}
+
+.account-secondary-button {
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-surface);
+  color: var(--color-night);
+}
+
+.account-success {
+  color: var(--color-indigo);
+}
+
+.account-danger {
+  border-color: color-mix(in srgb, var(--color-error) 40%, transparent);
+}
+
+.account-delete-button {
+  background: var(--color-error);
+}
+
+.account-logout-form {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--space-card);
+}
+
+.account-logout-button {
+  background: var(--color-night);
+}
+
+.account-page .participation-item {
+  gap: var(--space-tiny);
+  padding: var(--space-control);
+}
+
+@media (min-width: 640px) {
+  .account-membership {
+    grid-template-columns: 1fr auto;
+    align-items: center;
+  }
+
+  .account-form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 .auth-intro,
 .auth-switch,
 .message-copy,

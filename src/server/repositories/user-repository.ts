@@ -2,6 +2,7 @@ import "server-only"
 
 import { randomUUID } from "node:crypto"
 
+import type { AccountProfileInput } from "@/lib/validators/auth"
 import { db } from "@/server/db"
 import {
   AccountAlreadyExistsError,
@@ -10,10 +11,28 @@ import {
 
 const SESSION_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1_000
 
-type CreateCredentialsUserInput = Readonly<{
+type LegacyCredentialsUserInput = Readonly<{
   email: string
   passwordHash: string
 }>
+
+type ProfileCredentialsUserInput = Readonly<{
+  city: AccountProfileInput["city"]
+  country: AccountProfileInput["country"]
+  email: AccountProfileInput["email"]
+  firstName: AccountProfileInput["firstName"]
+  lastName: AccountProfileInput["lastName"]
+  name: string
+  passwordHash: string
+  phone: AccountProfileInput["phone"]
+  professionalLevel: AccountProfileInput["professionalLevel"]
+}>
+
+type UpdateUserProfileInput = AccountProfileInput &
+  Readonly<{
+    name: string
+    userId: string
+  }>
 
 type ReplacePasswordAndSessionsInput = Readonly<{
   currentSessionToken: string
@@ -30,18 +49,68 @@ function isUniqueConstraintError(error: unknown): boolean {
   )
 }
 
-export async function createCredentialsUser({
-  email,
-  passwordHash,
-}: CreateCredentialsUserInput) {
+export function createCredentialsUser(
+  input: LegacyCredentialsUserInput,
+): Promise<{
+  email: string
+  emailVerified: Date | null
+  id: string
+  membership: "FREE" | "PREMIUM"
+}>
+export function createCredentialsUser(
+  input: ProfileCredentialsUserInput,
+): Promise<{
+  city: string
+  country: string
+  email: string
+  firstName: string
+  id: string
+  lastName: string
+  membership: "FREE" | "PREMIUM"
+  phone: string
+  professionalLevel: AccountProfileInput["professionalLevel"]
+}>
+export async function createCredentialsUser(
+  input: LegacyCredentialsUserInput | ProfileCredentialsUserInput,
+) {
   try {
+    if (!("firstName" in input)) {
+      return await db.user.create({
+        data: {
+          email: input.email,
+          passwordHash: input.passwordHash,
+        },
+        select: {
+          email: true,
+          emailVerified: true,
+          id: true,
+          membership: true,
+        },
+      })
+    }
+
     return await db.user.create({
-      data: { email, passwordHash },
+      data: {
+        city: input.city,
+        country: input.country,
+        email: input.email,
+        firstName: input.firstName,
+        lastName: input.lastName,
+        name: input.name,
+        passwordHash: input.passwordHash,
+        phone: input.phone,
+        professionalLevel: input.professionalLevel,
+      },
       select: {
+        city: true,
+        country: true,
         email: true,
-        emailVerified: true,
+        firstName: true,
         id: true,
+        lastName: true,
         membership: true,
+        phone: true,
+        professionalLevel: true,
       },
     })
   } catch (error) {
@@ -50,6 +119,72 @@ export async function createCredentialsUser({
     }
     throw error
   }
+}
+
+export function findUserProfileById(userId: string) {
+  return db.user.findUnique({
+    where: { id: userId },
+    select: {
+      city: true,
+      country: true,
+      email: true,
+      firstName: true,
+      id: true,
+      lastName: true,
+      membership: true,
+      phone: true,
+      professionalLevel: true,
+    },
+  })
+}
+
+export async function updateUserProfile({
+  city,
+  country,
+  email,
+  firstName,
+  lastName,
+  name,
+  phone,
+  professionalLevel,
+  userId,
+}: UpdateUserProfileInput) {
+  try {
+    return await db.user.update({
+      where: { id: userId },
+      data: {
+        city,
+        country,
+        email,
+        firstName,
+        lastName,
+        name,
+        phone,
+        professionalLevel,
+      },
+      select: {
+        city: true,
+        country: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        phone: true,
+        professionalLevel: true,
+      },
+    })
+  } catch (error) {
+    if (isUniqueConstraintError(error)) {
+      throw new AccountAlreadyExistsError()
+    }
+    throw error
+  }
+}
+
+export function deleteUserById(userId: string) {
+  return db.user.delete({
+    where: { id: userId },
+    select: { id: true },
+  })
 }
 
 export function findCredentialsUserByEmail(email: string) {

@@ -34,11 +34,6 @@ export function SessionIndicator({
         Compte
       </Link>
       {membership ? MEMBERSHIP_STATUS[membership] : null}
-      <form action="/api/auth/logout" method="post">
-        <button className="session-action" type="submit">
-          Se déconnecter
-        </button>
-      </form>
     </div>
   )
 }

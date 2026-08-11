@@ -12,6 +12,13 @@ enum Membership {
   PREMIUM
 }
 
+enum ProfessionalLevel {
+  ELEVE
+  ETUDIANT
+  DIPLOME
+  AUTRE
+}
+
 enum Visibility {
   FREE
   PREMIUM
@@ -57,6 +64,12 @@ model User {
   image                 String?
   passwordHash          String
   membership            Membership             @default(FREE)
+  firstName             String?
+  lastName              String?
+  phone                 String?
+  city                  String?
+  country               String?
+  professionalLevel     ProfessionalLevel?
   accounts              Account[]
   sessions              Session[]
   inscriptions          Inscription[]

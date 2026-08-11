@@ -54,5 +54,5 @@ export async function changePasswordAction(formData: FormData) {
     value: result.sessionToken,
   })
 
-  redirect("/compte?passwordChanged=rotating")
+  redirect("/compte?section=confidentialite&passwordChanged=rotating")
 }

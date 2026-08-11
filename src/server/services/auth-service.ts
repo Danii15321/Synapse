@@ -1,12 +1,21 @@
 import "server-only"
 
-import type { RegisterInput, SessionUser } from "@/lib/validators/auth"
+import type {
+  AccountProfileInput,
+  RegisterInput,
+} from "@/lib/validators/auth"
 import { hashPassword, verifyPassword } from "@/server/auth/password"
-import { InvalidCurrentPasswordError } from "@/server/errors"
+import {
+  InvalidCurrentPasswordError,
+  UnauthorizedError,
+} from "@/server/errors"
 import {
   createCredentialsUser,
+  deleteUserById,
   findCredentialsUserById,
+  findUserProfileById,
   replacePasswordAndSessions,
+  updateUserProfile,
 } from "@/server/repositories/user-repository"
 
 type ChangePasswordServiceInput = Readonly<{
@@ -16,6 +25,20 @@ type ChangePasswordServiceInput = Readonly<{
   userId: string
 }>
 
+type UpdateProfileServiceInput = Readonly<{
+  profile: AccountProfileInput
+  userId: string
+}>
+
+type DeleteAccountServiceInput = Readonly<{
+  currentPassword: string
+  userId: string
+}>
+
+function profileName(profile: AccountProfileInput): string {
+  return `${profile.firstName} ${profile.lastName}`
+}
+
 /**
  * Spécification : crée un compte FREE à partir d'un hash argon2id et ne
  * retourne jamais de secret. Cette tranche ne décide encore aucun accès
@@ -23,11 +46,48 @@ type ChangePasswordServiceInput = Readonly<{
  */
 export async function registerUser(input: RegisterInput) {
   const passwordHash = await hashPassword(input.password)
-  return createCredentialsUser({ email: input.email, passwordHash })
+  const profile = {
+    city: input.city,
+    country: input.country,
+    email: input.email,
+    firstName: input.firstName,
+    lastName: input.lastName,
+    phone: input.phone,
+    professionalLevel: input.professionalLevel,
+  }
+  return createCredentialsUser({
+    ...profile,
+    name: profileName(profile),
+    passwordHash,
+  })
 }
 
-export function getAccount(user: SessionUser): SessionUser {
-  return user
+export async function getAccount(userId: string) {
+  const account = await findUserProfileById(userId)
+  if (!account) throw new UnauthorizedError()
+  return account
+}
+
+export function updateProfile({
+  profile,
+  userId,
+}: UpdateProfileServiceInput) {
+  return updateUserProfile({
+    ...profile,
+    name: profileName(profile),
+    userId,
+  })
+}
+
+export async function deleteAccount({
+  currentPassword,
+  userId,
+}: DeleteAccountServiceInput): Promise<void> {
+  const user = await findCredentialsUserById(userId)
+  if (!user || !(await verifyPassword(user.passwordHash, currentPassword))) {
+    throw new InvalidCurrentPasswordError()
+  }
+  await deleteUserById(userId)
 }
 
 /**
