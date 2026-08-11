@@ -52,31 +52,31 @@ describe("suggestions Prompts sur PostgreSQL réel", () => {
         {
           domain: "ia",
           id: currentId,
-          publishedAt: new Date("2026-08-01T10:00:00.000Z"),
+          publishedAt: new Date("2099-08-01T10:00:00.000Z"),
           title: "Prompt courant",
         },
         {
           domain: "ia",
           id: `${prefix}-related-1`,
-          publishedAt: new Date("2026-08-05T10:00:00.000Z"),
+          publishedAt: new Date("2099-08-05T10:00:00.000Z"),
           title: "Suggestion 1",
         },
         {
           domain: "ia",
           id: `${prefix}-related-2-z`,
-          publishedAt: new Date("2026-08-04T10:00:00.000Z"),
+          publishedAt: new Date("2099-08-04T10:00:00.000Z"),
           title: "Suggestion 2 Z",
         },
         {
           domain: "ia",
           id: `${prefix}-related-2-a`,
-          publishedAt: new Date("2026-08-04T10:00:00.000Z"),
+          publishedAt: new Date("2099-08-04T10:00:00.000Z"),
           title: "Suggestion 2 A",
         },
         {
           domain: "ia",
           id: `${prefix}-related-4`,
-          publishedAt: new Date("2026-08-03T10:00:00.000Z"),
+          publishedAt: new Date("2099-08-03T10:00:00.000Z"),
           title: "Suggestion hors limite",
         },
         {
@@ -88,7 +88,7 @@ describe("suggestions Prompts sur PostgreSQL réel", () => {
         {
           domain: "communication",
           id: `${prefix}-other-domain`,
-          publishedAt: new Date("2026-08-06T10:00:00.000Z"),
+          publishedAt: new Date("2099-08-06T10:00:00.000Z"),
           title: "Autre domaine interdit",
         },
       ] as const
