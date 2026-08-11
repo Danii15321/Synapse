@@ -16,7 +16,7 @@
   max-width: var(--content-wide);
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-control);
+  gap: var(--space-tiny);
   margin: auto;
   padding: var(--space-tiny) var(--space-control);
 }
@@ -55,6 +55,14 @@
   color: var(--color-night);
   font-weight: 700;
   cursor: pointer;
+}
+
+.mobile-menu-icon {
+  display: block;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-width: 2;
 }
 
 .mobile-menu-panel {
@@ -105,6 +113,13 @@
 .footer-link:hover {
   background: color-mix(in srgb, var(--color-indigo) 8%, transparent);
   color: var(--color-indigo);
+}
+
+.session-membership-cta,
+.session-membership-cta:hover {
+  background: var(--gradient-synapse);
+  color: var(--color-surface);
+  white-space: nowrap;
 }
 
 .session-indicator {

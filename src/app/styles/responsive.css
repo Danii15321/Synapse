@@ -1,7 +1,18 @@
 @media (min-width: 48rem) {
   .site-navigation {
     flex-wrap: nowrap;
+    gap: var(--space-control);
     padding-inline: var(--space-card);
+  }
+
+  .brand-link {
+    order: 1;
+  }
+
+  .mobile-menu-container {
+    display: flex;
+    flex: 1;
+    order: 2;
   }
 
   .mobile-menu-toggle,
@@ -30,6 +41,7 @@
 
   .session-indicator {
     margin-left: auto;
+    order: 3;
   }
 
   .session-action {

@@ -16,6 +16,7 @@ export function SiteNavigation({
   return (
     <header className="site-header">
       <nav aria-label="Navigation principale" className="site-navigation">
+        <MobileMenu showLogin={!authenticated} />
         <Link aria-label="Synapse — Accueil" className="brand-link" href="/">
           <CspImage
             alt=""
@@ -31,7 +32,6 @@ export function SiteNavigation({
           authenticated={authenticated}
           membership={membership}
         />
-        <MobileMenu />
       </nav>
     </header>
   )
