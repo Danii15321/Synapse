@@ -4,6 +4,10 @@ import { expect, test, type Page } from "@playwright/test"
 
 test.use({ viewport: { width: 390, height: 844 } })
 
+const HOME_TITLE = "Apprenez l'IA sous toutes ses formes avec Synapse"
+const HOME_DESCRIPTION =
+  "Synapse vous aide à comprendre l'intelligence artificielle, découvrir les bons outils et apprendre à les utiliser concrètement dans vos études, votre travail, votre entreprise ou vos projets."
+
 async function openMobileMenu(page: Page) {
   const toggle = page.getByRole("button", { name: /ouvrir.*menu|menu/i })
   await toggle.click()
@@ -14,15 +18,15 @@ async function openMobileMenu(page: Page) {
 test(`Le shell transforme le parcours mobile en site cohérent — ce qui est vérifié
 GIVEN : un visiteur anonyme sur un viewport de 390px
 WHEN  : il comprend l'accueil, ouvre le menu au clavier et visite les quatre rubriques puis les cinq pages institutionnelles
-THEN  : l'accueil garde titre et mission sans ancienne accroche, le header ordonne hamburger, marque et Devenir membre, Connexion reste dans le panneau, chaque destination répond et le menu conserve ses garanties tactiles et clavier`, async ({
+THEN  : l'accueil affiche exactement la promesse validée, le header ordonne hamburger, marque et Devenir membre, Connexion reste dans le panneau, chaque destination répond et le menu conserve ses garanties tactiles et clavier`, async ({
   page,
 }) => {
   const response = await page.goto("/")
   expect(response?.ok()).toBe(true)
-  await expect(page.getByRole("heading", { level: 1 })).toContainText(
-    /Synapse/i,
-  )
-  await expect(page.getByRole("main")).toContainText(/jeunes ivoiriens/i)
+  await expect(
+    page.getByRole("heading", { level: 1, name: HOME_TITLE, exact: true }),
+  ).toBeVisible()
+  await expect(page.getByText(HOME_DESCRIPTION, { exact: true })).toBeVisible()
   await expect(page.getByRole("main")).not.toContainText(
     "Apprendre. Créer. Avancer.",
   )
