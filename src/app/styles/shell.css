@@ -117,7 +117,7 @@
 
 .session-membership-cta,
 .session-membership-cta:hover {
-  background: var(--gradient-synapse);
+  background: linear-gradient(90deg, #c04400, #c00062, #1d25b5);
   color: var(--color-surface);
   white-space: nowrap;
 }
