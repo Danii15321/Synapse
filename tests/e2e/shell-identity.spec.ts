@@ -29,7 +29,8 @@ THEN  : l'accueil garde titre et mission sans ancienne accroche, le header ordon
   await expect(page.getByRole("contentinfo")).toBeVisible()
 
   const header = page.getByRole("banner")
-  const toggle = header.getByRole("button", { name: "Ouvrir le menu" })
+  const toggle = header.locator("button.mobile-menu-toggle")
+  await expect(toggle).toHaveAccessibleName("Ouvrir le menu")
   const brand = header.getByRole("link", { name: /synapse.*accueil/i })
   const membershipCallToAction = header.getByRole("link", {
     name: "Devenir membre",
@@ -59,6 +60,7 @@ THEN  : l'accueil garde titre et mission sans ancienne accroche, le header ordon
   await toggle.focus()
   await page.keyboard.press("Enter")
   await expect(toggle).toHaveAttribute("aria-expanded", "true")
+  await expect(toggle).toHaveAccessibleName("Fermer le menu")
   await expect(login).toBeVisible()
   const loginBox = await login.boundingBox()
   expect(loginBox?.height ?? 0).toBeGreaterThanOrEqual(44)
@@ -67,6 +69,7 @@ THEN  : l'accueil garde titre et mission sans ancienne accroche, le header ordon
   await page.keyboard.press("Escape")
   await expect(toggle).toBeFocused()
   await expect(toggle).toHaveAttribute("aria-expanded", "false")
+  await expect(toggle).toHaveAccessibleName("Ouvrir le menu")
 
   const rubricRoutes = [
     ["Prompts", "/prompts"],
