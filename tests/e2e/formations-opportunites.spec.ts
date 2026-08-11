@@ -45,7 +45,9 @@ THEN  : aucun formulaire, recherche, Nature, Niveau, bouton ou statut de filtre 
 
   const nextPage = main.getByRole("link", { name: /page suivante/i })
   await expect(nextPage).toBeVisible()
+  const firstPageUrl = page.url()
   await nextPage.click()
+  await expect(page).not.toHaveURL(firstPageUrl)
   expect(new URL(page.url()).searchParams.get("cursor")).toBeTruthy()
   await expect(main.locator("article").first()).toBeVisible()
 
@@ -110,7 +112,9 @@ THEN  : la recherche est absente, Type filtre réellement, le curseur conserve t
 
   const nextPage = main.getByRole("link", { name: /page suivante/i })
   await expect(nextPage).toBeVisible()
+  const firstPageUrl = page.url()
   await nextPage.click()
+  await expect(page).not.toHaveURL(firstPageUrl)
   const nextPageUrl = new URL(page.url())
   expect(nextPageUrl.searchParams.get("cursor")).toBeTruthy()
   expect(nextPageUrl.searchParams.get("type")).toBe("FINANCEMENT")
