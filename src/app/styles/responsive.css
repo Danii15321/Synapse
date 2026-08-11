@@ -80,7 +80,7 @@
   }
 
   .prompt-filters {
-    grid-template-columns: 2fr 1fr 1fr auto;
+    grid-template-columns: minmax(0, 1fr) auto;
     align-items: end;
   }
 }

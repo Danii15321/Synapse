@@ -212,15 +212,6 @@
   min-height: var(--touch-target);
 }
 
-.prompt-filter-status {
-  display: none;
-  color: var(--color-muted);
-}
-
-.prompt-filters:has(.prompt-filter-submit:focus) .prompt-filter-status {
-  display: block;
-}
-
 .pagination-link {
   display: inline-flex;
   align-items: center;
