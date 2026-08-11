@@ -126,7 +126,9 @@ describe("profil utilisateur sur PostgreSQL réel", () => {
         SELECT enumlabel AS value
         FROM pg_enum
         JOIN pg_type ON pg_type.oid = pg_enum.enumtypid
+        JOIN pg_namespace ON pg_namespace.oid = pg_type.typnamespace
         WHERE pg_type.typname = 'ProfessionalLevel'
+          AND pg_namespace.nspname = 'public'
         ORDER BY enumsortorder
       `
 
