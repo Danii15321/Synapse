@@ -186,15 +186,16 @@ describe("accueil et pages institutionnelles", () => {
       "À propos reprend fidèlement le positionnement du README",
       "les faits produit validés sur Synapse et ses trois thématiques historiques",
       "la page À propos est rendue",
-      "elle cite les jeunes ivoiriens, orientation académique, IA et entrepreneuriat, puis explique le recentrage de la plateforme",
+      "elle présente une startup ivoirienne qui accompagne les jeunes, Orientation & Opportunités, IA et entrepreneuriat, puis explique le rôle de la plateforme et de ses autres canaux",
     ),
     async () => {
       const page = await loadPage("@/app/(public)/a-propos/page")
       render(await page.default())
 
       const main = screen.getByRole("main")
-      expect(main).toHaveTextContent(/jeunes ivoiriens/i)
-      expect(main).toHaveTextContent(/orientation académique/i)
+      expect(main).toHaveTextContent(/startup ivoirienne/i)
+      expect(main).toHaveTextContent(/accompagne les jeunes/i)
+      expect(main).toHaveTextContent(/orientation\s*&\s*opportunités/i)
       expect(main).toHaveTextContent(/intelligence artificielle/i)
       expect(main).toHaveTextContent(/entrepreneuriat/i)
       expect(main).toHaveTextContent(/autres canaux|hors.*périmètre/i)
