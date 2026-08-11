@@ -1,6 +1,12 @@
 import { createElement, type ComponentType, type ReactNode } from "react"
 
-import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 type NavigationProps = Readonly<{
@@ -56,7 +62,7 @@ describe("navigation et footer du shell", () => {
       "Le menu mobile est entièrement utilisable au clavier",
       "un visiteur anonyme sur un viewport étroit avec le bouton de menu focalisé",
       "il ouvre le menu, parcourt ses limites avec Tab puis appuie sur Échap",
-      "le menu expose les quatre rubriques, piège le focus, se ferme et rend le focus au bouton",
+      "le menu expose les quatre rubriques et la connexion secondaire, piège le focus, se ferme et rend le focus au bouton",
     ),
     async () => {
       const { SiteNavigation } = await loadNavigation()
@@ -83,16 +89,19 @@ describe("navigation et footer du shell", () => {
         ["Formations", "/formations"],
         ["Jeux & concours", "/jeux"],
         ["Bons plans & opportunités", "/opportunites"],
+        ["Connexion", "/login"],
       ]) {
         expect(
-          screen.getByRole("link", { name: new RegExp(entry[0] ?? "", "i") }),
+          within(menu).getByRole("link", {
+            name: new RegExp(entry[0] ?? "", "i"),
+          }),
         ).toHaveAttribute("href", entry[1])
       }
 
       const focusable = Array.from(
         menu.querySelectorAll<HTMLElement>("a[href], button:not([disabled])"),
       )
-      expect(focusable.length).toBeGreaterThanOrEqual(5)
+      expect(focusable.length).toBeGreaterThanOrEqual(6)
       expect(focusable[0]).toHaveFocus()
 
       focusable[0]?.focus()
@@ -139,7 +148,7 @@ describe("navigation et footer du shell", () => {
       "La navigation reflète la session et l'adhésion",
       "un visiteur anonyme, un membre FREE puis un membre PREMIUM",
       "le même header serveur reçoit chacun de ces états",
-      "Connexion n'apparaît que pour l'anonyme, Compte pour les membres et le Badge premium uniquement pour PREMIUM",
+      "l'anonyme voit dans l'ordre hamburger, marque et Devenir membre avec Connexion dans le panneau, tandis que Compte, statut et déconnexion restent réservés aux membres",
     ),
     async () => {
       const { SiteNavigation } = await loadNavigation()
@@ -149,6 +158,32 @@ describe("navigation et footer du shell", () => {
           membership: null,
         }),
       )
+      const navigation = screen.getByRole("navigation", {
+        name: /navigation principale/i,
+      })
+      const toggle = screen.getByRole("button", {
+        name: "Ouvrir le menu",
+      })
+      const brand = screen.getByRole("link", { name: /synapse.*accueil/i })
+      const membershipCallToAction = screen.getByRole("link", {
+        name: "Devenir membre",
+      })
+      expect(membershipCallToAction).toHaveAttribute("href", "/premium")
+      expect(toggle).not.toHaveTextContent(/menu/i)
+      expect(toggle.querySelectorAll("svg line")).toHaveLength(3)
+
+      const menuContainer = toggle.parentElement
+      const sessionContainer = membershipCallToAction.parentElement
+      expect(menuContainer?.parentElement).toBe(navigation)
+      expect(brand.parentElement).toBe(navigation)
+      expect(sessionContainer?.parentElement).toBe(navigation)
+      expect(Array.from(navigation.children)).toEqual([
+        menuContainer,
+        brand,
+        sessionContainer,
+      ])
+
+      fireEvent.click(toggle)
       expect(screen.getByRole("link", { name: /connexion/i })).toHaveAttribute(
         "href",
         "/login",
@@ -165,6 +200,12 @@ describe("navigation et footer du shell", () => {
         "href",
         "/compte",
       )
+      expect(
+        screen.queryByRole("link", { name: /devenir membre/i }),
+      ).toBeNull()
+      expect(
+        screen.getByRole("button", { name: /déconnexion|se déconnecter/i }),
+      ).toBeInTheDocument()
       expect(
         screen.getByText(/membre gratuit|accès gratuit/i),
       ).toBeInTheDocument()

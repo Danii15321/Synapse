@@ -96,7 +96,6 @@ function HomePageFrame({ sections }: Readonly<{ sections: ReactNode }>) {
     <main className="page-shell">
       <div className="content-wide">
         <section>
-          <p className="eyebrow">Apprendre. Créer. Avancer.</p>
           <h1 className="hero-heading">
             Synapse rassemble les ressources qui font passer vos idées à
             <span className="gradient-text"> l&apos;action.</span>

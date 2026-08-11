@@ -21,8 +21,8 @@ export function SessionIndicator({
   if (!authenticated) {
     return (
       <div className="session-indicator">
-        <Link className="session-link" href="/login">
-          Connexion
+        <Link className="session-link session-membership-cta" href="/premium">
+          Devenir membre
         </Link>
       </div>
     )

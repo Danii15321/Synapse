@@ -130,7 +130,9 @@ THEN  : aucun octet verrouillé n'atteint les non entitled, le CTA membre reste 
       }
       await actorPage.goto(resource.page)
       await expect(
-        actorPage.getByRole("link", { name: /devenir membre|débloquer/i }),
+        actorPage
+          .getByRole("main")
+          .getByRole("link", { name: /devenir membre|débloquer/i }),
       ).toBeVisible()
     }
     if (actor === "anonymous") await context.close()

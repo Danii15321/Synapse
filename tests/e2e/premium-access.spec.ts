@@ -129,9 +129,11 @@ THEN  : body est absent de l'API et du payload RSC, l'extrait reste lisible, le 
     page.getByRole("heading", { name: prompt.title, exact: true }),
   ).toBeVisible()
   await expect(page.getByText(prompt.excerpt, { exact: true })).toBeVisible()
-  const gate = page.getByRole("link", {
-    name: /devenir membre|débloquer|accéder.*contenu/i,
-  })
+  const gate = page
+    .getByRole("main")
+    .getByRole("link", {
+      name: /devenir membre|débloquer|accéder.*contenu/i,
+    })
   await expect(gate).toHaveAttribute("href", "/register")
   const box = await gate.boundingBox()
   expect(box?.height ?? 0).toBeGreaterThanOrEqual(44)

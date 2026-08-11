@@ -10,7 +10,11 @@ const NAVIGATION_LINKS = [
   ["Bons plans & opportunités", "/opportunites"],
 ] as const
 
-export function MobileMenu() {
+type MobileMenuProps = Readonly<{
+  showLogin: boolean
+}>
+
+export function MobileMenu({ showLogin }: MobileMenuProps) {
   const [open, setOpen] = useState(false)
   const menuId = useId()
   const containerRef = useRef<HTMLDivElement>(null)
@@ -78,7 +82,18 @@ export function MobileMenu() {
         ref={toggleRef}
         type="button"
       >
-        Menu
+        <svg
+          aria-hidden="true"
+          className="mobile-menu-icon"
+          focusable="false"
+          height="24"
+          viewBox="0 0 24 24"
+          width="24"
+        >
+          <line x1="4" x2="20" y1="6" y2="6" />
+          <line x1="4" x2="20" y1="12" y2="12" />
+          <line x1="4" x2="20" y1="18" y2="18" />
+        </svg>
       </button>
       <div
         className={
@@ -101,6 +116,17 @@ export function MobileMenu() {
               </Link>
             </li>
           ))}
+          {showLogin ? (
+            <li>
+              <Link
+                className="primary-navigation-link"
+                href="/login"
+                onClick={() => setOpen(false)}
+              >
+                Connexion
+              </Link>
+            </li>
+          ) : null}
         </ul>
         <button
           className="mobile-menu-close"

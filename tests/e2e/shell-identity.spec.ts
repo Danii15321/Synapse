@@ -14,7 +14,7 @@ async function openMobileMenu(page: Page) {
 test(`Le shell transforme le parcours mobile en site cohérent — ce qui est vérifié
 GIVEN : un visiteur anonyme sur un viewport de 390px
 WHEN  : il comprend l'accueil, ouvre le menu au clavier et visite les quatre rubriques puis les cinq pages institutionnelles
-THEN  : chaque destination répond, le header et le footer restent présents, les cibles font au moins 44px et le menu se ferme par Échap en restaurant le focus`, async ({
+THEN  : l'accueil garde titre et mission sans ancienne accroche, le header ordonne hamburger, marque et Devenir membre, Connexion reste dans le panneau, chaque destination répond et le menu conserve ses garanties tactiles et clavier`, async ({
   page,
 }) => {
   const response = await page.goto("/")
@@ -23,16 +23,53 @@ THEN  : chaque destination répond, le header et le footer restent présents, le
     /Synapse/i,
   )
   await expect(page.getByRole("main")).toContainText(/jeunes ivoiriens/i)
+  await expect(page.getByRole("main")).not.toContainText(
+    "Apprendre. Créer. Avancer.",
+  )
   await expect(page.getByRole("contentinfo")).toBeVisible()
 
-  const toggle = page.getByRole("button", { name: /ouvrir.*menu|menu/i })
+  const header = page.getByRole("banner")
+  const toggle = header.locator("button.mobile-menu-toggle")
+  await expect(toggle).toHaveAccessibleName("Ouvrir le menu")
+  const brand = header.getByRole("link", { name: /synapse.*accueil/i })
+  const membershipCallToAction = header.getByRole("link", {
+    name: "Devenir membre",
+  })
+  await expect(membershipCallToAction).toHaveAttribute("href", "/premium")
+  await expect(toggle.locator("svg line")).toHaveCount(3)
+  await expect(toggle).not.toContainText(/menu/i)
+
+  const [toggleBox, brandBox, membershipBox] = await Promise.all([
+    toggle.boundingBox(),
+    brand.boundingBox(),
+    membershipCallToAction.boundingBox(),
+  ])
+  for (const control of [toggleBox, brandBox, membershipBox]) {
+    expect(control?.height ?? 0).toBeGreaterThanOrEqual(44)
+    expect(control?.width ?? 0).toBeGreaterThanOrEqual(44)
+  }
+  expect(toggleBox?.x ?? Number.POSITIVE_INFINITY).toBeLessThan(
+    brandBox?.x ?? Number.NEGATIVE_INFINITY,
+  )
+  expect(brandBox?.x ?? Number.POSITIVE_INFINITY).toBeLessThan(
+    membershipBox?.x ?? Number.NEGATIVE_INFINITY,
+  )
+
+  const login = header.locator('a[href="/login"]')
+  await expect(login).toBeHidden()
   await toggle.focus()
   await page.keyboard.press("Enter")
   await expect(toggle).toHaveAttribute("aria-expanded", "true")
+  await expect(toggle).toHaveAccessibleName("Fermer le menu")
+  await expect(login).toBeVisible()
+  const loginBox = await login.boundingBox()
+  expect(loginBox?.height ?? 0).toBeGreaterThanOrEqual(44)
+  expect(loginBox?.width ?? 0).toBeGreaterThanOrEqual(44)
   await expect(page.getByRole("link", { name: /^Prompts/i })).toBeFocused()
   await page.keyboard.press("Escape")
   await expect(toggle).toBeFocused()
   await expect(toggle).toHaveAttribute("aria-expanded", "false")
+  await expect(toggle).toHaveAccessibleName("Ouvrir le menu")
 
   const rubricRoutes = [
     ["Prompts", "/prompts"],
