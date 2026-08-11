@@ -157,6 +157,11 @@ THEN  : son token tourne, le second navigateur perd l'accès, l'ancien secret é
   const secondToken = findSessionCookie(await secondContext.cookies()).value
   expect(secondToken).not.toBe(before)
 
+  await page
+    .getByRole("main")
+    .getByRole("link", { name: "Confidentialité" })
+    .click()
+  await expect(page).toHaveURL(/\/compte\?section=confidentialite$/u)
   await page.getByRole("button", { name: /changer.*mot de passe/i }).click()
   await page.getByLabel(/ancien mot de passe/i).fill(oldPassword)
   await page.getByLabel(/nouveau mot de passe/i).fill(newPassword)
@@ -177,6 +182,8 @@ THEN  : son token tourne, le second navigateur perd l'accès, l'ancien secret é
   await expect(secondPage).toHaveURL(/\/login(?:\?|$)/)
   await secondContext.close()
 
+  await page.getByRole("main").getByRole("link", { name: "Mon profil" }).click()
+  await expect(page).toHaveURL(/\/compte$/u)
   await page
     .getByRole("button", { name: /déconnexion|se déconnecter/i })
     .click()
