@@ -83,7 +83,7 @@ describe("accueil et pages institutionnelles", () => {
       "L'accueil explique Synapse et ouvre les quatre rubriques",
       "le service retourne quatre compteurs réels et un contenu récent",
       "le Server Component d'accueil est rendu",
-      "la mission issue du README, les quatre liens chiffrés, la mise en avant et l'appel premium sont présents",
+      "le titre et la mission issue du README restent présents sans l'ancienne accroche, avec les quatre liens chiffrés, la mise en avant et l'appel premium",
     ),
     async () => {
       vi.doMock("@/server/services/home-service", () => ({
@@ -92,8 +92,14 @@ describe("accueil et pages institutionnelles", () => {
       const page = await loadPage("@/app/page")
       render(await page.default())
 
+      expect(
+        screen.getByRole("heading", { level: 1, name: /synapse.*action/i }),
+      ).toBeInTheDocument()
       expect(screen.getByRole("main")).toHaveTextContent(
         /accompagnement.*formation.*jeunes ivoiriens/i,
+      )
+      expect(screen.getByRole("main")).not.toHaveTextContent(
+        "Apprendre. Créer. Avancer.",
       )
       expect(screen.getByRole("main")).toHaveTextContent(
         /intelligence artificielle/i,

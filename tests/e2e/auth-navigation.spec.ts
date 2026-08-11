@@ -7,17 +7,23 @@ test.use({ viewport: { width: 390, height: 844 } })
 test(`La navigation rend l'état connecté ou déconnecté visible — ce qui est vérifié
 GIVEN : un visiteur anonyme sur mobile puis le même visiteur après création de son compte
 WHEN  : il consulte la navigation, s'inscrit et se déconnecte
-THEN  : le lien Connexion est visible seulement sans session, tandis que le lien Compte et l'action Déconnexion sont visibles seulement avec une session`, async ({
+THEN  : Devenir membre est l'action principale anonyme et Connexion reste dans le menu, tandis que Compte, statut et Déconnexion sont visibles seulement avec une session`, async ({
   page,
 }) => {
   const email = `navigation-${randomUUID()}@example.test`
   const password = "MotDePasse!2026"
 
   await page.goto("/")
-  const anonymousNavigation = page.getByRole("navigation")
+  let anonymousNavigation = page.getByRole("navigation")
   await expect(
-    anonymousNavigation.getByRole("link", { name: /connexion|se connecter/i }),
-  ).toHaveAttribute("href", /\/login$/)
+    anonymousNavigation.getByRole("link", { name: /devenir membre/i }),
+  ).toHaveAttribute("href", /\/premium$/)
+  const anonymousLogin = anonymousNavigation.locator('a[href="/login"]')
+  await expect(anonymousLogin).toBeHidden()
+  await anonymousNavigation
+    .getByRole("button", { name: "Ouvrir le menu" })
+    .click()
+  await expect(anonymousLogin).toBeVisible()
   await expect(
     anonymousNavigation.getByRole("link", { name: /compte/i }),
   ).toHaveCount(0)
@@ -46,9 +52,12 @@ THEN  : le lien Connexion est visible seulement sans session, tandis que le lien
   await memberNavigation
     .getByRole("button", { name: /déconnexion|se déconnecter/i })
     .click()
+  anonymousNavigation = page.getByRole("navigation")
   await expect(
-    page
-      .getByRole("navigation")
-      .getByRole("link", { name: /connexion|se connecter/i }),
-  ).toBeVisible()
+    anonymousNavigation.getByRole("link", { name: /devenir membre/i }),
+  ).toHaveAttribute("href", /\/premium$/)
+  await anonymousNavigation
+    .getByRole("button", { name: "Ouvrir le menu" })
+    .click()
+  await expect(anonymousNavigation.locator('a[href="/login"]')).toBeVisible()
 })
