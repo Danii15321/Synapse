@@ -4,13 +4,17 @@ import { notFound } from "next/navigation"
 import { DetailCoverImage } from "@/components/features/detail-cover-image"
 import { PromptActions } from "@/components/features/prompt-actions"
 import { PromptBody } from "@/components/features/prompt-body"
+import { PromptCard } from "@/components/features/prompt-card"
 import { PremiumGate } from "@/components/features/premium-gate"
 import { PremiumBadge } from "@/components/ui/premium-badge"
 import type { SessionUser } from "@/lib/validators/auth"
 import { promptSlugParamsSchema } from "@/lib/validators/prompt"
 import { auth } from "@/server/auth/config"
 import { ContentNotFoundError } from "@/server/errors"
-import { getPromptBySlug } from "@/server/services/prompt-service"
+import {
+  getPromptBySlug,
+  getRelatedPrompts,
+} from "@/server/services/prompt-service"
 
 export const dynamic = "force-dynamic"
 
@@ -60,6 +64,10 @@ export default async function PromptDetailPage({
 
   const session = await auth()
   const prompt = await loadPrompt(parsedParams.data.slug, session?.user ?? null)
+  const relatedPrompts = await getRelatedPrompts({
+    domain: prompt.domain,
+    excludeId: prompt.id,
+  })
 
   return (
     <main className="page-shell">
@@ -100,6 +108,16 @@ export default async function PromptDetailPage({
           <PremiumGate />
         )}
       </article>
+      {relatedPrompts.length > 0 ? (
+        <section className="content-wide detail-section">
+          <h2 className="section-heading">Vous aimerez aussi</h2>
+          <div className="recent-grid">
+            {relatedPrompts.map((relatedPrompt) => (
+              <PromptCard key={relatedPrompt.id} {...relatedPrompt} />
+            ))}
+          </div>
+        </section>
+      ) : null}
     </main>
   )
 }

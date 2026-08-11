@@ -2,7 +2,9 @@ import { createHash, randomUUID } from "node:crypto"
 import { spawnSync } from "node:child_process"
 
 import { PrismaClient } from "@prisma/client"
-import { expect, test } from "@playwright/test"
+import { expect, test, type Page } from "@playwright/test"
+
+import { completeRegistration } from "./auth-profile-helpers"
 
 test.use({ viewport: { width: 390, height: 844 } })
 test.describe.configure({ mode: "default" })
@@ -77,24 +79,12 @@ function sha256(value: string): string {
   return createHash("sha256").update(value, "utf8").digest("hex")
 }
 
-async function registerFreeMember(
-  page: {
-    getByLabel: (name: RegExp) => { fill: (value: string) => Promise<void> }
-    getByRole: (
-      role: "button",
-      options: { name: RegExp },
-    ) => { click: () => Promise<void> }
-    goto: (url: string) => Promise<unknown>
-    waitForURL: (url: RegExp) => Promise<void>
-  },
-  email: string,
-): Promise<void> {
+async function registerFreeMember(page: Page, email: string): Promise<void> {
   await page.goto("/register")
-  await page.getByLabel(/e-mail|email/i).fill(email)
-  await page.getByLabel(/^mot de passe/i).fill("MotDePasse!2026")
-  await page
-    .getByRole("button", { name: /créer|inscription|s'inscrire/i })
-    .click()
+  await completeRegistration(page, {
+    email,
+    password: "MotDePasse!2026",
+  })
   await page.waitForURL(/\/compte$/)
 }
 
@@ -129,11 +119,9 @@ THEN  : body est absent de l'API et du payload RSC, l'extrait reste lisible, le 
     page.getByRole("heading", { name: prompt.title, exact: true }),
   ).toBeVisible()
   await expect(page.getByText(prompt.excerpt, { exact: true })).toBeVisible()
-  const gate = page
-    .getByRole("main")
-    .getByRole("link", {
-      name: /devenir membre|débloquer|accéder.*contenu/i,
-    })
+  const gate = page.getByRole("main").getByRole("link", {
+    name: /devenir membre|débloquer|accéder.*contenu/i,
+  })
   await expect(gate).toHaveAttribute("href", "/register")
   const box = await gate.boundingBox()
   expect(box?.height ?? 0).toBeGreaterThanOrEqual(44)

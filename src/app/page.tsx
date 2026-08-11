@@ -93,18 +93,16 @@ async function HomeSections() {
 
 function HomePageFrame({ sections }: Readonly<{ sections: ReactNode }>) {
   return (
-    <main className="page-shell">
-      <div className="content-wide">
+    <main className="page-shell home-page-shell">
+      <div className="content-wide home-content">
         <section>
           <h1 className="hero-heading">
-            Synapse rassemble les ressources qui font passer vos idées à
-            <span className="gradient-text"> l&apos;action.</span>
+            Apprenez l&apos;IA sous toutes ses formes avec Synapse
           </h1>
           <p className="hero-copy">
-            Synapse œuvre dans l&apos;accompagnement et la formation des jeunes
-            ivoiriens. Cette plateforme réunit nos contenus en intelligence
-            artificielle et en entrepreneuriat dans un point d&apos;entrée
-            unique.
+            Synapse vous aide à comprendre l&apos;intelligence artificielle,
+            découvrir les bons outils et apprendre à les utiliser concrètement
+            dans vos études, votre travail, votre entreprise ou vos projets.
           </p>
         </section>
 

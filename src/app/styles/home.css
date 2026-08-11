@@ -1,0 +1,73 @@
+@media (max-width: 47.999rem) {
+  .home-page-shell {
+    padding: 1.25rem var(--space-control) var(--space-section);
+  }
+
+  .home-content .hero-heading {
+    font-size: 2rem;
+  }
+
+  .home-content .hero-copy {
+    margin-top: var(--space-small);
+    font-size: 1rem;
+  }
+
+  .home-content .home-section {
+    margin-top: var(--space-card);
+  }
+
+  .home-content .section-heading {
+    font-size: 1.5rem;
+  }
+
+  .home-content .section-intro {
+    margin-top: var(--space-nano);
+  }
+
+  .home-content .rubric-grid,
+  .home-content .recent-grid {
+    gap: var(--space-small);
+    margin-top: var(--space-control);
+  }
+
+  .home-content .rubric-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .home-content .rubric-entry {
+    min-height: 7.5rem;
+    gap: var(--space-tiny);
+    padding: var(--space-small);
+  }
+
+  .home-content .rubric-title {
+    font-size: 0.9375rem;
+  }
+
+  .home-content .rubric-count {
+    font-size: 1.5rem;
+  }
+
+  .home-content a,
+  .home-content button {
+    font-size: 0.875rem;
+  }
+
+  .home-content .prompt-card-body,
+  .home-content .ui-card,
+  .home-content .premium-callout {
+    padding: var(--space-control);
+  }
+
+  .home-content .card-heading,
+  .home-content .ui-card h3 {
+    font-size: 1rem;
+  }
+
+  .home-content .ui-card > a {
+    display: flex;
+    min-width: var(--touch-target);
+    min-height: var(--touch-target);
+    align-items: center;
+  }
+}

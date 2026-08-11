@@ -40,6 +40,17 @@ function registerRequest(body: unknown): Request {
   })
 }
 
+const COMPLETE_REGISTRATION = {
+  city: "Abidjan",
+  country: "Côte d'Ivoire",
+  email: "nouveau@example.test",
+  firstName: "Awa",
+  lastName: "Kouassi",
+  password: "MotDePasse!2026",
+  phone: "+2250701020304",
+  professionalLevel: "ETUDIANT",
+} as const
+
 describe("Route Handler d'inscription", () => {
   afterEach(() => {
     vi.doUnmock("@/server/services/auth-service")
@@ -50,7 +61,7 @@ describe("Route Handler d'inscription", () => {
   it(
     scenario(
       "POST /api/auth/register accepte une inscription valide sans exposer le mot de passe",
-      "un JSON strict contenant une adresse nouvelle et un mot de passe de 12 caractères ou plus",
+      "un JSON strict contenant les deux étapes complètes et un mot de passe de 12 caractères ou plus",
       "le Route Handler valide puis délègue l'inscription au service",
       "la réponse HTTP brute est un succès JSON générique et ne contient ni password, ni passwordHash, ni le secret soumis",
     ),
@@ -65,7 +76,7 @@ describe("Route Handler d'inscription", () => {
       const route = await loadRegisterRoute()
 
       const response = await route.POST(
-        registerRequest({ email: "nouveau@example.test", password }),
+        registerRequest({ ...COMPLETE_REGISTRATION, password }),
       )
       const rawBody = await response.text()
 
@@ -75,11 +86,52 @@ describe("Route Handler d'inscription", () => {
         /^application\/json\b/i,
       )
       expect(registerUser).toHaveBeenCalledWith({
-        email: "nouveau@example.test",
+        ...COMPLETE_REGISTRATION,
         password,
       })
       expect(rawBody).not.toContain(password)
       expect(rawBody).not.toMatch(/passwordHash|"password"/i)
+    },
+  )
+
+  it(
+    scenario(
+      "POST /api/auth/register ne crée rien avant un profil complet et valide",
+      "une étape 1 seule, un profil au téléphone local, un niveau inconnu puis une inscription complète",
+      "les quatre JSON sont envoyés directement sans validation navigateur",
+      "les trois charges incomplètes ou invalides valent 400, tandis que seule la charge complète atteint le service avec le niveau strict",
+    ),
+    async () => {
+      const registerUser = vi.fn().mockResolvedValue({ id: "user-created" })
+      vi.doMock("@/server/services/auth-service", () => ({ registerUser }))
+      const route = await loadRegisterRoute()
+
+      const stepOneOnly = await route.POST(
+        registerRequest({
+          email: COMPLETE_REGISTRATION.email,
+          password: COMPLETE_REGISTRATION.password,
+        }),
+      )
+      const localPhone = await route.POST(
+        registerRequest({
+          ...COMPLETE_REGISTRATION,
+          phone: "0701020304",
+        }),
+      )
+      const unknownLevel = await route.POST(
+        registerRequest({
+          ...COMPLETE_REGISTRATION,
+          professionalLevel: "CADRE",
+        }),
+      )
+      const complete = await route.POST(registerRequest(COMPLETE_REGISTRATION))
+
+      expect(stepOneOnly.status).toBe(400)
+      expect(localPhone.status).toBe(400)
+      expect(unknownLevel.status).toBe(400)
+      expect(complete.status).toBe(201)
+      expect(registerUser).toHaveBeenCalledOnce()
+      expect(registerUser).toHaveBeenCalledWith(COMPLETE_REGISTRATION)
     },
   )
 
@@ -97,6 +149,7 @@ describe("Route Handler d'inscription", () => {
 
       const response = await route.POST(
         registerRequest({
+          ...COMPLETE_REGISTRATION,
           email: "faible@example.test",
           password: "12345678901",
         }),
@@ -124,9 +177,9 @@ describe("Route Handler d'inscription", () => {
 
       const response = await route.POST(
         registerRequest({
+          ...COMPLETE_REGISTRATION,
           email: "forgee@example.test",
           membership: "PREMIUM",
-          password: "MotDePasse!2026",
           userId: "victime",
         }),
       )
@@ -148,8 +201,8 @@ describe("Route Handler d'inscription", () => {
       vi.doMock("@/server/services/auth-service", () => ({ registerUser }))
       const route = await loadRegisterRoute()
       const request = registerRequest({
+        ...COMPLETE_REGISTRATION,
         email: "csrf@example.test",
-        password: "MotDePasse!2026",
       })
       request.headers.set("origin", "https://attaquant.example")
 
@@ -179,8 +232,8 @@ describe("Route Handler d'inscription", () => {
       vi.doMock("@/server/services/auth-service", () => ({ registerUser }))
       const route = await loadRegisterRoute()
       const body = {
+        ...COMPLETE_REGISTRATION,
         email: "meme-adresse@example.test",
-        password: "MotDePasse!2026",
       }
 
       const created = await route.POST(registerRequest(body))
@@ -220,7 +273,11 @@ describe("Route Handler d'inscription", () => {
       const route = await loadRegisterRoute()
 
       const response = await route.POST(
-        registerRequest({ email: "log@example.test", password }),
+        registerRequest({
+          ...COMPLETE_REGISTRATION,
+          email: "log@example.test",
+          password,
+        }),
       )
       const rawBody = await response.text()
       const logs = [...stdout.mock.calls, ...stderr.mock.calls]

@@ -43,7 +43,11 @@ describe("Route Handler protégé du compte", () => {
       )
       const getAccount = vi.fn()
       vi.doMock("@/server/auth/require-user", () => ({ requireUser }))
-      vi.doMock("@/server/services/auth-service", () => ({ getAccount }))
+      vi.doMock("@/server/services/auth-service", () => ({
+        deleteAccount: vi.fn(),
+        getAccount,
+        updateProfile: vi.fn(),
+      }))
       const module: unknown = await vi.importActual(
         "@/app/api/auth/account/route",
       )

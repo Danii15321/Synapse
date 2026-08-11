@@ -16,7 +16,7 @@ export default async function PremiumPage() {
   const [offer, session] = await Promise.all([getPremiumOffer(), auth()])
 
   return (
-    <main className="page-shell">
+    <main className="page-shell premium-page-shell">
       <div className="content-wide">
         <PremiumTunnel
           accountEmail={session?.user.email ?? null}

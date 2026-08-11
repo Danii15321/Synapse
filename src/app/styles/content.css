@@ -133,6 +133,7 @@
 }
 
 .prompt-card {
+  position: relative;
   overflow: hidden;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-card);
@@ -194,6 +195,67 @@
   padding: var(--space-card);
 }
 
+.prompt-share {
+  position: absolute;
+  z-index: 2;
+  top: var(--space-small);
+  left: var(--space-small);
+}
+
+.prompt-share-button,
+.prompt-share-item {
+  display: inline-flex;
+  min-width: var(--touch-target);
+  min-height: var(--touch-target);
+  align-items: center;
+  gap: var(--space-tiny);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-control);
+  padding: var(--space-tiny) var(--space-control);
+  background: var(--color-surface);
+  color: var(--color-night);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.prompt-share-button svg,
+.prompt-share-item svg {
+  flex: 0 0 auto;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+.prompt-share-menu {
+  position: absolute;
+  z-index: 10;
+  top: calc(100% + var(--space-tiny));
+  left: 0;
+  display: grid;
+  width: min(14rem, calc(100vw - (2 * var(--space-control))));
+  max-width: calc(100vw - (2 * var(--space-control)));
+  gap: var(--space-tiny);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  padding: var(--space-tiny);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+}
+
+.prompt-share-item {
+  width: 100%;
+  text-align: left;
+}
+
+.prompt-share-status {
+  min-height: 1.25rem;
+  margin-top: var(--space-tiny);
+  color: var(--color-muted);
+  font-size: 0.85rem;
+}
+
 .prompt-card-meta {
   display: flex;
   flex-wrap: wrap;
@@ -210,15 +272,6 @@
 .prompt-filter-submit,
 .pagination-link {
   min-height: var(--touch-target);
-}
-
-.prompt-filter-status {
-  display: none;
-  color: var(--color-muted);
-}
-
-.prompt-filters:has(.prompt-filter-submit:focus) .prompt-filter-status {
-  display: block;
 }
 
 .pagination-link {
@@ -316,6 +369,129 @@
 
 .form-submit {
   width: 100%;
+}
+
+.account-page,
+.account-view,
+.account-profile-panel,
+.account-profile-grid,
+.account-form-grid,
+.account-privacy-stack {
+  display: grid;
+  gap: var(--space-control);
+}
+
+.account-navigation {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-tiny);
+  margin-top: var(--space-card);
+  border-radius: var(--radius-control);
+  padding: var(--space-tiny);
+  background: color-mix(in srgb, var(--color-night) 6%, transparent);
+}
+
+.account-navigation-link {
+  display: inline-flex;
+  min-height: var(--touch-target);
+  align-items: center;
+  justify-content: center;
+  border-radius: calc(var(--radius-control) - var(--space-nano));
+  padding: var(--space-tiny);
+  text-align: center;
+  font-weight: 700;
+}
+
+.account-navigation-link[aria-current="page"] {
+  background: var(--color-surface);
+  color: var(--color-indigo);
+  box-shadow: var(--shadow-card);
+}
+
+.account-view {
+  margin-top: var(--space-card);
+}
+
+.account-membership {
+  display: grid;
+  gap: var(--space-control);
+}
+
+.account-membership-value {
+  margin-top: var(--space-nano);
+  color: var(--color-indigo);
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+
+.account-subheading {
+  font-size: 1.2rem;
+}
+
+.account-profile-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0;
+}
+
+.account-profile-grid > div {
+  min-width: 0;
+}
+
+.account-profile-form,
+.account-profile-panel,
+.account-privacy-stack .form-stack {
+  margin-top: var(--space-control);
+}
+
+.account-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-tiny);
+}
+
+.account-secondary-button {
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-surface);
+  color: var(--color-night);
+}
+
+.account-success {
+  color: var(--color-indigo);
+}
+
+.account-danger {
+  border-color: color-mix(in srgb, var(--color-error) 40%, transparent);
+}
+
+.account-delete-button {
+  background: var(--color-error);
+}
+
+.account-logout-form {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--space-card);
+}
+
+.account-logout-button {
+  background: var(--color-night);
+}
+
+.account-page .participation-item {
+  gap: var(--space-tiny);
+  padding: var(--space-control);
+}
+
+@media (min-width: 640px) {
+  .account-membership {
+    grid-template-columns: 1fr auto;
+    align-items: center;
+  }
+
+  .account-form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .auth-intro,

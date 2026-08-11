@@ -324,6 +324,7 @@ describe("carte et détail de référence Prompts", () => {
           title: "Prompt sûr",
           visibility: "FREE",
         }),
+        getRelatedPrompts: vi.fn().mockResolvedValue([]),
       }))
       const page = await loadDetailPage()
 

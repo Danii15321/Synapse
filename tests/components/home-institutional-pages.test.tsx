@@ -80,10 +80,10 @@ describe("accueil et pages institutionnelles", () => {
 
   it(
     scenario(
-      "L'accueil explique Synapse et ouvre les quatre rubriques",
+      "L'accueil reprend mot pour mot la promesse validée et ouvre les quatre rubriques",
       "le service retourne quatre compteurs réels et un contenu récent",
       "le Server Component d'accueil est rendu",
-      "le titre et la mission issue du README restent présents sans l'ancienne accroche, avec les quatre liens chiffrés, la mise en avant et l'appel premium",
+      "le titre et la description validés sont exacts, avec les quatre liens chiffrés, la mise en avant et l'appel premium",
     ),
     async () => {
       vi.doMock("@/server/services/home-service", () => ({
@@ -93,18 +93,20 @@ describe("accueil et pages institutionnelles", () => {
       render(await page.default())
 
       expect(
-        screen.getByRole("heading", { level: 1, name: /synapse.*action/i }),
+        screen.getByRole("heading", {
+          level: 1,
+          name: "Apprenez l'IA sous toutes ses formes avec Synapse",
+        }),
       ).toBeInTheDocument()
-      expect(screen.getByRole("main")).toHaveTextContent(
-        /accompagnement.*formation.*jeunes ivoiriens/i,
-      )
+      expect(
+        screen.getByText(
+          "Synapse vous aide à comprendre l'intelligence artificielle, découvrir les bons outils et apprendre à les utiliser concrètement dans vos études, votre travail, votre entreprise ou vos projets.",
+          { exact: true },
+        ),
+      ).toBeInTheDocument()
       expect(screen.getByRole("main")).not.toHaveTextContent(
         "Apprendre. Créer. Avancer.",
       )
-      expect(screen.getByRole("main")).toHaveTextContent(
-        /intelligence artificielle/i,
-      )
-      expect(screen.getByRole("main")).toHaveTextContent(/entrepreneuriat/i)
       for (const section of HOME_DATA.sections) {
         const link = screen.getByRole("link", {
           name: new RegExp(`${section.title}.*${section.count}`, "i"),
@@ -184,15 +186,16 @@ describe("accueil et pages institutionnelles", () => {
       "À propos reprend fidèlement le positionnement du README",
       "les faits produit validés sur Synapse et ses trois thématiques historiques",
       "la page À propos est rendue",
-      "elle cite les jeunes ivoiriens, orientation académique, IA et entrepreneuriat, puis explique le recentrage de la plateforme",
+      "elle présente une startup ivoirienne qui accompagne les jeunes, Orientation & Opportunités, IA et entrepreneuriat, puis explique le rôle de la plateforme et de ses autres canaux",
     ),
     async () => {
       const page = await loadPage("@/app/(public)/a-propos/page")
       render(await page.default())
 
       const main = screen.getByRole("main")
-      expect(main).toHaveTextContent(/jeunes ivoiriens/i)
-      expect(main).toHaveTextContent(/orientation académique/i)
+      expect(main).toHaveTextContent(/startup ivoirienne/i)
+      expect(main).toHaveTextContent(/accompagne les jeunes/i)
+      expect(main).toHaveTextContent(/orientation\s*&\s*opportunités/i)
       expect(main).toHaveTextContent(/intelligence artificielle/i)
       expect(main).toHaveTextContent(/entrepreneuriat/i)
       expect(main).toHaveTextContent(/autres canaux|hors.*périmètre/i)

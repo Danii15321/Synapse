@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test"
 
 import {
   cleanupReplicatedFixtures,
+  insertFilterUiCatalogs,
   insertReplicatedFixtures,
   registerReplicatedMember,
   replicatedDb,
@@ -12,6 +13,119 @@ test.describe.configure({ mode: "default" })
 
 test.afterEach(cleanupReplicatedFixtures)
 test.afterAll(async () => replicatedDb.$disconnect())
+
+test(`La liste Formations commence par son contenu sans aucun filtre visible — ce qui est vérifié
+GIVEN : 26 formations publiées et un viewport mobile de 390x844
+WHEN  : un visiteur parcourt la première page, suit son curseur puis demande un état vide par paramètre historique direct
+THEN  : aucun formulaire, recherche, Nature, Niveau, bouton ou statut de filtre n'est rendu, cartes puis empty suivent directement le titre, la pagination fonctionne sans overflow`, async ({
+  page,
+}) => {
+  const catalog = await insertFilterUiCatalogs()
+
+  await page.goto("/formations")
+
+  const main = page.getByRole("main")
+  const heading = main.getByRole("heading", { level: 1, name: /formations/i })
+  await expect(heading).toBeVisible()
+  await expect(main.locator("form")).toHaveCount(0)
+  await expect(main.getByRole("searchbox")).toHaveCount(0)
+  await expect(main.getByRole("combobox")).toHaveCount(0)
+  await expect(
+    main.getByRole("button", { name: /appliquer.*filtre/i }),
+  ).toHaveCount(0)
+  await expect(main.getByRole("status")).toHaveCount(0)
+  await expect(
+    main.getByRole("heading", { name: catalog.formationTitle, exact: true }),
+  ).toBeVisible()
+  expect(
+    await heading.evaluate(
+      (node) => node.nextElementSibling?.querySelector("article") !== null,
+    ),
+  ).toBe(true)
+
+  const nextPage = main.getByRole("link", { name: /page suivante/i })
+  await expect(nextPage).toBeVisible()
+  const firstPageUrl = page.url()
+  await nextPage.click()
+  await expect(page).not.toHaveURL(firstPageUrl)
+  expect(new URL(page.url()).searchParams.get("cursor")).toBeTruthy()
+  await expect(main.locator("article").first()).toBeVisible()
+
+  await page.goto(
+    `/formations?search=${encodeURIComponent(`${catalog.prefix}-aucun-resultat`)}`,
+  )
+  const empty = main.getByText(/aucune formation/i)
+  await expect(empty).toBeVisible()
+  expect(
+    await heading.evaluate((node) =>
+      node.nextElementSibling?.classList.contains("empty-state"),
+    ),
+  ).toBe(true)
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth > window.innerWidth,
+    ),
+  ).toBe(false)
+})
+
+test(`La liste Opportunités n'expose que Type et conserve ce filtre dans la pagination — ce qui est vérifié
+GIVEN : 26 financements et une offre d'emploi publiés sur un viewport mobile de 390x844
+WHEN  : un visiteur choisit Type Financement, applique le filtre puis suit le curseur
+THEN  : la recherche est absente, Type filtre réellement, le curseur conserve type sans search, les actions sont accessibles et la liste ne déborde pas`, async ({
+  page,
+}) => {
+  const catalog = await insertFilterUiCatalogs()
+
+  await page.goto("/opportunites")
+
+  const main = page.getByRole("main")
+  await expect(
+    main.getByRole("heading", {
+      name: catalog.employmentOpportunityTitle,
+      exact: true,
+    }),
+  ).toBeVisible()
+  await expect(main.getByRole("searchbox")).toHaveCount(0)
+  await expect(main.getByRole("combobox")).toHaveCount(1)
+  const type = main.getByRole("combobox", { name: /^type$/i })
+  await type.selectOption("FINANCEMENT")
+  const submit = main.getByRole("button", { name: /appliquer.*filtre/i })
+  for (const control of [type, submit]) {
+    const box = await control.boundingBox()
+    expect(box?.height ?? 0).toBeGreaterThanOrEqual(44)
+    expect(box?.width ?? 0).toBeGreaterThanOrEqual(44)
+  }
+  await submit.click()
+
+  const filteredUrl = new URL(page.url())
+  expect(filteredUrl.searchParams.get("type")).toBe("FINANCEMENT")
+  expect(filteredUrl.searchParams.has("search")).toBe(false)
+  await expect(
+    main.getByRole("heading", {
+      name: catalog.financingOpportunityTitle,
+      exact: true,
+    }),
+  ).toBeVisible()
+  await expect(main.getByText(catalog.employmentOpportunityTitle)).toHaveCount(
+    0,
+  )
+
+  const nextPage = main.getByRole("link", { name: /page suivante/i })
+  await expect(nextPage).toBeVisible()
+  const firstPageUrl = page.url()
+  await nextPage.click()
+  await expect(page).not.toHaveURL(firstPageUrl)
+  const nextPageUrl = new URL(page.url())
+  expect(nextPageUrl.searchParams.get("cursor")).toBeTruthy()
+  expect(nextPageUrl.searchParams.get("type")).toBe("FINANCEMENT")
+  expect(nextPageUrl.searchParams.has("search")).toBe(false)
+  await expect(main.locator("article").first()).toBeVisible()
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth > window.innerWidth,
+    ),
+  ).toBe(false)
+})
 
 test(`Formations et Opportunités reproduisent le patron à 390px avec les règles temporelles décidées — ce qui est vérifié
 GIVEN : une formation permanente, un événement futur, un événement passé, une opportunité future et une expirée

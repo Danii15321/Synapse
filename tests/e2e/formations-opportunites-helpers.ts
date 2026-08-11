@@ -3,6 +3,8 @@ import { randomUUID } from "node:crypto"
 import { PrismaClient } from "@prisma/client"
 import type { Page } from "@playwright/test"
 
+import { completeRegistration } from "./auth-profile-helpers"
+
 export const replicatedDb = new PrismaClient()
 const prefixes = new Set<string>()
 const emails = new Set<string>()
@@ -26,6 +28,72 @@ export type ReplicatedFixtures = Readonly<{
     title: string
   }>
 }>
+
+export type FilterUiCatalogs = Readonly<{
+  employmentOpportunityTitle: string
+  financingOpportunityTitle: string
+  formationTitle: string
+  prefix: string
+}>
+
+export async function insertFilterUiCatalogs(): Promise<FilterUiCatalogs> {
+  const prefix = `filters-e2e-${randomUUID()}`
+  prefixes.add(prefix)
+  await replicatedDb.$executeRaw`
+    INSERT INTO "Formation" (
+      "id", "slug", "title", "summary", "excerpt", "body", "visibility",
+      "publishedAt", "level", "format", "durationH", "kind", "startsAt",
+      "coverImage", "createdAt", "updatedAt"
+    )
+    SELECT
+      ${prefix} || '-formation-' || LPAD(series::text, 3, '0'),
+      ${prefix} || '-formation-' || LPAD(series::text, 3, '0'),
+      ${prefix} || ' Formation ' || LPAD(series::text, 3, '0'),
+      'Résumé formation ' || series, 'Extrait formation ' || series,
+      'Programme formation ' || series, 'FREE'::"Visibility",
+      NOW() + INTERVAL '1 day' - (series || ' seconds')::interval,
+      'DEBUTANT'::"Level", 'EN_LIGNE'::"Format", 2,
+      'PERMANENTE'::"FormationKind", NULL, NULL, NOW(), NOW()
+    FROM generate_series(1, 26) AS series
+  `
+  await replicatedDb.$executeRaw`
+    INSERT INTO "Opportunite" (
+      "id", "slug", "title", "summary", "excerpt", "body", "visibility",
+      "publishedAt", "type", "organisme", "deadline", "externalUrl",
+      "coverImage", "createdAt", "updatedAt"
+    )
+    SELECT
+      ${prefix} || '-financement-' || LPAD(series::text, 3, '0'),
+      ${prefix} || '-financement-' || LPAD(series::text, 3, '0'),
+      ${prefix} || ' Financement ' || LPAD(series::text, 3, '0'),
+      'Résumé financement ' || series, 'Extrait financement ' || series,
+      'Corps financement ' || series, 'FREE'::"Visibility",
+      NOW() + INTERVAL '1 day' - (series || ' seconds')::interval,
+      'FINANCEMENT'::"OpportuniteType", 'Synapse',
+      NOW() + INTERVAL '30 days', NULL, NULL, NOW(), NOW()
+    FROM generate_series(1, 26) AS series
+  `
+  const employmentOpportunityTitle = `${prefix} Emploi témoin`
+  await replicatedDb.$executeRaw`
+    INSERT INTO "Opportunite" (
+      "id", "slug", "title", "summary", "excerpt", "body", "visibility",
+      "publishedAt", "type", "organisme", "deadline", "externalUrl",
+      "coverImage", "createdAt", "updatedAt"
+    ) VALUES (
+      ${`${prefix}-emploi-temoin`}, ${`${prefix}-emploi-temoin`},
+      ${employmentOpportunityTitle}, 'Résumé emploi', 'Extrait emploi',
+      'Corps emploi', 'FREE'::"Visibility", NOW() + INTERVAL '2 days',
+      'EMPLOI'::"OpportuniteType", 'Synapse', NOW() + INTERVAL '30 days',
+      NULL, NULL, NOW(), NOW()
+    )
+  `
+  return {
+    employmentOpportunityTitle,
+    financingOpportunityTitle: `${prefix} Financement 001`,
+    formationTitle: `${prefix} Formation 001`,
+    prefix,
+  }
+}
 
 export async function insertReplicatedFixtures(): Promise<ReplicatedFixtures> {
   const prefix = `t08-e2e-${randomUUID()}`
@@ -118,11 +186,10 @@ export async function registerReplicatedMember(page: Page): Promise<string> {
   const email = `t08-${randomUUID()}@example.test`
   emails.add(email)
   await page.goto("/register")
-  await page.getByLabel(/e-mail|email/i).fill(email)
-  await page.getByLabel(/^mot de passe/i).fill("MotDePasse!2026")
-  await page
-    .getByRole("button", { name: /créer|inscription|s'inscrire/i })
-    .click()
+  await completeRegistration(page, {
+    email,
+    password: "MotDePasse!2026",
+  })
   await page.waitForURL(/\/compte$/u)
   return email
 }

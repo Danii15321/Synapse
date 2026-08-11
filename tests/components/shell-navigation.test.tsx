@@ -148,7 +148,7 @@ describe("navigation et footer du shell", () => {
       "La navigation reflète la session et l'adhésion",
       "un visiteur anonyme, un membre FREE puis un membre PREMIUM",
       "le même header serveur reçoit chacun de ces états",
-      "l'anonyme voit dans l'ordre hamburger, marque et Devenir membre avec Connexion dans le panneau, tandis que Compte, statut et déconnexion restent réservés aux membres",
+      "l'anonyme voit dans l'ordre hamburger, marque et Devenir membre avec Connexion dans le panneau, tandis que les membres voient Compte et leur statut sans bouton Déconnexion dans le header",
     ),
     async () => {
       const { SiteNavigation } = await loadNavigation()
@@ -200,12 +200,10 @@ describe("navigation et footer du shell", () => {
         "href",
         "/compte",
       )
+      expect(screen.queryByRole("link", { name: /devenir membre/i })).toBeNull()
       expect(
-        screen.queryByRole("link", { name: /devenir membre/i }),
+        screen.queryByRole("button", { name: /déconnexion|se déconnecter/i }),
       ).toBeNull()
-      expect(
-        screen.getByRole("button", { name: /déconnexion|se déconnecter/i }),
-      ).toBeInTheDocument()
       expect(
         screen.getByText(/membre gratuit|accès gratuit/i),
       ).toBeInTheDocument()
@@ -224,10 +222,10 @@ describe("navigation et footer du shell", () => {
 
   it(
     scenario(
-      "Le footer donne accès aux cinq pages institutionnelles",
+      "Le footer ne rend que Contact et À propos",
       "le footer partagé rendu sur n'importe quelle page",
-      "ses liens et mentions sont lus",
-      "À propos, Contact, Mentions légales, Confidentialité et Conditions d'utilisation sont liés, avec le premium et l'année courante",
+      "ses liens et son contenu textuel sont recensés",
+      "Contact et À propos sont les deux seuls liens et aucun texte descriptif, offre membre, copyright, rubrique ou lien légal n'est rendu",
     ),
     async () => {
       const modulePath = "@/components/site-footer"
@@ -237,22 +235,29 @@ describe("navigation et footer du shell", () => {
       }
       render(await module.default())
 
-      const links = [
-        ["À propos", "/a-propos"],
-        ["Contact", "/contact"],
-        ["Mentions légales", "/mentions-legales"],
-        ["Confidentialité", "/confidentialite"],
-        ["Conditions d'utilisation", "/conditions-utilisation"],
-      ]
-      for (const [name, href] of links) {
-        expect(
-          screen.getByRole("link", { name: new RegExp(name ?? "", "i") }),
-        ).toHaveAttribute("href", href)
+      const footer = screen.getByRole("contentinfo")
+      const actualLinks = within(footer)
+        .getAllByRole("link")
+        .map((link) => ({
+          href: link.getAttribute("href"),
+          label: link.textContent?.trim() ?? "",
+        }))
+        .sort((left, right) => left.label.localeCompare(right.label, "fr"))
+      const expectedLinks = [
+        { href: "/a-propos", label: "À propos" },
+        { href: "/contact", label: "Contact" },
+      ].sort((left, right) => left.label.localeCompare(right.label, "fr"))
+
+      expect(actualLinks).toEqual(expectedLinks)
+
+      const footerWithoutLinks = footer.cloneNode(true)
+      if (!(footerWithoutLinks instanceof HTMLElement)) {
+        throw new Error("le footer cloné doit rester un élément HTML")
       }
-      expect(screen.getByText(/premium|accès à vie/i)).toBeInTheDocument()
-      expect(
-        screen.getByText(String(new Date().getFullYear())),
-      ).toBeInTheDocument()
+      footerWithoutLinks.querySelectorAll("a").forEach((link) => link.remove())
+      expect(footerWithoutLinks.textContent?.replace(/\s+/g, " ").trim()).toBe(
+        "",
+      )
     },
   )
 })

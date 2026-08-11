@@ -3,6 +3,12 @@ import { randomUUID } from "node:crypto"
 import { PrismaClient } from "@prisma/client"
 import { expect, test } from "@playwright/test"
 
+import {
+  completeRegistration,
+  fillRegistrationCredentialsStep,
+  fillRegistrationProfileStep,
+} from "./auth-profile-helpers"
+
 test.use({ viewport: { width: 390, height: 844 } })
 test.describe.configure({ mode: "default" })
 
@@ -51,12 +57,7 @@ THEN  : il est connecté immédiatement, le cookie est httpOnly Secure SameSite=
 
   await page.goto("/register")
   await expectNoHorizontalOverflow(page)
-  await page.getByLabel(/e-mail|email/i).fill(email)
-  await page.getByLabel(/^mot de passe/i).fill(password)
-  const submit = page.getByRole("button", {
-    name: /créer|inscription|s'inscrire/i,
-  })
-  await submit.click()
+  await completeRegistration(page, { email, password })
   await expect(page).toHaveURL(/\/compte$/)
   await expect(page.getByText(email)).toBeVisible()
   await expect(page.getByText(/FREE/i)).toBeVisible()
@@ -137,11 +138,7 @@ THEN  : son token tourne, le second navigateur perd l'accès, l'ancien secret é
   const newPassword = "NouveauSecret!2026"
 
   await page.goto("/register")
-  await page.getByLabel(/e-mail|email/i).fill(email)
-  await page.getByLabel(/^mot de passe/i).fill(oldPassword)
-  await page
-    .getByRole("button", { name: /créer|inscription|s'inscrire/i })
-    .click()
+  await completeRegistration(page, { email, password: oldPassword })
   await expect(page).toHaveURL(/\/compte$/)
 
   const secondContext = await browser.newContext({
@@ -160,6 +157,12 @@ THEN  : son token tourne, le second navigateur perd l'accès, l'ancien secret é
   const secondToken = findSessionCookie(await secondContext.cookies()).value
   expect(secondToken).not.toBe(before)
 
+  await page
+    .getByRole("main")
+    .getByRole("link", { name: "Confidentialité" })
+    .click()
+  await expect(page).toHaveURL(/\/compte\?section=confidentialite$/u)
+  await page.getByRole("button", { name: /changer.*mot de passe/i }).click()
   await page.getByLabel(/ancien mot de passe/i).fill(oldPassword)
   await page.getByLabel(/nouveau mot de passe/i).fill(newPassword)
   await page.getByRole("button", { name: /changer|modifier/i }).click()
@@ -179,6 +182,8 @@ THEN  : son token tourne, le second navigateur perd l'accès, l'ancien secret é
   await expect(secondPage).toHaveURL(/\/login(?:\?|$)/)
   await secondContext.close()
 
+  await page.getByRole("main").getByRole("link", { name: "Mon profil" }).click()
+  await expect(page).toHaveURL(/\/compte$/u)
   await page
     .getByRole("button", { name: /déconnexion|se déconnecter/i })
     .click()
@@ -235,11 +240,12 @@ THEN  : le bouton devient désactivé pendant loading, une seule requête part, 
   })
   await page.goto("/register")
   await expect(page.getByLabel(/e-mail|email/i)).toHaveValue("")
-  await page.getByLabel(/e-mail|email/i).fill("loading@example.test")
-  await page.getByLabel(/^mot de passe/i).fill("MotDePasse!2026")
-  const button = page.getByRole("button", {
-    name: /créer|inscription|s'inscrire/i,
+  await fillRegistrationCredentialsStep(page, {
+    email: "loading@example.test",
+    password: "MotDePasse!2026",
   })
+  await fillRegistrationProfileStep(page)
+  const button = page.locator('form button[type="submit"]')
 
   await button.click()
   await expect(button).toBeDisabled()
@@ -249,9 +255,6 @@ THEN  : le bouton devient désactivé pendant loading, une seule requête part, 
   expect(calls).toBe(1)
 
   await page.unroute("**/api/auth/register")
-  await page
-    .getByLabel(/e-mail|email/i)
-    .fill(`success-${randomUUID()}@example.test`)
   await button.click()
   await expect(page).toHaveURL(/\/compte$/)
 })

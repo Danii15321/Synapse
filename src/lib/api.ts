@@ -14,11 +14,16 @@ import type {
 } from "@/lib/validators/opportunite"
 import { opportuniteCatalogPageSchema } from "@/lib/validators/opportunite"
 import type {
+  AccountProfileInput,
   ChangePasswordInput,
+  DeleteAccountInput,
   LoginInput,
   RegisterInput,
 } from "@/lib/validators/auth"
-import { authMessageSchema } from "@/lib/validators/auth"
+import {
+  accountProfileSchema,
+  authMessageSchema,
+} from "@/lib/validators/auth"
 import {
   type ParticipationConfirmation,
   participationConfirmationSchema,
@@ -119,6 +124,30 @@ export function changePassword(
   formData.set("currentPassword", input.currentPassword)
   formData.set("newPassword", input.newPassword)
   return action(formData)
+}
+
+async function mutateAccount(
+  method: "DELETE" | "PATCH",
+  input: AccountProfileInput | DeleteAccountInput,
+): Promise<unknown> {
+  const response = await fetch("/api/auth/account", {
+    body: JSON.stringify(input),
+    headers: { "content-type": "application/json" },
+    method,
+  })
+  const payload: unknown = await response.json()
+  if (!response.ok) {
+    throw new Error("La demande n'a pas pu être traitée.")
+  }
+  return payload
+}
+
+export async function updateAccountProfile(input: AccountProfileInput) {
+  return accountProfileSchema.parse(await mutateAccount("PATCH", input))
+}
+
+export async function deleteAccount(input: DeleteAccountInput) {
+  return authMessageSchema.parse(await mutateAccount("DELETE", input))
 }
 
 async function mutateParticipation(

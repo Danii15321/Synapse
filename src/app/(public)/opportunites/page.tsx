@@ -52,16 +52,6 @@ export default async function OpportunitesPage({
         <h1 className="page-heading">Bons plans &amp; opportunités</h1>
         <form action="/opportunites" className="prompt-filters" method="get">
           <label className="field-stack">
-            <span className="field-label">Rechercher</span>
-            <input
-              className="ui-input"
-              defaultValue={parsedQuery.data.search ?? ""}
-              name="search"
-              placeholder="Ex. stage à Abidjan"
-              type="search"
-            />
-          </label>
-          <label className="field-stack">
             <span className="field-label">Type</span>
             <select
               className="ui-input"

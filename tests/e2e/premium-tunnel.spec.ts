@@ -1,3 +1,5 @@
+import { randomUUID } from "node:crypto"
+
 import { expect, test } from "@playwright/test"
 
 import {
@@ -11,6 +13,9 @@ test.use({ viewport: { width: 390, height: 844 } })
 test.describe.configure({ mode: "default" })
 
 const PRICE_PATTERN = /7[\s\u00a0\u202f]*550\s*FCFA/iu
+const OFFER_TITLE = "Accès à vie Synapse Premium"
+const OFFER_DESCRIPTION =
+  "Obtenez un accès illimité et permanent à l’ensemble du contenu Premium de Synapse — prompts, formations, jeux, opportunités et toutes les futures mises à jour — avec un unique paiement."
 
 type PublishedRow = Readonly<{ id: string; publishedAt: Date }>
 
@@ -84,79 +89,128 @@ async function hidePublishedPremiumContents(): Promise<() => Promise<void>> {
   }
 }
 
+async function addPublishedPremiumPrompts(count: number): Promise<string[]> {
+  const fixtureId = randomUUID()
+  const ids = Array.from(
+    { length: count },
+    (_, index) => `t10-offer-${fixtureId}-${index}`,
+  )
+  await premiumTunnelDb.prompt.createMany({
+    data: ids.map((id) => ({
+      body: `Corps ${id}`,
+      excerpt: `Extrait ${id}`,
+      id,
+      publishedAt: new Date(),
+      slug: id,
+      summary: `Résumé ${id}`,
+      title: `Prompt ${id}`,
+      visibility: "PREMIUM",
+    })),
+  })
+  return ids
+}
+
 test.afterEach(cleanupPremiumTunnelMembers)
 test.afterAll(async () => premiumTunnelDb.$disconnect())
 
-test(`L'offre premium est publique, explicite et mobile sans logo opérateur — ce qui est vérifié
-GIVEN : un visiteur anonyme, les volumes PREMIUM publiés réels en base et un viewport de 390px
-WHEN  : il demande le HTML brut puis ouvre /premium
-THEN  : la réponse vaut 200, annonce 7 550 FCFA une seule fois pour un paiement unique à vie sans abonnement, nomme les quatre rubriques avec leurs seuls volumes PREMIUM publiés, exige un compte avant la demande, n'affiche aucun logo opérateur et ne déborde pas horizontalement`, async ({
+test(`L'offre publique reprend la proposition de valeur Premium sans volume inventé — ce qui est vérifié
+GIVEN : un visiteur anonyme et un volume de prompts PREMIUM publiés volontairement différent de 49
+WHEN  : il demande le HTML brut puis ouvre /premium sur un viewport de 390px
+THEN  : la maquette adaptée affiche la promesse, le prix, cinq bénéfices, le seul volume Prompts réel, les accès inscription et connexion ainsi qu'un support local, sans faux chiffre, contact WhatsApp public, Atalakou, logo opérateur ni débordement`, async ({
   page,
 }) => {
-  const [prompts, formations, jeux, opportunites] = await Promise.all([
-    premiumTunnelDb.prompt.count({
-      where: { publishedAt: { not: null }, visibility: "PREMIUM" },
-    }),
-    premiumTunnelDb.formation.count({
-      where: { publishedAt: { not: null }, visibility: "PREMIUM" },
-    }),
-    premiumTunnelDb.jeu.count({
-      where: { publishedAt: { not: null }, visibility: "PREMIUM" },
-    }),
-    premiumTunnelDb.opportunite.count({
-      where: { publishedAt: { not: null }, visibility: "PREMIUM" },
-    }),
-  ])
-  const response = await page.request.get("/premium")
-  const rawHtml = await response.text()
+  const initialPromptCount = await premiumTunnelDb.prompt.count({
+    where: { publishedAt: { not: null }, visibility: "PREMIUM" },
+  })
+  const extraCount = initialPromptCount + 1 === 49 ? 2 : 1
+  const promptIds = await addPublishedPremiumPrompts(extraCount)
+  const expectedPromptCount = initialPromptCount + extraCount
+  expect(expectedPromptCount).not.toBe(49)
 
-  expect(response.status()).toBe(200)
-  expect(rawHtml).toMatch(PRICE_PATTERN)
-  expect(rawHtml).toMatch(/paiement unique/iu)
-  expect(rawHtml).toMatch(/accès à vie/iu)
-  expect(rawHtml).toMatch(/(?:sans|pas d.)abonnement/iu)
+  try {
+    const response = await page.request.get("/premium")
+    const rawHtml = await response.text()
 
-  await page.goto("/premium")
-  await expect(page.getByRole("main")).toContainText(PRICE_PATTERN)
-  await expect(page.getByRole("main")).toContainText(/paiement unique/iu)
-  await expect(page.getByRole("main")).toContainText(/accès à vie/iu)
-  for (const [label, count] of [
-    [/prompts/i, prompts],
-    [/formations/i, formations],
-    [/jeux|concours/i, jeux],
-    [/opportunités/i, opportunites],
-  ] as const) {
-    const labelNode = page.getByRole("main").getByText(label, { exact: true })
-    await expect(labelNode).toBeVisible()
-    await expect(labelNode.locator("..")).toContainText(String(count))
-  }
+    expect(response.status()).toBe(200)
+    expect(rawHtml).toContain(OFFER_TITLE)
+    expect(rawHtml).toMatch(PRICE_PATTERN)
+    expect(rawHtml).toMatch(/aucun abonnement/iu)
 
-  const accountActions = page
-    .getByRole("link")
-    .filter({ hasText: /créer.*compte|s'inscrire|se connecter|connexion/i })
-  await expect(accountActions.first()).toBeVisible()
-  const accountHrefs = await accountActions.evaluateAll((links) =>
-    links.map((link) => link.getAttribute("href")),
-  )
-  expect(
-    accountHrefs.some((href) =>
-      href === null ? false : /^\/(?:login|register)(?:\?|$)/u.test(href),
-    ),
-  ).toBe(true)
+    await page.goto("/premium")
+    const main = page.getByRole("main")
+    await expect(
+      main.getByText("Synapse Premium", { exact: true }).first(),
+    ).toBeVisible()
+    await expect(
+      main.getByRole("heading", { level: 1, name: OFFER_TITLE, exact: true }),
+    ).toBeVisible()
+    await expect(
+      main.getByText(OFFER_DESCRIPTION, { exact: true }),
+    ).toBeVisible()
+    await expect(main).toContainText(PRICE_PATTERN)
+    await expect(main).toContainText(/aucun abonnement/iu)
 
-  const brandImages = await page
-    .locator("img")
-    .evaluateAll((images) =>
-      images.map(
-        (image) => `${image.getAttribute("alt")} ${image.getAttribute("src")}`,
-      ),
+    const benefits = main
+      .getByRole("list")
+      .filter({ hasText: /prompts Premium/iu })
+      .getByRole("listitem")
+    await expect(benefits).toHaveCount(5)
+    await expect(benefits.nth(0)).toContainText(
+      new RegExp(`${expectedPromptCount}\\+?\\s+prompts Premium`, "iu"),
     )
-  expect(brandImages.join("\n")).not.toMatch(/wave|orange|mtn|moov/iu)
-  expect(
-    await page.evaluate(
-      () => document.documentElement.scrollWidth > window.innerWidth,
-    ),
-  ).toBe(false)
+    for (const pattern of [
+      /formations et ressources exclusives/iu,
+      /jeux & concours Premium/iu,
+      /meilleures opportunités/iu,
+      /futurs contenus Premium inclus/iu,
+    ]) {
+      const benefit = benefits.filter({ hasText: pattern })
+      await expect(benefit).toHaveCount(1)
+      expect(await benefit.innerText()).not.toMatch(/\d/u)
+    }
+
+    await expect(
+      main.getByRole("link", {
+        name: "Débloquer Synapse Premium",
+        exact: true,
+      }),
+    ).toHaveAttribute("href", "/register")
+    await expect(
+      main.getByRole("link", { name: "Se connecter", exact: true }),
+    ).toHaveAttribute("href", "/login")
+    await expect(main).toContainText(/une question|besoin.*aide|support/iu)
+    await expect(
+      main.getByRole("link", { name: /contact|aide|support/iu }),
+    ).toHaveAttribute("href", "/contact")
+
+    const visibleOfferText = await main.innerText()
+    expect(visibleOfferText).not.toMatch(
+      /Atalakou|\+?33[\s.-]*6[\s.-]*68[\s.-]*82[\s.-]*30[\s.-]*12|2250703381175/iu,
+    )
+    const initialHrefs = await main
+      .getByRole("link")
+      .evaluateAll((links) => links.map((link) => link.getAttribute("href")))
+    expect(initialHrefs.join("\n")).not.toMatch(/wa\.me/iu)
+
+    const brandImages = await page
+      .locator("img")
+      .evaluateAll((images) =>
+        images.map(
+          (image) =>
+            `${image.getAttribute("alt")} ${image.getAttribute("src")}`,
+        ),
+      )
+    expect(brandImages.join("\n")).not.toMatch(/wave|orange|mtn|moov/iu)
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth > window.innerWidth,
+      ),
+    ).toBe(false)
+  } finally {
+    await premiumTunnelDb.prompt.deleteMany({
+      where: { id: { in: promptIds } },
+    })
+  }
 })
 
 test(`Un membre FREE parcourt le tunnel sans aucune mutation User ni MembershipGrant et garde ses données hors de l'URL WhatsApp — ce qui est vérifié
@@ -191,11 +245,11 @@ THEN  : l'e-mail est en lecture seule, les actions tactiles font au moins 44px, 
   await page.goto("/premium")
   const start = page
     .getByRole("button", {
-      name: /commencer|demander|continuer|choisir.*premium/i,
+      name: /commencer|demander|continuer|choisir.*premium|débloquer.*premium/i,
     })
     .or(
       page.getByRole("link", {
-        name: /commencer|demander|continuer|choisir.*premium/i,
+        name: /commencer|demander|continuer|choisir.*premium|débloquer.*premium/i,
       }),
     )
     .first()

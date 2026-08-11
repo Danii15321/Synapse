@@ -70,10 +70,10 @@ describe("formulaires d'authentification accessibles sur mobile", () => {
 
   it(
     scenario(
-      "Le formulaire d'inscription expose la règle de 12 caractères et des cibles tactiles",
-      "un visiteur sur la page d'inscription vide",
+      "La première étape d'inscription expose la règle de 12 caractères et une cible tactile",
+      "un visiteur sur la première étape d'inscription vide",
       "le formulaire Register est rendu",
-      "les champs sont labellisés, le nouveau mot de passe annonce au moins 12 caractères et le bouton mesure au moins 44px",
+      "e-mail et nouveau mot de passe sont labellisés, la règle des 12 caractères est annoncée et le bouton de progression mesure au moins 44px",
     ),
     async () => {
       const module: unknown = await vi.importActual(
@@ -94,9 +94,7 @@ describe("formulaires d'authentification accessibles sur mobile", () => {
         "new-password",
       )
       expect(screen.getByText(/12 caractères/i)).toBeInTheDocument()
-      expect(
-        screen.getByRole("button", { name: /créer|inscription|s'inscrire/i }),
-      ).toHaveClass("min-h-touch")
+      expect(screen.getByRole("button")).toHaveClass("min-h-touch")
     },
   )
 

@@ -3,6 +3,7 @@ import Link from "next/link"
 import { CspImage } from "@/components/ui/csp-image"
 import { PremiumBadge } from "@/components/ui/premium-badge"
 import type { PromptCardDto } from "@/lib/validators/prompt"
+import { PromptShare } from "./prompt-actions"
 
 const PROMPT_FALLBACK_IMAGE = "/images/fallbacks/fallback-prompts.webp"
 
@@ -38,6 +39,7 @@ export function PromptCard({
           <span className="card-copy">{summary}</span>
         </span>
       </Link>
+      <PromptShare slug={slug} title={title} />
     </article>
   )
 }

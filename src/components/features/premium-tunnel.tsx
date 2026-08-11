@@ -224,55 +224,61 @@ export function PremiumTunnel({ accountEmail, offer }: PremiumTunnelProps) {
   }
 
   return (
-    <section aria-labelledby="premium-offer-title">
-      <p className="eyebrow">Premium Synapse</p>
-      <h1 className="page-heading" id="premium-offer-title">
-        Premium Synapse : un paiement unique, un accès à vie
-      </h1>
-      <p className="lead">
-        {formattedPrice}, pas d’abonnement. Débloquez les contenus Premium
-        publiés dans les quatre rubriques.
-      </p>
-
-      {totalCount === 0 ? (
-        <p className="empty-state">
-          Aucun contenu premium n’est disponible pour le moment.
+    <section
+      aria-labelledby="premium-offer-title"
+      className="premium-offer-layout"
+    >
+      <div className="premium-offer-hero">
+        <p className="eyebrow">Synapse Premium</p>
+        <h1 className="premium-offer-title" id="premium-offer-title">
+          Accès à vie Synapse Premium
+        </h1>
+        <p className="premium-offer-description">
+          Obtenez un accès illimité et permanent à l’ensemble du contenu Premium
+          de Synapse — prompts, formations, jeux, opportunités et toutes les
+          futures mises à jour — avec un unique paiement.
         </p>
-      ) : null}
-
-      <div className="premium-count-grid">
-        {[
-          ["Prompts", offer.counts.prompts],
-          ["Formations", offer.counts.formations],
-          ["Jeux & concours", offer.counts.jeux],
-          ["Opportunités", offer.counts.opportunites],
-        ].map(([label, count]) => (
-          <article className="premium-count-card" key={label}>
-            <h2 className="card-heading">{label}</h2>
-            <p className="premium-count">{count}</p>
-          </article>
-        ))}
+        {totalCount === 0 ? (
+          <p className="empty-state">
+            Aucun contenu premium n’est disponible pour le moment.
+          </p>
+        ) : null}
       </div>
 
-      <div className="premium-offer-action">
+      <aside className="premium-price-card">
+        <p className="premium-price-label">Synapse Premium</p>
+        <p className="premium-offer-price">{formattedPrice}</p>
+        <p className="premium-offer-once">Aucun abonnement</p>
+        <ul className="premium-benefit-list">
+          <li>{offer.counts.prompts}+ prompts Premium</li>
+          <li>Formations et ressources exclusives</li>
+          <li>Accès aux jeux &amp; concours Premium</li>
+          <li>Accès aux meilleures opportunités</li>
+          <li>Futurs contenus Premium inclus</li>
+        </ul>
+
         {accountEmail ? (
-          <Button onClick={() => setStep("summary")} type="button">
-            Commencer ma demande
+          <Button
+            className="premium-offer-cta"
+            onClick={() => setStep("summary")}
+            type="button"
+          >
+            Débloquer Synapse Premium
           </Button>
         ) : (
-          <>
-            <p>Créez un compte ou connectez-vous avant votre demande.</p>
-            <div className="premium-account-links">
-              <Link className="premium-contact-link" href="/register">
-                Créer un compte
-              </Link>
-              <Link className="inline-link" href="/login">
-                Se connecter
-              </Link>
-            </div>
-          </>
+          <Link className="premium-offer-cta" href="/register">
+            Débloquer Synapse Premium
+          </Link>
         )}
-      </div>
+
+        <p className="premium-login">
+          Déjà membre ?<Link href="/login">Se connecter</Link>
+        </p>
+      </aside>
+
+      <p className="premium-offer-support">
+        Une question ?<Link href="/contact">Contacter le support</Link>
+      </p>
     </section>
   )
 }

@@ -1,0 +1,204 @@
+.about-page-shell {
+  overflow: hidden;
+}
+
+.about-content {
+  display: grid;
+  gap: var(--space-page);
+}
+
+.about-region {
+  min-width: 0;
+}
+
+.about-hero {
+  max-width: 56rem;
+}
+
+.about-eyebrow,
+.about-conviction-label {
+  color: var(--color-magenta);
+  font-family: var(--font-heading);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.about-title {
+  max-width: 17ch;
+  margin-top: var(--space-small);
+  color: var(--color-night);
+  font-size: clamp(2.25rem, 10vw, 5.25rem);
+  font-weight: 800;
+  letter-spacing: -0.045em;
+  line-height: 1;
+  overflow-wrap: anywhere;
+}
+
+.about-intro {
+  max-width: 45rem;
+  margin-top: var(--space-card);
+  color: var(--color-muted);
+  font-size: 1rem;
+}
+
+.about-conviction {
+  border-radius: var(--radius-card);
+  padding: var(--space-card);
+  background: var(--color-night);
+  color: var(--color-surface);
+  box-shadow: var(--shadow-card);
+}
+
+.about-conviction-label {
+  color: color-mix(in srgb, var(--color-surface) 70%, var(--color-indigo));
+}
+
+.about-conviction-title {
+  max-width: 53rem;
+  margin-top: var(--space-small);
+  font-size: clamp(2rem, 8vw, 3rem);
+  line-height: 1.05;
+}
+
+.about-conviction-copy {
+  max-width: 48rem;
+  margin-top: var(--space-control);
+  color: color-mix(in srgb, var(--color-surface) 74%, var(--color-night));
+}
+
+.about-section-heading {
+  max-width: 45rem;
+}
+
+.about-section-title,
+.about-platform-title {
+  margin-top: var(--space-tiny);
+  color: var(--color-night);
+  font-size: clamp(2rem, 8vw, 3.2rem);
+  line-height: 1.05;
+}
+
+.about-pillar-grid {
+  display: grid;
+  gap: var(--space-control);
+  margin-top: var(--space-card);
+}
+
+.about-pillar {
+  display: grid;
+  min-width: 0;
+  gap: var(--space-small);
+  align-content: start;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  padding: var(--space-card);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+}
+
+.about-pillar-number {
+  color: var(--color-orange);
+  font-family: var(--font-heading);
+  font-size: 0.875rem;
+  font-weight: 800;
+}
+
+.about-pillar h3 {
+  margin-top: var(--space-control);
+  font-size: 1.3rem;
+}
+
+.about-pillar > :last-child,
+.about-platform-copy,
+.about-social-intro {
+  color: var(--color-muted);
+}
+
+.about-pillar > :last-child {
+  font-size: 1rem;
+}
+
+.about-platform {
+  display: grid;
+  gap: var(--space-card);
+  border-block: 1px solid var(--color-border);
+  padding-block: var(--space-section);
+}
+
+.about-platform-copy {
+  display: grid;
+  gap: var(--space-control);
+}
+
+.about-social-intro {
+  margin-top: var(--space-small);
+}
+
+.about-social-list {
+  display: grid;
+  gap: var(--space-small);
+  margin: var(--space-card) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.about-social-card {
+  display: grid;
+  grid-template-columns: var(--touch-target) minmax(0, 1fr);
+  min-width: 0;
+  min-height: calc(var(--touch-target) + (2 * var(--space-control)));
+  align-items: center;
+  gap: var(--space-control);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  padding: var(--space-control);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+}
+
+.about-social-icon {
+  display: grid;
+  width: var(--touch-target);
+  height: var(--touch-target);
+  place-items: center;
+  border-radius: var(--radius-control);
+  background: color-mix(in srgb, var(--color-indigo) 8%, var(--color-surface));
+  color: var(--color-indigo);
+}
+
+.about-social-icon svg {
+  width: 1.4rem;
+  height: 1.4rem;
+  fill: currentColor;
+}
+
+.about-social-card strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-family: var(--font-heading);
+}
+
+@media (min-width: 64rem) {
+  .about-page-shell {
+    padding-top: var(--space-page);
+  }
+
+  .about-conviction {
+    padding: var(--space-section);
+  }
+
+  .about-pillar-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .about-pillar {
+    min-height: 16rem;
+  }
+
+  .about-platform {
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+    gap: var(--space-page);
+  }
+}
