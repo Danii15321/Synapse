@@ -63,18 +63,17 @@ THEN  : chaque corps libre est lisible, aucun corps premium ne l'est, les CTA m�
     replicated.premiumOpportunity.slug,
   )
 
-  await page.goto("/")
   for (const [name, path] of [
-    [/prompts/i, "/prompts"],
-    [/formations/i, "/formations"],
-    [/jeux|concours/i, "/jeux"],
-    [/opportunités/i, "/opportunites"],
+    [/^voir la rubrique prompts\b/i, "/prompts"],
+    [/^voir la rubrique formations\b/i, "/formations"],
+    [/^voir la rubrique jeux & concours\b/i, "/jeux"],
+    [/^voir la rubrique bons plans & opportunités\b/i, "/opportunites"],
   ] as const) {
-    await expect(page.getByRole("link", { name }).first()).toHaveAttribute(
-      "href",
-      path,
-    )
-    await page.goto(path)
+    await page.goto("/")
+    const rubricLink = page.getByRole("main").getByRole("link", { name })
+    await expect(rubricLink).toHaveAttribute("href", path)
+    await rubricLink.click()
+    await expect(page).toHaveURL(new RegExp(`${path}$`, "u"))
     await expect(page.getByRole("main")).toBeVisible()
   }
 
