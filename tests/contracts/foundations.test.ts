@@ -139,6 +139,22 @@ describe("fondations du projet", () => {
 
   it(
     scenario(
+      "Chaque installation régénère le client Prisma",
+      "un build Vercel pouvant restaurer node_modules depuis un cache antérieur au schéma courant",
+      "le script postinstall du package est inspecté",
+      "npm exécute exactement prisma generate après chaque installation afin que le client reflète toujours le schéma versionné",
+    ),
+    () => {
+      const packageJson: unknown = JSON.parse(read("package.json"))
+
+      expect(packageJson).toMatchObject({
+        scripts: { postinstall: "prisma generate" },
+      })
+    },
+  )
+
+  it(
+    scenario(
       "PostgreSQL 16 est l'unique infrastructure locale",
       "la configuration Docker du dépôt",
       "les services et leurs images sont inspectés",
