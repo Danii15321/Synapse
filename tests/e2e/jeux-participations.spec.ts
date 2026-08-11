@@ -218,7 +218,9 @@ THEN  : aucune réponse brute ne contient body ni la sentinelle et le CTA de con
     }
     await actorPage.goto(`/jeux/${fixtures.premiumJeu.slug}`)
     await expect(
-      actorPage.getByRole("link", { name: /devenir membre|débloquer/i }),
+      actorPage
+        .getByRole("main")
+        .getByRole("link", { name: /devenir membre|débloquer/i }),
     ).toBeVisible()
     if (actor === "anonymous") await context.close()
   }
