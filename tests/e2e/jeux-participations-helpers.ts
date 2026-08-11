@@ -3,6 +3,8 @@ import { randomUUID } from "node:crypto"
 import { PrismaClient } from "@prisma/client"
 import type { Page } from "@playwright/test"
 
+import { completeRegistration } from "./auth-profile-helpers"
+
 export const participationDb = new PrismaClient()
 const prefixes = new Set<string>()
 const emails = new Set<string>()
@@ -125,11 +127,10 @@ export async function registerParticipationMember(page: Page): Promise<string> {
   const email = `t09-${randomUUID()}@example.test`
   emails.add(email)
   await page.goto("/register")
-  await page.getByLabel(/e-mail|email/i).fill(email)
-  await page.getByLabel(/^mot de passe/i).fill("MotDePasse!2026")
-  await page
-    .getByRole("button", { name: /créer|inscription|s'inscrire/i })
-    .click()
+  await completeRegistration(page, {
+    email,
+    password: "MotDePasse!2026",
+  })
   await page.waitForURL(/\/compte$/u)
   return email
 }

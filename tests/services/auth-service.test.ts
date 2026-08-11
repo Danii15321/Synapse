@@ -1,8 +1,14 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 type RegisterUser = (input: {
+  city: string
+  country: string
   email: string
+  firstName: string
+  lastName: string
   password: string
+  phone: string
+  professionalLevel: "ELEVE" | "ETUDIANT" | "DIPLOME" | "AUTRE"
 }) => Promise<unknown>
 
 type ChangePassword = (input: {
@@ -22,6 +28,37 @@ type CredentialsModule = {
     email: string
     password: string
   }) => Promise<unknown>
+}
+
+type AccountMutationServiceModule = Readonly<{
+  deleteAccount: (input: {
+    currentPassword: string
+    userId: string
+  }) => Promise<unknown>
+  updateProfile: (input: {
+    profile: PublicProfile
+    userId: string
+  }) => Promise<unknown>
+}>
+
+type PublicProfile = Readonly<{
+  city: string
+  country: string
+  email: string
+  firstName: string
+  lastName: string
+  phone: string
+  professionalLevel: "ELEVE" | "ETUDIANT" | "DIPLOME" | "AUTRE"
+}>
+
+const PROFILE: PublicProfile = {
+  city: "Abidjan",
+  country: "Côte d'Ivoire",
+  email: "nouveau@example.test",
+  firstName: "Awa",
+  lastName: "Kouassi",
+  phone: "+2250701020304",
+  professionalLevel: "ETUDIANT",
 }
 
 function scenario(
@@ -49,12 +86,34 @@ function isCredentialsModule(value: unknown): value is CredentialsModule {
   return isRecord(value) && typeof value.authorizeCredentials === "function"
 }
 
+function isAccountMutationServiceModule(
+  value: unknown,
+): value is AccountMutationServiceModule {
+  return (
+    isRecord(value) &&
+    typeof value.updateProfile === "function" &&
+    typeof value.deleteAccount === "function"
+  )
+}
+
 async function loadAuthService(): Promise<AuthServiceModule> {
   const module: unknown = await vi.importActual(
     "@/server/services/auth-service",
   )
   if (!isAuthServiceModule(module)) {
     throw new Error("auth-service doit exposer registerUser et changePassword")
+  }
+  return module
+}
+
+async function loadAccountMutationService(): Promise<AccountMutationServiceModule> {
+  const module: unknown = await vi.importActual(
+    "@/server/services/auth-service",
+  )
+  if (!isAccountMutationServiceModule(module)) {
+    throw new Error(
+      "auth-service doit exposer updateProfile et deleteAccount selon le contrat arbitré",
+    )
   }
   return module
 }
@@ -101,13 +160,14 @@ describe("service d'inscription", () => {
       const service = await loadAuthService()
 
       const result = await service.registerUser({
-        email: "nouveau@example.test",
+        ...PROFILE,
         password,
       })
 
       expect(hashPassword).toHaveBeenCalledWith(password)
       expect(createCredentialsUser).toHaveBeenCalledWith({
-        email: "nouveau@example.test",
+        ...PROFILE,
+        name: "Awa Kouassi",
         passwordHash,
       })
       expect(JSON.stringify(result)).not.toContain(password)
@@ -287,6 +347,95 @@ describe("changement de mot de passe", () => {
       })
       expect(result).toEqual({ sessionToken: "session-rotated" })
       expect(result).not.toEqual({ sessionToken: "session-current" })
+    },
+  )
+})
+
+describe("profil et suppression du compte", () => {
+  afterEach(() => {
+    vi.doUnmock("@/server/auth/password")
+    vi.doUnmock("@/server/repositories/user-repository")
+    vi.resetModules()
+  })
+
+  it(
+    scenario(
+      "La sauvegarde de profil transmet l'identité serveur séparément du profil public",
+      "un membre authentifié et les sept champs complets de son profil",
+      "updateProfile reçoit userId et profile après validation de la frontière HTTP",
+      "le repository filtre l'écriture sur userId et le service retourne seulement le profil public sans membership ni secret",
+    ),
+    async () => {
+      const updateUserProfile = vi.fn().mockResolvedValue(PROFILE)
+      vi.doMock("@/server/repositories/user-repository", () => ({
+        updateUserProfile,
+      }))
+      const service = await loadAccountMutationService()
+
+      const result = await service.updateProfile({
+        profile: PROFILE,
+        userId: "member-1",
+      })
+
+      expect(updateUserProfile).toHaveBeenCalledWith({
+        ...PROFILE,
+        name: expect.stringMatching(/Awa.*Kouassi|Kouassi.*Awa/u),
+        userId: "member-1",
+      })
+      expect(result).toEqual(PROFILE)
+      expect(JSON.stringify(result)).not.toMatch(/password|membership|session/i)
+    },
+  )
+
+  it(
+    scenario(
+      "La suppression vérifie le mot de passe actuel avant de supprimer l'utilisateur de session",
+      "le même userId authentifié avec une première vérification argon2id fausse puis une seconde vraie",
+      "deleteAccount est demandé deux fois avec les secrets correspondants",
+      "le mauvais secret lève une erreur générique sans écriture, puis le bon secret supprime uniquement userId et ne transmet jamais le clair au repository",
+    ),
+    async () => {
+      const passwordHash = "$argon2id$v=19$m=65536,t=3,p=4$known$hash"
+      const deleteUserById = vi.fn().mockResolvedValue(undefined)
+      const verifyPassword = vi
+        .fn()
+        .mockResolvedValueOnce(false)
+        .mockResolvedValueOnce(true)
+      vi.doMock("@/server/repositories/user-repository", () => ({
+        deleteUserById,
+        findCredentialsUserById: vi
+          .fn()
+          .mockResolvedValue({ id: "member-1", passwordHash }),
+      }))
+      vi.doMock("@/server/auth/password", () => ({
+        hashPassword: vi.fn(),
+        verifyPassword,
+      }))
+      const service = await loadAccountMutationService()
+
+      await expect(
+        service.deleteAccount({
+          currentPassword: "MauvaisSecret!2026",
+          userId: "member-1",
+        }),
+      ).rejects.toMatchObject({ name: "InvalidCurrentPasswordError" })
+      expect(deleteUserById).not.toHaveBeenCalled()
+
+      await expect(
+        service.deleteAccount({
+          currentPassword: "BonSecret!2026xx",
+          userId: "member-1",
+        }),
+      ).resolves.toBeUndefined()
+      expect(verifyPassword).toHaveBeenNthCalledWith(
+        2,
+        passwordHash,
+        "BonSecret!2026xx",
+      )
+      expect(deleteUserById).toHaveBeenCalledWith("member-1")
+      expect(JSON.stringify(deleteUserById.mock.calls)).not.toContain(
+        "BonSecret!2026xx",
+      )
     },
   )
 })

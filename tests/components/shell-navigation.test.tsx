@@ -148,7 +148,7 @@ describe("navigation et footer du shell", () => {
       "La navigation reflète la session et l'adhésion",
       "un visiteur anonyme, un membre FREE puis un membre PREMIUM",
       "le même header serveur reçoit chacun de ces états",
-      "l'anonyme voit dans l'ordre hamburger, marque et Devenir membre avec Connexion dans le panneau, tandis que Compte, statut et déconnexion restent réservés aux membres",
+      "l'anonyme voit dans l'ordre hamburger, marque et Devenir membre avec Connexion dans le panneau, tandis que les membres voient Compte et leur statut sans bouton Déconnexion dans le header",
     ),
     async () => {
       const { SiteNavigation } = await loadNavigation()
@@ -202,8 +202,8 @@ describe("navigation et footer du shell", () => {
       )
       expect(screen.queryByRole("link", { name: /devenir membre/i })).toBeNull()
       expect(
-        screen.getByRole("button", { name: /déconnexion|se déconnecter/i }),
-      ).toBeInTheDocument()
+        screen.queryByRole("button", { name: /déconnexion|se déconnecter/i }),
+      ).toBeNull()
       expect(
         screen.getByText(/membre gratuit|accès gratuit/i),
       ).toBeInTheDocument()

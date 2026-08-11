@@ -2,6 +2,8 @@ import { randomUUID } from "node:crypto"
 
 import { expect, test, type Page } from "@playwright/test"
 
+import { completeRegistration } from "./auth-profile-helpers"
+
 test.use({ viewport: { width: 390, height: 844 } })
 
 const HOME_TITLE = "Apprenez l'IA sous toutes ses formes avec Synapse"
@@ -125,11 +127,7 @@ THEN  : Connexion disparaît, Compte apparaît et l'indicateur de session annonc
   const password = `Aa!${randomUUID()}2026`
 
   await page.goto("/register")
-  await page.getByLabel(/e-mail|email/i).fill(email)
-  await page.getByLabel(/^mot de passe/i).fill(password)
-  await page
-    .getByRole("button", { name: /créer|inscription|s'inscrire/i })
-    .click()
+  await completeRegistration(page, { email, password })
   await expect(page).toHaveURL(/\/compte$/)
 
   await page.goto("/")
