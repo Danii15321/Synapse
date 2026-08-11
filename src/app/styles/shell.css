@@ -164,3 +164,27 @@
 .legal-note {
   color: var(--color-muted);
 }
+
+@media (max-width: 47.999rem) {
+  .site-navigation {
+    min-height: 3.75rem;
+  }
+
+  .brand-link,
+  .mobile-menu-toggle,
+  .mobile-menu-close,
+  .primary-navigation-link,
+  .session-link,
+  .session-action {
+    font-size: 0.875rem;
+  }
+
+  .brand-mark {
+    width: 2rem;
+    height: 2rem;
+  }
+
+  .brand-word {
+    font-size: 0.9375rem;
+  }
+}
