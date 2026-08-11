@@ -30,11 +30,12 @@ type CredentialsModule = {
   }) => Promise<unknown>
 }
 
-type AccountMutationServiceModule = Readonly<{
+type AccountServiceModule = Readonly<{
   deleteAccount: (input: {
     currentPassword: string
     userId: string
   }) => Promise<unknown>
+  getAccount: (userId: string) => Promise<unknown>
   updateProfile: (input: {
     profile: PublicProfile
     userId: string
@@ -86,11 +87,10 @@ function isCredentialsModule(value: unknown): value is CredentialsModule {
   return isRecord(value) && typeof value.authorizeCredentials === "function"
 }
 
-function isAccountMutationServiceModule(
-  value: unknown,
-): value is AccountMutationServiceModule {
+function isAccountServiceModule(value: unknown): value is AccountServiceModule {
   return (
     isRecord(value) &&
+    typeof value.getAccount === "function" &&
     typeof value.updateProfile === "function" &&
     typeof value.deleteAccount === "function"
   )
@@ -106,13 +106,13 @@ async function loadAuthService(): Promise<AuthServiceModule> {
   return module
 }
 
-async function loadAccountMutationService(): Promise<AccountMutationServiceModule> {
+async function loadAccountService(): Promise<AccountServiceModule> {
   const module: unknown = await vi.importActual(
     "@/server/services/auth-service",
   )
-  if (!isAccountMutationServiceModule(module)) {
+  if (!isAccountServiceModule(module)) {
     throw new Error(
-      "auth-service doit exposer updateProfile et deleteAccount selon le contrat arbitré",
+      "auth-service doit exposer getAccount, updateProfile et deleteAccount selon le contrat arbitré",
     )
   }
   return module
@@ -360,6 +360,52 @@ describe("profil et suppression du compte", () => {
 
   it(
     scenario(
+      "La lecture du compte délègue uniquement l'identifiant serveur au repository",
+      "un userId authentifié et un DTO public contenant profil et membership",
+      "getAccount lit le profil courant",
+      "findUserProfileById reçoit seulement userId et le service retourne exactement le DTO public sans secret ni champ adapter",
+    ),
+    async () => {
+      const account = {
+        ...PROFILE,
+        id: "member-1",
+        membership: "FREE",
+      } as const
+      const findUserProfileById = vi.fn().mockResolvedValue(account)
+      vi.doMock("@/server/repositories/user-repository", () => ({
+        findUserProfileById,
+      }))
+      const service = await loadAccountService()
+
+      const result = await service.getAccount("member-1")
+
+      expect(findUserProfileById).toHaveBeenCalledWith("member-1")
+      expect(findUserProfileById).toHaveBeenCalledOnce()
+      expect(result).toEqual(account)
+      if (!isRecord(result)) {
+        throw new Error("getAccount doit retourner un DTO public")
+      }
+      expect(Object.keys(result).sort()).toEqual(
+        [
+          "city",
+          "country",
+          "email",
+          "firstName",
+          "id",
+          "lastName",
+          "membership",
+          "phone",
+          "professionalLevel",
+        ].sort(),
+      )
+      expect(JSON.stringify(result)).not.toMatch(
+        /passwordHash|session|createdAt|updatedAt/i,
+      )
+    },
+  )
+
+  it(
+    scenario(
       "La sauvegarde de profil transmet l'identité serveur séparément du profil public",
       "un membre authentifié et les sept champs complets de son profil",
       "updateProfile reçoit userId et profile après validation de la frontière HTTP",
@@ -370,7 +416,7 @@ describe("profil et suppression du compte", () => {
       vi.doMock("@/server/repositories/user-repository", () => ({
         updateUserProfile,
       }))
-      const service = await loadAccountMutationService()
+      const service = await loadAccountService()
 
       const result = await service.updateProfile({
         profile: PROFILE,
@@ -411,7 +457,7 @@ describe("profil et suppression du compte", () => {
         hashPassword: vi.fn(),
         verifyPassword,
       }))
-      const service = await loadAccountMutationService()
+      const service = await loadAccountService()
 
       await expect(
         service.deleteAccount({

@@ -44,7 +44,7 @@ test.afterAll(async () => db.$disconnect())
 test(`L'inscription en deux étapes crée le profil seulement à la fin puis le membre peut l'éditer — ce qui est vérifié
 GIVEN : une adresse unique, PostgreSQL migré et un visiteur mobile 390px sans session
 WHEN  : il valide l'étape e-mail/mot de passe, complète les six informations, ouvre Mon profil, modifie son e-mail puis se déconnecte et se reconnecte
-THEN  : aucune ligne n'existe après l'étape 1, la création finale persiste le profil FREE complet, l'e-mail est normalisé, le CTA membre et les sections attendues sont accessibles sans logout dans le header ni overflow`, async ({
+THEN  : aucune ligne n'existe après l'étape 1, la création finale persiste le profil FREE complet, l'e-mail est normalisé, Mon profil reste séparé de Confidentialité, le CTA membre est accessible sans logout dans le header ni overflow`, async ({
   page,
 }) => {
   const initialEmail = `profile-${randomUUID()}@example.test`
@@ -79,9 +79,24 @@ THEN  : aucune ligne n'existe après l'étape 1, la création finale persiste le
 
   const main = page.getByRole("main")
   await expect(main.getByRole("heading", { name: "Mon profil" })).toBeVisible()
+  const accountNavigation = main.getByRole("navigation", { name: /compte/i })
+  await expect(accountNavigation.getByRole("link")).toHaveText([
+    "Mon profil",
+    "Confidentialité",
+  ])
+  await expect(
+    accountNavigation.getByRole("link", { name: "Mon profil" }),
+  ).toHaveAttribute("aria-current", "page")
+  await expect(
+    accountNavigation.getByRole("link", { name: "Confidentialité" }),
+  ).not.toHaveAttribute("aria-current")
   await expect(
     main.getByRole("heading", { name: "Confidentialité" }),
-  ).toBeVisible()
+  ).toHaveCount(0)
+  await expect(main.getByLabel(/ancien mot de passe/i)).toHaveCount(0)
+  await expect(
+    main.getByRole("heading", { name: /zone de danger/i }),
+  ).toHaveCount(0)
   await expect(
     main.getByRole("link", { name: /devenir membre/i }),
   ).toHaveAttribute("href", "/premium")
@@ -132,7 +147,7 @@ THEN  : aucune ligne n'existe après l'étape 1, la création finale persiste le
 test(`La zone de danger refuse un mauvais secret puis supprime irréversiblement le compte — ce qui est vérifié
 GIVEN : un membre connecté avec une seconde session database et son mot de passe actuel
 WHEN  : il tente la suppression avec un mauvais secret puis recommence avec le bon
-THEN  : la première tentative reste générique et conserve le compte, la seconde redirige hors compte, supprime User et toutes ses sessions et expire le cookie navigateur`, async ({
+THEN  : il doit d'abord ouvrir la vue Confidentialité séparée, la première tentative reste générique et conserve le compte, la seconde redirige hors compte, supprime User et toutes ses sessions et expire le cookie navigateur`, async ({
   page,
 }) => {
   const email = `delete-${randomUUID()}@example.test`
@@ -148,6 +163,23 @@ THEN  : la première tentative reste générique et conserve le compte, la secon
       userId,
     },
   })
+
+  const navigation = page
+    .getByRole("main")
+    .getByRole("navigation", { name: /compte/i })
+  await navigation.getByRole("link", { name: "Confidentialité" }).click()
+  await expect(page).toHaveURL(/\/compte\?section=confidentialite$/u)
+  await expect(
+    navigation.getByRole("link", { name: "Confidentialité" }),
+  ).toHaveAttribute("aria-current", "page")
+  await expect(
+    page.getByRole("main").getByRole("heading", { name: "Mon profil" }),
+  ).toHaveCount(0)
+  await expect(
+    page
+      .getByRole("main")
+      .getByRole("button", { name: /déconnexion|se déconnecter/i }),
+  ).toHaveCount(0)
 
   const dangerHeading = page.getByRole("heading", { name: /zone de danger/i })
   const danger = page.locator("section").filter({ has: dangerHeading })

@@ -109,14 +109,27 @@ describe("inscription enrichie et espace compte", () => {
       fireEvent.change(screen.getByLabelText(/^pays$/i), {
         target: { value: "Côte d'Ivoire" },
       })
-      const level = screen.queryByRole("combobox", {
+      const level = screen.getByRole("combobox", {
         name: /niveau professionnel/i,
       })
-      if (level) {
-        fireEvent.change(level, { target: { value: "ETUDIANT" } })
-      } else {
-        fireEvent.click(screen.getByRole("radio", { name: "Étudiant" }))
-      }
+      expect(
+        within(level)
+          .getAllByRole("option")
+          .map((option) => {
+            if (!(option instanceof HTMLOptionElement)) {
+              throw new Error(
+                "le niveau professionnel doit utiliser de vraies options HTML",
+              )
+            }
+            return { label: option.textContent, value: option.value }
+          }),
+      ).toEqual([
+        { label: "Élève", value: "ELEVE" },
+        { label: "Étudiant", value: "ETUDIANT" },
+        { label: "Diplômé", value: "DIPLOME" },
+        { label: "Autre", value: "AUTRE" },
+      ])
+      fireEvent.change(level, { target: { value: "ETUDIANT" } })
       const form = firstName.closest("form")
       if (!form)
         throw new Error("les deux étapes doivent partager un formulaire")
@@ -144,20 +157,19 @@ describe("inscription enrichie et espace compte", () => {
 
   it(
     scenario(
-      "Le compte FREE ordonne profil, confidentialité, participations puis déconnexion",
-      "un membre FREE avec profil complet et aucune participation",
-      "la page Compte est rendue puis Modifier et Changer le mot de passe sont activés",
-      "l'adhésion et le CTA membre sont mis en valeur, le profil passe de lecture seule à édition, la sécurité est repliable, la zone danger vérifie le secret et Déconnexion est la dernière action",
+      "La navigation Compte sépare strictement Mon profil et Confidentialité",
+      "un membre FREE avec un profil public complet et aucune participation",
+      "la vue par défaut Mon profil est rendue puis bascule en édition",
+      "la navigation expose exactement deux destinations avec Mon profil courant, le service lit le DTO par userId, adhésion, profil, participations et déconnexion sont visibles, tandis que mot de passe et zone danger sont absents",
     ),
     async () => {
-      const getAccount = vi
-        .fn()
-        .mockReturnValueOnce(ACCOUNT)
-        .mockReturnValueOnce({ ...ACCOUNT, membership: "PREMIUM" })
-      vi.doMock("@/server", () => ({
-        getAccount,
-        requireUser: vi.fn().mockResolvedValue(ACCOUNT),
-      }))
+      const requireUser = vi.fn().mockResolvedValue({
+        email: ACCOUNT.email,
+        id: ACCOUNT.id,
+        membership: ACCOUNT.membership,
+      })
+      const getAccount = vi.fn().mockResolvedValue(ACCOUNT)
+      vi.doMock("@/server", () => ({ getAccount, requireUser }))
       vi.doMock("@/lib/account-participations-server", () => ({
         getMyParticipations: vi
           .fn()
@@ -171,16 +183,27 @@ describe("inscription enrichie et espace compte", () => {
       )
 
       const main = screen.getByRole("main")
-      const profileHeading = within(main).getByRole("heading", {
-        name: "Mon profil",
+      const navigation = within(main).getByRole("navigation", {
+        name: /compte/i,
       })
-      const privacyHeading = within(main).getByRole("heading", {
-        name: "Confidentialité",
-      })
+      const destinations = within(navigation).getAllByRole("link")
+      expect(destinations).toHaveLength(2)
+      expect(destinations.map((link) => link.textContent)).toEqual([
+        "Mon profil",
+        "Confidentialité",
+      ])
       expect(
-        profileHeading.compareDocumentPosition(privacyHeading) &
-          Node.DOCUMENT_POSITION_FOLLOWING,
-      ).toBeTruthy()
+        within(navigation).getByRole("link", { name: "Mon profil" }),
+      ).toHaveAttribute("aria-current", "page")
+      expect(
+        within(navigation).getByRole("link", { name: "Confidentialité" }),
+      ).not.toHaveAttribute("aria-current")
+      expect(requireUser).toHaveBeenCalledOnce()
+      expect(getAccount).toHaveBeenCalledWith(ACCOUNT.id)
+
+      expect(
+        within(main).getByRole("heading", { name: "Mon profil" }),
+      ).toBeVisible()
       expect(within(main).getByText("FREE", { exact: true })).toBeVisible()
       expect(
         within(main).getByRole("link", { name: /devenir membre/i }),
@@ -188,6 +211,10 @@ describe("inscription enrichie et espace compte", () => {
       expect(within(main).getByText(ACCOUNT.firstName)).toBeVisible()
       expect(
         within(main).queryByRole("textbox", { name: /^prénom$/i }),
+      ).toBeNull()
+      expect(within(main).queryByLabelText(/ancien mot de passe/i)).toBeNull()
+      expect(
+        within(main).queryByRole("heading", { name: /zone de danger/i }),
       ).toBeNull()
 
       fireEvent.click(within(main).getByRole("button", { name: "Modifier" }))
@@ -197,6 +224,66 @@ describe("inscription enrichie et espace compte", () => {
       expect(within(main).getByLabelText(/e-mail|email/i)).toHaveValue(
         ACCOUNT.email,
       )
+
+      const buttons = within(main).getAllByRole("button")
+      expect(buttons.at(-1)).toHaveAccessibleName(/déconnexion|se déconnecter/i)
+    },
+  )
+
+  it(
+    scenario(
+      "La vue Confidentialité isole le mot de passe et la suppression du profil",
+      "un membre FREE ouvre explicitement ?section=confidentialite",
+      "la page rend la section privée puis déplie le formulaire de changement de mot de passe",
+      "Confidentialité est la seule destination courante, mot de passe repliable et zone danger sont visibles, tandis qu'adhésion, profil, participations et déconnexion sont absents",
+    ),
+    async () => {
+      vi.doMock("@/server", () => ({
+        getAccount: vi.fn().mockResolvedValue(ACCOUNT),
+        requireUser: vi.fn().mockResolvedValue({
+          email: ACCOUNT.email,
+          id: ACCOUNT.id,
+          membership: ACCOUNT.membership,
+        }),
+      }))
+      vi.doMock("@/lib/account-participations-server", () => ({
+        getMyParticipations: vi
+          .fn()
+          .mockResolvedValue({ items: [], nextCursor: null }),
+        waitForPendingParticipation: vi.fn(),
+      }))
+      const page = pageOf(await import("@/app/(member)/compte/page"))
+
+      renderWithQueryClient(
+        await page.default({
+          searchParams: Promise.resolve({ section: "confidentialite" }),
+        }),
+      )
+
+      const main = screen.getByRole("main")
+      const navigation = within(main).getByRole("navigation", {
+        name: /compte/i,
+      })
+      expect(
+        within(navigation).getByRole("link", { name: "Confidentialité" }),
+      ).toHaveAttribute("aria-current", "page")
+      expect(
+        within(navigation).getByRole("link", { name: "Mon profil" }),
+      ).not.toHaveAttribute("aria-current")
+      expect(
+        within(main).getByRole("heading", { name: "Confidentialité" }),
+      ).toBeVisible()
+      expect(within(main).queryByText("FREE", { exact: true })).toBeNull()
+      expect(
+        within(main).queryByRole("link", { name: /devenir membre/i }),
+      ).toBeNull()
+      expect(within(main).queryByText(ACCOUNT.firstName)).toBeNull()
+      expect(within(main).queryByText(/participations/i)).toBeNull()
+      expect(
+        within(main).queryByRole("button", {
+          name: /déconnexion|se déconnecter/i,
+        }),
+      ).toBeNull()
 
       expect(within(main).queryByLabelText(/ancien mot de passe/i)).toBeNull()
       fireEvent.click(
@@ -216,10 +303,35 @@ describe("inscription enrichie et espace compte", () => {
       expect(
         within(danger).getByRole("button", { name: /supprimer.*compte/i }),
       ).toHaveClass("min-h-touch")
+    },
+  )
 
-      const buttons = within(main).getAllByRole("button")
-      expect(buttons.at(-1)).toHaveAccessibleName(/déconnexion|se déconnecter/i)
-      cleanup()
+  it(
+    scenario(
+      "Le profil PREMIUM ne propose plus de devenir membre",
+      "un membre PREMIUM avec son DTO public complet",
+      "il ouvre la vue Mon profil",
+      "l'accès à vie est visible et aucun CTA d'adhésion n'est rendu",
+    ),
+    async () => {
+      vi.doMock("@/server", () => ({
+        getAccount: vi
+          .fn()
+          .mockResolvedValue({ ...ACCOUNT, membership: "PREMIUM" }),
+        requireUser: vi.fn().mockResolvedValue({
+          email: ACCOUNT.email,
+          id: ACCOUNT.id,
+          membership: "PREMIUM",
+        }),
+      }))
+      vi.doMock("@/lib/account-participations-server", () => ({
+        getMyParticipations: vi
+          .fn()
+          .mockResolvedValue({ items: [], nextCursor: null }),
+        waitForPendingParticipation: vi.fn(),
+      }))
+      const page = pageOf(await import("@/app/(member)/compte/page"))
+
       renderWithQueryClient(
         await page.default({ searchParams: Promise.resolve({}) }),
       )

@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest"
 
 type AccountRoute = Readonly<{
   DELETE: (request: Request) => Promise<Response> | Response
+  GET: (request: Request) => Promise<Response> | Response
   PATCH: (request: Request) => Promise<Response> | Response
 }>
 
@@ -37,6 +38,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 function isAccountRoute(value: unknown): value is AccountRoute {
   return (
     isRecord(value) &&
+    typeof value.GET === "function" &&
     typeof value.PATCH === "function" &&
     typeof value.DELETE === "function"
   )
@@ -45,7 +47,7 @@ function isAccountRoute(value: unknown): value is AccountRoute {
 async function loadRoute(): Promise<AccountRoute> {
   const module: unknown = await vi.importActual("@/app/api/auth/account/route")
   if (!isAccountRoute(module)) {
-    throw new Error("/api/auth/account doit exporter PATCH et DELETE")
+    throw new Error("/api/auth/account doit exporter GET, PATCH et DELETE")
   }
   return module
 }
@@ -76,7 +78,86 @@ afterEach(() => {
   vi.resetModules()
 })
 
-describe("mutations protégées du profil", () => {
+describe("lecture et mutations protégées du profil", () => {
+  it(
+    scenario(
+      "GET /api/auth/account retourne strictement le profil public du compte courant",
+      "un membre authentifié dont la session contient seulement l'identité minimale",
+      "le Route Handler reçoit directement GET sans middleware ni identifiant client",
+      "getAccount reçoit seulement user.id et le JSON brut contient exactement id, email, membership et les six champs de profil sans name, hash, session ni timestamp",
+    ),
+    async () => {
+      const account = { ...PROFILE, id: USER.id, membership: USER.membership }
+      const requireUser = vi.fn().mockResolvedValue(USER)
+      const getAccount = vi.fn().mockResolvedValue(account)
+      vi.doMock("@/server/auth/require-user", () => ({ requireUser }))
+      vi.doMock("@/server/services/auth-service", () => ({ getAccount }))
+      const route = await loadRoute()
+
+      const response = await route.GET(
+        new Request(
+          "http://localhost/api/auth/account?userId=victim&include=passwordHash",
+        ),
+      )
+      const raw = await response.text()
+      const parsed: unknown = JSON.parse(raw)
+
+      expect(response.status).toBe(200)
+      expect(requireUser).toHaveBeenCalledOnce()
+      expect(getAccount).toHaveBeenCalledWith(USER.id)
+      expect(getAccount).toHaveBeenCalledOnce()
+      expect(parsed).toEqual(account)
+      if (!isRecord(parsed)) {
+        throw new Error("GET /api/auth/account doit retourner un objet JSON")
+      }
+      expect(Object.keys(parsed).sort()).toEqual(
+        [
+          "city",
+          "country",
+          "email",
+          "firstName",
+          "id",
+          "lastName",
+          "membership",
+          "phone",
+          "professionalLevel",
+        ].sort(),
+      )
+      expect(raw).not.toMatch(/passwordHash|session|createdAt|updatedAt/iu)
+      expect(parsed).not.toHaveProperty("name")
+    },
+  )
+
+  it(
+    scenario(
+      "GET /api/auth/account refuse une lecture directe sans session",
+      "une requête qui forge userId dans l'URL mais aucune session Auth.js",
+      "le Route Handler est appelé directement sans middleware",
+      "la réponse vaut 401, getAccount n'est jamais appelé et aucun détail d'authentification ne fuite",
+    ),
+    async () => {
+      const getAccount = vi.fn()
+      vi.doMock("@/server/auth/require-user", () => ({
+        requireUser: vi.fn().mockRejectedValue(
+          Object.assign(new Error("session absente"), {
+            name: "UnauthorizedError",
+          }),
+        ),
+      }))
+      vi.doMock("@/server/services/auth-service", () => ({ getAccount }))
+      const route = await loadRoute()
+
+      const response = await route.GET(
+        new Request("http://localhost/api/auth/account?userId=victim"),
+      )
+      const raw = await response.text()
+
+      expect(response.status).toBe(401)
+      expect(getAccount).not.toHaveBeenCalled()
+      expect(raw).not.toMatch(/session absente|victim|stack|Prisma/iu)
+    },
+  )
+
   it(
     scenario(
       "PATCH /api/auth/account normalise et sauvegarde un profil public complet",

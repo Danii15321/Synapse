@@ -16,11 +16,18 @@ type Profile = Readonly<{
   professionalLevel: ProfessionalLevel
 }>
 
+type PublicAccount = Profile &
+  Readonly<{
+    id: string
+    membership: "FREE" | "PREMIUM"
+  }>
+
 type UserRepository = Readonly<{
   createCredentialsUser: (
     input: Profile & Readonly<{ name: string; passwordHash: string }>,
   ) => Promise<unknown>
   deleteUserById: (userId: string) => Promise<unknown>
+  findUserProfileById: (userId: string) => Promise<PublicAccount | null>
   updateUserProfile: (
     input: Profile & Readonly<{ name: string; userId: string }>,
   ) => Promise<unknown>
@@ -55,6 +62,7 @@ function isUserRepository(value: unknown): value is UserRepository {
   return (
     isRecord(value) &&
     typeof value.createCredentialsUser === "function" &&
+    typeof value.findUserProfileById === "function" &&
     typeof value.updateUserProfile === "function" &&
     typeof value.deleteUserById === "function"
   )
@@ -66,7 +74,7 @@ async function loadRepository(): Promise<UserRepository> {
   )
   if (!isUserRepository(module)) {
     throw new Error(
-      "user-repository doit exposer createCredentialsUser, updateUserProfile et deleteUserById",
+      "user-repository doit exposer createCredentialsUser, findUserProfileById, updateUserProfile et deleteUserById",
     )
   }
   return module
@@ -206,6 +214,57 @@ describe("profil utilisateur sur PostgreSQL réel", () => {
         membership: "FREE",
       })
       expect(result).toEqual(PROFILE)
+    },
+  )
+
+  it(
+    scenario(
+      "La lecture du compte sélectionne exactement le DTO public par userId",
+      "un utilisateur dont la ligne contient profil, name, hash, dates et membership FREE",
+      "findUserProfileById reçoit l'identifiant issu de la session",
+      "le résultat contient exactement id, email, membership et les six champs de profil, sans name, hash, session ni timestamp",
+    ),
+    async () => {
+      const repository = await loadRepository()
+      const userId = `profile-read-${randomUUID()}`
+      const email = `profile-read-${randomUUID()}@example.test`
+      await insertUser(userId, email)
+      await db.$executeRaw`
+        UPDATE "User"
+        SET "firstName" = ${PROFILE.firstName},
+            "lastName" = ${PROFILE.lastName},
+            "phone" = ${PROFILE.phone},
+            "city" = ${PROFILE.city},
+            "country" = ${PROFILE.country},
+            "professionalLevel" = ${PROFILE.professionalLevel}::"ProfessionalLevel"
+        WHERE "id" = ${userId}
+      `
+
+      const result = await repository.findUserProfileById(userId)
+
+      expect(result).toEqual({
+        ...PROFILE,
+        email,
+        id: userId,
+        membership: "FREE",
+      })
+      expect(Object.keys(result ?? {}).sort()).toEqual(
+        [
+          "city",
+          "country",
+          "email",
+          "firstName",
+          "id",
+          "lastName",
+          "membership",
+          "phone",
+          "professionalLevel",
+        ].sort(),
+      )
+      expect(result).not.toHaveProperty("name")
+      expect(JSON.stringify(result)).not.toMatch(
+        /passwordHash|session|createdAt|updatedAt/i,
+      )
     },
   )
 
