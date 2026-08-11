@@ -194,6 +194,65 @@
   padding: var(--space-card);
 }
 
+.prompt-share {
+  position: relative;
+  padding: 0 var(--space-card) var(--space-card);
+}
+
+.prompt-share-button,
+.prompt-share-item {
+  display: inline-flex;
+  min-width: var(--touch-target);
+  min-height: var(--touch-target);
+  align-items: center;
+  gap: var(--space-tiny);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-control);
+  padding: var(--space-tiny) var(--space-control);
+  background: var(--color-surface);
+  color: var(--color-night);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.prompt-share-button svg,
+.prompt-share-item svg {
+  flex: 0 0 auto;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+.prompt-share-menu {
+  position: absolute;
+  z-index: 10;
+  right: var(--space-card);
+  bottom: calc(100% + var(--space-tiny));
+  display: grid;
+  width: min(14rem, calc(100vw - (2 * var(--space-control))));
+  max-width: calc(100% - var(--space-card));
+  gap: var(--space-tiny);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  padding: var(--space-tiny);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+}
+
+.prompt-share-item {
+  width: 100%;
+  text-align: left;
+}
+
+.prompt-share-status {
+  min-height: 1.25rem;
+  margin-top: var(--space-tiny);
+  color: var(--color-muted);
+  font-size: 0.85rem;
+}
+
 .prompt-card-meta {
   display: flex;
   flex-wrap: wrap;

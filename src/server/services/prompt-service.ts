@@ -5,6 +5,8 @@ import {
   promptFullSchema,
   promptTeaserSchema,
   type PromptCatalogPage,
+  type PromptCardDto,
+  type PromptDomain,
   type PromptFull,
   type PromptListQuery,
   type PromptTeaser,
@@ -15,6 +17,7 @@ import {
   findBySlug,
   findMany,
   findMetaBySlug,
+  findRelatedByDomain,
 } from "@/server/repositories/prompt-repository"
 import type { SessionUser } from "@/lib/validators/auth"
 
@@ -39,6 +42,23 @@ export async function getPrompts(
     items,
     nextCursor: hasNextPage ? (items.at(-1)?.id ?? null) : null,
   }
+}
+
+/**
+ * Spécification : retourne au plus trois cartes publiques du même domaine,
+ * sans lire de champ verrouillé et sans décision d'entitlement.
+ */
+export async function getRelatedPrompts(input: Readonly<{
+  domain: PromptDomain
+  excludeId: string
+}>): Promise<PromptCardDto[]> {
+  const rows = await findRelatedByDomain({
+    domain: input.domain,
+    excludeId: input.excludeId,
+    take: 3,
+  })
+
+  return rows.map((row) => promptCardSchema.parse(row))
 }
 
 /**

@@ -2,7 +2,10 @@ import "server-only"
 
 import type { Prisma } from "@prisma/client"
 
-import type { PromptListQuery } from "@/lib/validators/prompt"
+import type {
+  PromptDomain,
+  PromptListQuery,
+} from "@/lib/validators/prompt"
 import { db } from "@/server/db"
 
 const catalogListSelect = {
@@ -17,6 +20,7 @@ const catalogListSelect = {
 } satisfies Prisma.PromptSelect
 
 const PROMPT_TAG_FILTER_LIMIT = 500
+const RELATED_PROMPTS_MAX_TAKE = 3
 
 type CatalogListRow = Prisma.PromptGetPayload<{
   select: typeof catalogListSelect
@@ -42,6 +46,25 @@ export function findMany(options: PromptListQuery): Promise<CatalogListRow[]> {
     skip: options.cursor ? 1 : undefined,
     take: options.take,
     where,
+  })
+}
+
+export function findRelatedByDomain(
+  options: Readonly<{
+    domain: PromptDomain
+    excludeId: string
+    take: number
+  }>,
+): Promise<CatalogListRow[]> {
+  return db.prompt.findMany({
+    orderBy: [{ publishedAt: "desc" }, { id: "desc" }],
+    select: catalogListSelect,
+    take: Math.min(Math.max(options.take, 1), RELATED_PROMPTS_MAX_TAKE),
+    where: {
+      domain: options.domain,
+      id: { not: options.excludeId },
+      publishedAt: { not: null },
+    },
   })
 }
 
