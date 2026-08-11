@@ -106,6 +106,7 @@ THEN  : chaque corps libre est lisible, aucun corps premium ne l'est, les CTA m√
     await expect(
       page
         .getByRole("main")
+        .locator(":scope > article")
         .getByRole("link", { name: /devenir membre|d√©bloquer|premium/i }),
     ).toBeVisible()
   }
