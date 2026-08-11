@@ -69,6 +69,21 @@ export async function insertCatalog(prefix: string): Promise<void> {
       NOW() - (series || ' seconds')::interval, NOW(), NOW()
     FROM generate_series(1, 205) AS series
   `
+  await db.prompt.create({
+    data: {
+      body: "Corps communication témoin",
+      coverImage: null,
+      domain: "communication",
+      excerpt: "Extrait communication témoin",
+      id: `${prefix}-communication-temoin`,
+      publishedAt: new Date("2099-01-02T00:00:00.000Z"),
+      slug: `${prefix}-communication-temoin`,
+      summary: "Résumé communication témoin",
+      tags: [prefix],
+      title: `${prefix} Prompt communication témoin`,
+      visibility: "FREE",
+    },
+  })
 }
 
 export async function cleanupReferenceFixtures(): Promise<void> {

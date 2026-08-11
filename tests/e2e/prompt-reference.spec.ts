@@ -40,10 +40,10 @@ function sha256(value: string): string {
   return createHash("sha256").update(value, "utf8").digest("hex")
 }
 
-test(`La liste reste utilisable à 390px sous réseau bridé, avec filtres, recherche et pagination — ce qui est vérifié
-GIVEN : 205 prompts publiés isolés par un tag, une image de repli et un profil réseau mobile dégradé
-WHEN  : un anonyme ouvre /prompts, soumet ses filtres, suit le curseur vers la page suivante puis soumet ses recherches
-THEN  : succès filtré, page suivante sans doublon, empty et résultat recherché sont accessibles sans débordement horizontal`, async ({
+test(`La liste Prompts n'expose que Domaine et conserve ce filtre dans la pagination — ce qui est vérifié
+GIVEN : 205 prompts IA publiés, une image de repli et un profil réseau mobile dégradé à 390px
+WHEN  : un anonyme ouvre /prompts, applique Domaine, suit le curseur puis utilise les paramètres historiques directement dans l'URL
+THEN  : recherche et Tag sont absents, Domaine filtre réellement, la page suivante le conserve sans doublon, empty et succès restent accessibles sans débordement`, async ({
   page,
 }) => {
   const prefix = `t07-e2e-list-${randomUUID()}`
@@ -60,15 +60,26 @@ THEN  : succès filtré, page suivante sans doublon, empty et résultat recherch
 
   const navigation = page.goto("/prompts")
   await navigation
+  const nonMatchingDomainTitle = `${prefix} Prompt communication témoin`
+  await expect(
+    page.getByRole("heading", { name: nonMatchingDomainTitle, exact: true }),
+  ).toBeVisible()
+  await expect(page.getByRole("searchbox")).toHaveCount(0)
+  await expect(page.getByRole("combobox", { name: /tag/i })).toHaveCount(0)
+  await expect(page.getByRole("combobox")).toHaveCount(1)
   await page.getByRole("combobox", { name: /domaine/i }).selectOption("ia")
-  await page.getByRole("combobox", { name: /tag/i }).selectOption(prefix)
   const submit = page.getByRole("button", {
-    name: /appliquer|filtrer|rechercher/i,
+    name: /appliquer.*filtre/i,
   })
+  const submitBox = await submit.boundingBox()
+  expect(submitBox?.height ?? 0).toBeGreaterThanOrEqual(44)
+  expect(submitBox?.width ?? 0).toBeGreaterThanOrEqual(44)
   const filterSubmission = submit.click()
   await filterSubmission
   await expect(page).toHaveURL(/domain=ia/u)
-  await expect(page).toHaveURL(new RegExp(`tag=${prefix}`, "u"))
+  expect(new URL(page.url()).searchParams.has("search")).toBe(false)
+  expect(new URL(page.url()).searchParams.has("tag")).toBe(false)
+  await expect(page.getByText(nonMatchingDomainTitle)).toHaveCount(0)
   const cardsBefore = page.getByRole("main").locator("article")
   await expect(cardsBefore.first()).toBeVisible()
   const firstPageHrefs = await cardsBefore
@@ -84,7 +95,11 @@ THEN  : succès filtré, page suivante sans doublon, empty et résultat recherch
   const firstPageUrl = page.url()
   await pagination.click()
   await expect(page).not.toHaveURL(firstPageUrl)
-  expect(new URL(page.url()).searchParams.get("cursor")).toBeTruthy()
+  const nextPageUrl = new URL(page.url())
+  expect(nextPageUrl.searchParams.get("cursor")).toBeTruthy()
+  expect(nextPageUrl.searchParams.get("domain")).toBe("ia")
+  expect(nextPageUrl.searchParams.has("search")).toBe(false)
+  expect(nextPageUrl.searchParams.has("tag")).toBe(false)
   const nextPageHrefs = await page
     .getByRole("main")
     .locator('article a[href^="/prompts/"]')
@@ -96,15 +111,14 @@ THEN  : succès filtré, page suivante sans doublon, empty et résultat recherch
     [],
   )
 
-  const search = page.getByRole("searchbox", { name: /recherch/i })
-  await search.fill(`${prefix} aucun résultat`)
-  await submit.click()
+  await page.goto(
+    `/prompts?domain=ia&search=${encodeURIComponent(`${prefix} aucun résultat`)}`,
+  )
   expect(new URL(page.url()).searchParams.get("search")).toBe(
     `${prefix} aucun résultat`,
   )
   await expect(page.getByText(/aucun prompt|aucun résultat/i)).toBeVisible()
-  await search.fill("aiguille recherche unique")
-  await submit.click()
+  await page.goto("/prompts?domain=ia&search=aiguille%20recherche%20unique")
   expect(new URL(page.url()).searchParams.get("search")).toBe(
     "aiguille recherche unique",
   )
